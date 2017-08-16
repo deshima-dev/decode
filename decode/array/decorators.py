@@ -8,8 +8,11 @@ __all__ = [
 ]
 
 # standard library
-from functools import partial, wraps
-from inspect import Parameter, signature
+import os
+import sys
+from concurrent.futures import ProcessPoolExecutor
+from functools import wraps
+from inspect import Parameter, signature, stack
 
 # dependent packages
 import decode as dc
@@ -19,6 +22,7 @@ import xarray as xr
 # module constants
 EMPTY = Parameter.empty
 POS_OR_KWD = Parameter.POSITIONAL_OR_KEYWORD
+MAX_WORKERS = os.cpu_count() - 1
 
 
 # decorators
@@ -79,10 +83,47 @@ def numchunk(func):
         wrapper (function): A wrapped function.
 
     """
+    orgname = '_original_' + func.__name__
+    orgfunc = dc.utils.copy_function(func, orgname)
+    depth = [s.function for s in stack()].index('<module>')
+    (sys._getframe(depth).f_globals)[orgname] = orgfunc
+
     @wraps(func)
     def wrapper(*args, **kwargs):
-        N = kwargs.pop('numchunk', p.n_processes)
-        return _numchunk(func, args, kwargs, N)
+        n_chunks = kwargs.pop('numchunk', 1)
+        n_processes = kwargs.pop('n_processes', MAX_WORKERS)
+
+        # make chunked args
+        nargs = []
+        params = signature(func).parameters
+        for i, (key, val) in enumerate(params.items()):
+            if not val.kind == POS_OR_KWD:
+                continue
+
+            if val.default == EMPTY:
+                try:
+                    nargs.append(np.array_split(args[i], n_chunks))
+                except TypeError:
+                    nargs.append(np.tile(args[i], n_chunks))
+            else:
+                try:
+                    kwargs.update({key: args[i]})
+                except IndexError:
+                    kwargs.setdefault(key, val.default)
+
+        # run the function
+        with ProcessPoolExecutor(n_processes) as e:
+            futures = []
+            for args in zip(*nargs):
+                futures.append(e.submit(orgfunc, *args, **kwargs))
+
+            results = [f.result() for f in futures]
+
+        # make an output
+        try:
+            return xr.concat(results, 't')
+        except TypeError:
+            return np.concatenate(results, 0)
 
     return wrapper
 
@@ -106,53 +147,47 @@ def timechunk(func):
         wrapper (function): A wrapped function.
 
     """
+    orgname = '_original_' + func.__name__
+    orgfunc = dc.utils.copy_function(func, orgname)
+    depth = [s.function for s in stack()].index('<module>')
+    (sys._getframe(depth).f_globals)[orgname] = orgfunc
+
     @wraps(func)
     def wrapper(*args, **kwargs):
-        T = kwargs.pop('timechunk', len(args[0]))
-        N = int(round(len(args[0]) / T))
-        return _numchunk(func, args, kwargs, N)
+        length = len(args[0])
+        n_chunks = round(length / kwargs.pop('timechunk', length))
+        n_processes = kwargs.pop('n_processes', MAX_WORKERS)
 
-    return wrapper
+        # make chunked args
+        nargs = []
+        params = signature(func).parameters
+        for i, (key, val) in enumerate(params.items()):
+            if not val.kind == POS_OR_KWD:
+                continue
 
-
-def _numchunk(func, args, kwargs, n_chunks):
-    """Execute a function with multicore numchunk processing.
-
-    This function is only used within decorators of num/timechunk.
-
-    Args:
-        func (function): A function to be executed.
-        args (list or tuple): Arguments of the function.
-        kwargs (dict): Keyword arguments of the function.
-        n_chunks (int): Number of chunks.
-
-    Returns:
-        result (numpy.ndarray or xarray.DataArray): An output array.
-
-    """
-    arrays = []
-    params = signature(func).parameters
-    for i, key in enumerate(params):
-        if params[key].kind == POS_OR_KWD:
-            if params[key].default == EMPTY:
-                arrays.append(args[i])
+            if val.default == EMPTY:
+                try:
+                    nargs.append(np.array_split(args[i], n_chunks))
+                except TypeError:
+                    nargs.append(np.tile(args[i], n_chunks))
             else:
                 try:
                     kwargs.update({key: args[i]})
                 except IndexError:
-                    kwargs.setdefault(key, params[key].default)
+                    kwargs.setdefault(key, val.default)
 
-    sequences = []
-    for array in arrays:
+        # run the function
+        with ProcessPoolExecutor(n_processes) as e:
+            futures = []
+            for args in zip(*nargs):
+                futures.append(e.submit(orgfunc, *args, **kwargs))
+
+            results = [f.result() for f in futures]
+
+        # make an output
         try:
-            sequences.append(np.array_split(array, n_chunks))
+            return xr.concat(results, 't')
         except TypeError:
-            sequences.append(np.tile(array, n_chunks))
+            return np.concatenate(results, 0)
 
-    p = dc.utils.MPPool(kwargs.pop('n_processes', None))
-    result = p.map(partial(func, **kwargs), *sequences)
-
-    try:
-        return xr.concat(result, 't')
-    except TypeError:
-        return np.concatenate(result, 0)
+    return wrapper
