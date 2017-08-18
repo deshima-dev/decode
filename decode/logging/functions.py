@@ -38,7 +38,7 @@ def setlogfile(filename=None, overwrite=False, *, logger=None):
         logger.removeHandler(handler)
 
     if filename is None:
-        handler = logging.StreamHandler(sys.stdout)
+        handler = logging.StreamHandler()
     else:
         filename = os.path.expanduser(filename)
         if overwrite:
