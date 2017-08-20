@@ -8,11 +8,11 @@ __all__ = [
 ]
 
 # standard library
-import os
 import sys
 from concurrent.futures import ProcessPoolExecutor
 from functools import wraps
 from inspect import Parameter, signature, stack
+from multiprocessing import cpu_count
 
 # dependent packages
 import decode as dc
@@ -22,19 +22,22 @@ import xarray as xr
 # module constants
 EMPTY = Parameter.empty
 POS_OR_KWD = Parameter.POSITIONAL_OR_KEYWORD
-MAX_WORKERS = os.cpu_count() - 1
+try:
+    MAX_WORKERS = cpu_count() - 1
+except:
+    MAX_WORKERS = 1
 
 
 # decorators
 def numpyfunc(func):
     """Make a function compatible with xarray.DataArray.
 
-    This function should be used as a decorator like::
+    This function is intended to be used as a decorator like::
 
         >>> @dc.arrayfunc
         >>> def func(array):
-        ...     # some operations ...
-        ...     return array
+        ...     # do something
+        ...     return newarray
         >>>
         >>> result = func(array)
 
@@ -66,12 +69,12 @@ def numpyfunc(func):
 def numchunk(func):
     """Make a function compatible with multicore numchunk processing.
 
-    This function should be used as a decorator like::
+    This function is intended to be used as a decorator like::
 
         >>> @dc.numchunk
         >>> def func(array):
-        ...     # some operations ...
-        ...     return array # do nothing
+        ...     # do something
+        ...     return newarray
         >>>
         >>> result = func(array, numchunk=10)
 
@@ -112,12 +115,13 @@ def numchunk(func):
                     kwargs.setdefault(key, val.default)
 
         # run the function
-        with ProcessPoolExecutor(n_processes) as e:
-            futures = []
-            for args in zip(*nargs):
-                futures.append(e.submit(orgfunc, *args, **kwargs))
+        with dc.utils.one_thread_per_process():
+            with ProcessPoolExecutor(n_processes) as e:
+                futures = []
+                for args in zip(*nargs):
+                    futures.append(e.submit(orgfunc, *args, **kwargs))
 
-            results = [f.result() for f in futures]
+                results = [f.result() for f in futures]
 
         # make an output
         try:
@@ -131,11 +135,12 @@ def numchunk(func):
 def timechunk(func):
     """Make a function compatible with multicore timechunk processing.
 
-    This function is used as a decorator like::
+    This function is intended to be used as a decorator like::
 
         >>> @dc.timechunk
         >>> def func(array):
-        ...     return array # do nothing
+        ...     # do something
+        ...     return newarray
         >>>
         >>> result = func(array, timechunk=100)
 
@@ -177,12 +182,13 @@ def timechunk(func):
                     kwargs.setdefault(key, val.default)
 
         # run the function
-        with ProcessPoolExecutor(n_processes) as e:
-            futures = []
-            for args in zip(*nargs):
-                futures.append(e.submit(orgfunc, *args, **kwargs))
+        with dc.utils.one_thread_per_process():
+            with ProcessPoolExecutor(n_processes) as e:
+                futures = []
+                for args in zip(*nargs):
+                    futures.append(e.submit(orgfunc, *args, **kwargs))
 
-            results = [f.result() for f in futures]
+                results = [f.result() for f in futures]
 
         # make an output
         try:
