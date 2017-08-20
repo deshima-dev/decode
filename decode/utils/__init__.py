@@ -1,4 +1,4 @@
 # coding: utf-8
 
-from .miscellaneous import *
-del miscellaneous
+from .misc import *
+del misc
