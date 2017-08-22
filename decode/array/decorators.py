@@ -2,6 +2,7 @@
 
 # public items
 __all__ = [
+    'chunk',
     'numpyfunc',
     'numchunk',
     'timechunk',
@@ -64,6 +65,82 @@ def numpyfunc(func):
             return func(*args, **kwargs)
 
     return wrapper
+
+
+def chunk(*argnames):
+    """Make a function compatible with multicore chunk processing.
+
+    This function is intended to be used as a decorator like::
+
+        >>> @fm.chunk('array')
+        >>> def func(array):
+        ...     # do something
+        ...     return newarray
+        >>>
+        >>> result = func(array, timechunk=10)
+
+    """
+    def _chunk(func):
+        orgname = '_original_' + func.__name__
+        orgfunc = fm.utils.copy_function(func, orgname)
+        depth = [s.function for s in stack()].index('<module>')
+        sys._getframe(depth).f_globals[orgname] = orgfunc
+
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            # parse args and kwargs
+            params = signature(func).parameters
+            for i, (key, val) in enumerate(params.items()):
+                if not val.kind == POS_OR_KWD:
+                    break
+
+                try:
+                    kwargs.update({key: args[i]})
+                except IndexError:
+                    kwargs.setdefault(key, val.default)
+
+            # n_chunks and n_processes
+            if 'numchunk' in kwargs:
+                n_chunks = kwargs.pop('numchunk', 1)
+            elif 'timechunk' in kwargs:
+                length = len(kwargs[argnames[0]])
+                tchunk = kwargs.pop('timechunk', length)
+                n_chunks = round(length / tchunk)
+            else:
+                n_chunks = 1
+
+            n_processes = kwargs.pop('n_processes', MAX_WORKERS)
+
+            # make chunked args
+            chunks = {}
+            for name in argnames:
+                arg = kwargs.pop(name)
+                try:
+                    nargs = np.array_split(arg, n_chunks)
+                except TypeError:
+                    nargs = np.tile(arg, n_chunks)
+
+                chunks.update({name: nargs})
+
+            # run the function
+            with fm.utils.one_thread_per_process(), \
+                    ProcessPoolExecutor(n_processes) as e:
+                futures = []
+                for i in range(n_chunks):
+                    chunk = {key: val[i] for key, val in chunks.items()}
+                    futures.append(e.submit(orgfunc, **{**chunk, **kwargs}))
+
+                results = [future.result() for future in futures]
+
+            # make an output
+            try:
+                return xr.concat(results, 't')
+            except TypeError:
+                return np.concatenate(results, 0)
+
+        return wrapper
+
+    return _chunk
 
 
 def numchunk(func):
