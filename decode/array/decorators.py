@@ -72,7 +72,7 @@ def chunk(*argnames):
 
     This function is intended to be used as a decorator like::
 
-        >>> @fm.chunk('array')
+        >>> @dc.chunk('array')
         >>> def func(array):
         ...     # do something
         ...     return newarray
@@ -82,7 +82,7 @@ def chunk(*argnames):
     """
     def _chunk(func):
         orgname = '_original_' + func.__name__
-        orgfunc = fm.utils.copy_function(func, orgname)
+        orgfunc = dc.utils.copy_function(func, orgname)
         depth = [s.function for s in stack()].index('<module>')
         sys._getframe(depth).f_globals[orgname] = orgfunc
 
@@ -123,7 +123,7 @@ def chunk(*argnames):
                 chunks.update({name: nargs})
 
             # run the function
-            with fm.utils.one_thread_per_process(), \
+            with dc.utils.one_thread_per_process(), \
                     ProcessPoolExecutor(n_processes) as e:
                 futures = []
                 for i in range(n_chunks):
