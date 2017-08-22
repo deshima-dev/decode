@@ -13,9 +13,9 @@ import decode as dc
 setup(
     name = 'decode',
     description = __doc__,
-    version = dc.__version__,
-    author = dc.__author__,
-    author_email = dc.__email__,
+    version = '0.1.1',
+    author = 'snoopython',
+    author_email = 'taniguchi@ioa.s.u-tokyo.ac.jp',
     url = 'https://github.com/deshima-dev/decode',
     install_requires = ['astropy', 'numpy', 'xarray'],
     packages = find_packages(),

@@ -1,7 +1,7 @@
 # coding: utf-8
 
 # information
-__version__ = '0.1'
+__version__ = '0.1.1'
 __author__  = 'snoopython'
 __email__   = 'taniguchi@ioa.s.u-tokyo.ac.jp'
 
