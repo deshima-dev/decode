@@ -32,7 +32,7 @@ def numpyfunc(func):
 
     This function is intended to be used as a decorator like::
 
-        >>> @dc.arrayfunc
+        >>> @dc.numpyfunc
         >>> def func(array):
         ...     # do something
         ...     return newarray
