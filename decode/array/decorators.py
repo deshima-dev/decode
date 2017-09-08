@@ -64,7 +64,7 @@ def numpyfunc(func):
     return wrapper
 
 
-def chunk(*argnames):
+def chunk(*argnames, concatfunc=None):
     """Make a function compatible with multicore chunk processing.
 
     This function is intended to be used as a decorator like::
@@ -130,6 +130,9 @@ def chunk(*argnames):
                 results = [future.result() for future in futures]
 
             # make an output
+            if concatfunc is not None:
+                return concatfunc(results)
+
             try:
                 return xr.concat(results, 't')
             except TypeError:
