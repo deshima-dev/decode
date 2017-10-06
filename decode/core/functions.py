@@ -16,7 +16,7 @@ __all__ = [
 ]
 
 # standard library
-import uuid import uuid4
+from uuid import uuid4
 
 # dependent packages
 import decode as dc
