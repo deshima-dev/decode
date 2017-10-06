@@ -10,6 +10,7 @@ from collections import OrderedDict
 import decode as dc
 import numpy as np
 import xarray as xr
+from astropy.io import fits
 from ..classes import BaseAccessor
 
 # local constants
@@ -66,6 +67,7 @@ class DecodeCubeAccessor(BaseAccessor):
         array   = self._dataarray.copy()
         nx_grid = len(x_grid)
         ny_grid = len(y_grid)
+        nz_grid = len(array.ch)
 
         if isinstance(x_grid, list):
             x_grid = xr.DataArray(np.array(x_grid), dims='grid')
@@ -80,7 +82,12 @@ class DecodeCubeAccessor(BaseAccessor):
         i     = np.abs(self.x - x_grid).argmin('grid')
         j     = np.abs(self.y - y_grid).argmin('grid')
         index = i + j * nx_grid
-        array.coords.update({'index': index})
-        gridded_array = array.groupby('index').mean('t')
 
-        return gridded_array
+        array.coords.update({'index': index})
+        griddedarray = array.groupby('index').mean('t')
+        cubedata     = griddedarray.values.reshape((ny_grid, nx_grid, nz_grid)).swapaxes(0, 1)
+
+        xcoords  = {'ra': x_grid.values}
+        ycoords  = {'dec': y_grid.values}
+
+        return dc.cube(cubedata, xcoords=xcoords, ycoords=ycoords)

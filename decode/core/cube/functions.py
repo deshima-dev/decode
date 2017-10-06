@@ -29,10 +29,10 @@ def cube(data, xcoords=None, ycoords=None, chcoords=None, scalarcoords=None, att
 
     # update coords with input values (if any)
     if xcoords is not None:
-        cube.coords.update({key: ('t', xcoords[key]) for key in xcoords})
+        cube.coords.update({key: ('x', xcoords[key]) for key in xcoords})
 
     if ycoords is not None:
-        cube.coords.update({key: ('t', ycoords[key]) for key in ycoords})
+        cube.coords.update({key: ('y', ycoords[key]) for key in ycoords})
 
     if chcoords is not None:
         cube.coords.update({key: ('ch', chcoords[key]) for key in chcoords})
@@ -41,3 +41,7 @@ def cube(data, xcoords=None, ycoords=None, chcoords=None, scalarcoords=None, att
         cube.coords.update(scalarcoords)
 
     return cube
+
+
+def tocube(array, x_grid, y_grid):
+    return array.dcc.fromarray(x_grid, y_grid)
