@@ -7,11 +7,11 @@ __all__ = [
 ]
 
 # standard library
-import sys
-from concurrent.futures import ProcessPoolExecutor
+from concurrent.futures import ProcessPoolExecutor as Pool
 from functools import wraps
 from inspect import Parameter, signature, stack
 from multiprocessing import cpu_count
+from sys import _getframe as getframe
 
 # dependent packages
 import decode as dc
@@ -19,7 +19,7 @@ import numpy as np
 import xarray as xr
 
 # module constants
-POS_OR_KWD = Parameter.POSITIONAL_OR_KEYWORD
+DEFAULT_N_CHUNKS = 1
 try:
     MAX_WORKERS = cpu_count() - 1
 except:
@@ -76,19 +76,30 @@ def chunk(*argnames, concatfunc=None):
         >>>
         >>> result = func(array, timechunk=10)
 
+    or you can set a global chunk parameter outside the function::
+
+        >>> timechunk = 10
+        >>> result = func(array)
+
     """
     def _chunk(func):
+        depth = [s.function for s in stack()].index('<module>')
+        f_globals = getframe(depth).f_globals
+
+        # original (unwrapped) function
         orgname = '_original_' + func.__name__
         orgfunc = dc.utils.copy_function(func, orgname)
-        depth = [s.function for s in stack()].index('<module>')
-        sys._getframe(depth).f_globals[orgname] = orgfunc
+        f_globals[orgname] = orgfunc
 
         @wraps(func)
         def wrapper(*args, **kwargs):
+            depth = [s.function for s in stack()].index('<module>')
+            f_globals = getframe(depth).f_globals
+
             # parse args and kwargs
             params = signature(func).parameters
             for i, (key, val) in enumerate(params.items()):
-                if not val.kind == POS_OR_KWD:
+                if not val.kind == Parameter.POSITIONAL_OR_KEYWORD:
                     break
 
                 try:
@@ -97,37 +108,45 @@ def chunk(*argnames, concatfunc=None):
                     kwargs.setdefault(key, val.default)
 
             # n_chunks and n_processes
-            if 'numchunk' in kwargs:
-                n_chunks = kwargs.pop('numchunk', 1)
-            elif 'timechunk' in kwargs:
-                length = len(kwargs[argnames[0]])
-                tchunk = kwargs.pop('timechunk', length)
-                n_chunks = round(length / tchunk)
-            else:
-                n_chunks = 1
+            n_chunks = DEFAULT_N_CHUNKS
+            n_processes = MAX_WORKERS
 
-            n_processes = kwargs.pop('n_processes', MAX_WORKERS)
+            if argnames:
+                length = len(kwargs[argnames[0]])
+
+                if 'numchunk' in kwargs:
+                    n_chunks = kwargs.pop('numchunk')
+                elif 'timechunk' in kwargs:
+                    n_chunks = round(length / kwargs.pop('timechunk'))
+                elif 'numchunk' in f_globals:
+                    n_chunks = f_globals['numchunk']
+                elif 'timechunk' in f_globals:
+                    n_chunks = round(length / f_globals['timechunk'])
+
+                if 'n_processes' in kwargs:
+                    n_processes = kwargs.pop('n_processes')
+                elif 'n_processes' in f_globals:
+                    n_processes = f_globals['n_processes']
 
             # make chunked args
             chunks = {}
             for name in argnames:
                 arg = kwargs.pop(name)
                 try:
-                    nargs = np.array_split(arg, n_chunks)
+                    chunks.update({name: np.array_split(arg, n_chunks)})
                 except TypeError:
-                    nargs = np.tile(arg, n_chunks)
-
-                chunks.update({name: nargs})
+                    chunks.update({name: np.tile(arg, n_chunks)})
 
             # run the function
-            with dc.utils.one_thread_per_process(), \
-                    ProcessPoolExecutor(n_processes) as e:
-                futures = []
+            futures = []
+            results = []
+            with dc.utils.one_thread_per_process(), Pool(n_processes) as p:
                 for i in range(n_chunks):
                     chunk = {key: val[i] for key, val in chunks.items()}
-                    futures.append(e.submit(orgfunc, **{**chunk, **kwargs}))
+                    futures.append(p.submit(orgfunc, **{**chunk, **kwargs}))
 
-                results = [future.result() for future in futures]
+                for future in futures:
+                    results.append(future.result())
 
             # make an output
             if concatfunc is not None:
