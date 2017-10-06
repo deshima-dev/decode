@@ -13,19 +13,20 @@ import numpy as np
 import xarray as xr
 
 # local constants
-TCOORDS = lambda size=0: OrderedDict([
-    ('vrad', ('t', np.zeros(size, dtype=float))),
-    ('xrel', ('t', np.zeros(size, dtype=float))),
-    ('yrel', ('t', np.zeros(size, dtype=float))),
-    ('time', ('t', np.tile(datetime(2000,1,1), size))),
+TCOORDS = lambda array: OrderedDict([
+    ('vrad', ('t', np.zeros(array.shape[0], dtype=float))),
+    ('x',    ('t', np.zeros(array.shape[0], dtype=float))),
+    ('y',    ('t', np.zeros(array.shape[0], dtype=float))),
+    ('time', ('t', np.full(array.shape[0], datetime(2000,1,1)))),
 ])
 
-CHCOORDS = lambda size=0: OrderedDict([
-    ('kidid', ('ch', np.zeros(size, dtype=int))),
-    ('kidfq', ('ch', np.zeros(size, dtype=float))),
+CHCOORDS = lambda array: OrderedDict([
+    ('kidid', ('ch', np.zeros(array.shape[1], dtype=float))),
+    ('kidfq', ('ch', np.zeros(array.shape[1], dtype=float))),
 ])
 
 PTCOORDS = OrderedDict([
+    ('coordsys', 'RADEC'),
     ('xref', 0.0),
     ('yref', 0.0),
 ])
