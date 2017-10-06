@@ -1,4 +1,4 @@
-scalarcoords# coding: utf-8
+# coding: utf-8
 
 # public items
 __all__ = [

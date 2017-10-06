@@ -63,6 +63,7 @@ class DecodeCubeAccessor(BaseAccessor):
         self.coords.update(SCALARCOORDS)
 
     def fromarray(self, x_grid, y_grid):
+        array   = self._dataarray.copy()
         nx_grid = len(x_grid)
         ny_grid = len(y_grid)
 
@@ -76,6 +77,10 @@ class DecodeCubeAccessor(BaseAccessor):
         elif isinstance(y_grid, np.ndarray):
             y_grid = xr.DataArray(y_grid, dims='grid')
 
-        i     = np.abs(self.xrel - X).argmin('grid')
-        j     = np.abs(self.yrel - Y).argmin('grid')
-        index =
+        i     = np.abs(self.x - x_grid).argmin('grid')
+        j     = np.abs(self.y - y_grid).argmin('grid')
+        index = i + j * nx_grid
+        array.coords.update({'index': index})
+        gridded_array = array.groupby('index').mean('t')
+
+        return gridded_array
