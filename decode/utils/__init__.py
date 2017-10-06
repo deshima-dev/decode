@@ -1,4 +1,4 @@
 # coding: utf-8
 
-from .misc import *
+from .misc.functions import *
 del misc
