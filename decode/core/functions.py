@@ -16,7 +16,7 @@ __all__ = [
 ]
 
 # standard library
-import uuid
+import uuid import uuid4
 
 # dependent packages
 import decode as dc
@@ -210,48 +210,50 @@ def empty_like(array, dtype=None, keepmeta=True):
         return dc.empty(array.shape, dtype)
 
 
-def save(array, filename=None):
-    """Save an array to a NetCDF file.
+def save(dataarray, filename=None):
+    """Save a dataarray to a NetCDF file.
 
     Args:
-        array (xarray.DataArray):
+        dataarray (xarray.DataArray): A dataarray to be saved.
         filename (str): A filename (used as <filename>.nc).
             If not spacified, random 8-character name will be used.
 
     """
     if filename is None:
-        if array.name is not None:
-            filename = array.name
+        if dataarray.name is not None:
+            filename = dataarray.name
         else:
-            filename = uuid.uuid4().hex[:8]
+            filename = uuid4().hex[:8]
 
     if not filename.endswith('.nc'):
         filename += '.nc'
 
-    array.to_netcdf(filename)
+    dataarray.to_netcdf(filename)
 
 
 def load(filename, copy=True):
-    """Load an array from a NetCDF file.
+    """Load a dataarray from a NetCDF file.
 
     Args:
         filename (str): A file name (*.nc).
-        copy (bool): If True, array is copied in memory. Default is True.
+        copy (bool): If True, dataarray is copied in memory. Default is True.
 
     Returns:
-        array (xarray.DataArray): A loaded array.
+        dataarray (xarray.DataArray): A loaded dataarray.
 
     """
     if copy:
-        array = xr.open_dataarray(filename).copy()
+        dataarray = xr.open_dataarray(filename).copy()
     else:
-        array = xr.open_dataarray(filename)
+        dataarray = xr.open_dataarray(filename)
 
-    if array.name is None:
-        array.name = filename.rstrip('.nc')
+    if dataarray.name is None:
+        dataarray.name = filename.rstrip('.nc')
 
-    for coord in array.coords:
-        if array[coord].dtype.kind == 'S':
-            array[coord] = array[coord].astype('U')
+    for key, val in dataarray.coords.items():
+        if val.dtype.kind == 'S':
+            dataarray[key] = val.astype('U')
+        elif val.dtype == np.int32:
+            dataarray[key] = val.astype('i8')
 
-    return array
+    return dataarray
