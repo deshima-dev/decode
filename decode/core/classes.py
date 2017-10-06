@@ -33,8 +33,41 @@ PTCOORDS = OrderedDict([
 
 
 # classes
-@xr.register_dataarray_accessor('dc')
-class DecodeAccessor(object):
+class BaseAccessor(object):
+    def __init__(self, dataarray):
+        """Initialize the base accessor."""
+        self._dataarray = dataarray
+
+    def __getattr__(self, name):
+        """self._dataarray.name <=> self.name."""
+        return getattr(self._dataarray, name)
+
+    def __setstate__(self, state):
+        """A method used for pickling."""
+        self.__dict__ = state
+
+    def __getstate__(self):
+        """A method used for unpickling."""
+        return self.__dict__
+
+    @property
+    def tcoords(self):
+        """A dictionary of arrays that label time axis."""
+        return {k: v.values for k, v in self.coords.items() if v.dims==('t',)}
+
+    @property
+    def chcoords(self):
+        """A dictionary of arrays that label channel axis."""
+        return {k: v.values for k, v in self.coords.items() if v.dims==('ch',)}
+
+    @property
+    def ptcoords(self):
+        """A dictionary of values that don't label any axes (point-like)."""
+        return {k: v.values for k, v in self.coords.items() if v.dims==()}
+
+
+@xr.register_dataarray_accessor('dca')
+class DecodeArrayAccessor(BaseAccessor):
     def __init__(self, array):
         """Initialize the Decode accessor of an array.
 
@@ -46,22 +79,7 @@ class DecodeAccessor(object):
             array (xarray.DataArray): An array to which Decode accessor is added.
 
         """
-        self._array = array
-
-    @property
-    def tcoords(self):
-        """A dictionary of arrays that label time axis."""
-        return {key: getattr(self, key).values for key in TCOORDS()}
-
-    @property
-    def chcoords(self):
-        """A dictionary of arrays that label channel axis."""
-        return {key: getattr(self, key).values for key in CHCOORDS()}
-
-    @property
-    def ptcoords(self):
-        """A dictionary of values that don't label any axes (point-like)."""
-        return {key: getattr(self, key).item() for key in PTCOORDS}
+        super().__init__(array)
 
     def _initcoords(self):
         """Initialize coords with default values.
@@ -71,10 +89,6 @@ class DecodeAccessor(object):
             This forcibly replaces all vaules of coords with default ones.
 
         """
-        self.coords.update(TCOORDS(self.shape[0]))
-        self.coords.update(CHCOORDS(self.shape[1]))
+        self.coords.update(TCOORDS(self))
+        self.coords.update(CHCOORDS(self))
         self.coords.update(PTCOORDS)
-
-    def __getattr__(self, name):
-        """array.dc.name <=> array.name"""
-        return getattr(self._array, name)
