@@ -43,7 +43,7 @@ def array(data, tcoords=None, chcoords=None, ptcoords=None, attrs=None, name=Non
     """
     # initialize coords with default values
     array = xr.DataArray(data, dims=('t', 'ch'), attrs=attrs, name=name)
-    array.dc._initcoords()
+    array.dca._initcoords()
 
     # update coords with input values (if any)
     if tcoords is not None:
@@ -203,8 +203,8 @@ def empty_like(array, dtype=None, keepmeta=True):
     """
     if keepmeta:
         return dc.empty(array.shape, dtype,
-            tcoords=array.dc.tcoords, chcoords=array.dc.chcoords,
-            ptcoords=array.dc.ptcoords, attrs=array.attrs, name=array.name
+            tcoords=array.dca.tcoords, chcoords=array.dca.chcoords,
+            ptcoords=array.dca.ptcoords, attrs=array.attrs, name=array.name
         )
     else:
         return dc.empty(array.shape, dtype)
