@@ -1,8 +1,8 @@
 # coding: utf-8
 
-from .array import *
-from .logging import *
 from . import utils
+from .core import *
+from .logging import *
 
 # default logger
 import logging
