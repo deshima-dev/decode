@@ -25,7 +25,7 @@ CHCOORDS = lambda array: OrderedDict([
     ('kidfq', ('ch', np.zeros(array.shape[1], dtype=float))),
 ])
 
-PTCOORDS = OrderedDict([
+SCALARCOORDS = OrderedDict([
     ('coordsys', 'RADEC'),
     ('xref', 0.0),
     ('yref', 0.0),
@@ -51,6 +51,15 @@ class BaseAccessor(object):
         return self.__dict__
 
     @property
+    def xcoords(self):
+        """A dictionary of arrays that label x axis."""
+        return {k: v.values for k, v in self.coords.items() if v.dims==('x',)}
+
+    def ycoords(self):
+        """A dictionary of arrays that label y axis."""
+        return {k: v.values for k, v in self.coords.items() if v.dims==('y',)}
+
+    @property
     def tcoords(self):
         """A dictionary of arrays that label time axis."""
         return {k: v.values for k, v in self.coords.items() if v.dims==('t',)}
@@ -61,7 +70,7 @@ class BaseAccessor(object):
         return {k: v.values for k, v in self.coords.items() if v.dims==('ch',)}
 
     @property
-    def ptcoords(self):
+    def scalarcoords(self):
         """A dictionary of values that don't label any axes (point-like)."""
         return {k: v.values for k, v in self.coords.items() if v.dims==()}
 
@@ -91,4 +100,4 @@ class DecodeArrayAccessor(BaseAccessor):
         """
         self.coords.update(TCOORDS(self))
         self.coords.update(CHCOORDS(self))
-        self.coords.update(PTCOORDS)
+        self.coords.update(SCALARCOORDS)

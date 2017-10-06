@@ -1,4 +1,4 @@
-# coding: utf-8
+scalarcoords# coding: utf-8
 
 # public items
 __all__ = [
@@ -26,14 +26,14 @@ from astropy import units as u
 
 
 # functions
-def array(data, tcoords=None, chcoords=None, ptcoords=None, attrs=None, name=None):
+def array(data, tcoords=None, chcoords=None, scalarcoords=None, attrs=None, name=None):
     """Create an array as an instance of xarray.DataArray with Decode accessor.
 
     Args:
         data (numpy.ndarray): A 2D (time x channel) array.
         tcoords (dict, optional): A dictionary of arrays that label time axis.
         chcoords (dict, optional): A dictionary of arrays that label channel axis.
-        ptcoords (dict, optional): A dictionary of values that don't label any axes (point-like).
+        scalarcoords (dict, optional): A dictionary of values that don't label any axes (point-like).
         attrs (dict, optional): A dictionary of attributes to add to the instance.
         name (str, optional): A string that names the instance.
 
@@ -52,8 +52,8 @@ def array(data, tcoords=None, chcoords=None, ptcoords=None, attrs=None, name=Non
     if chcoords is not None:
         array.coords.update({key: ('ch', chcoords[key]) for key in chcoords})
 
-    if ptcoords is not None:
-        array.coords.update(ptcoords)
+    if scalarcoords is not None:
+        array.coords.update(scalarcoords)
 
     return array
 
@@ -204,7 +204,7 @@ def empty_like(array, dtype=None, keepmeta=True):
     if keepmeta:
         return dc.empty(array.shape, dtype,
             tcoords=array.dca.tcoords, chcoords=array.dca.chcoords,
-            ptcoords=array.dca.ptcoords, attrs=array.attrs, name=array.name
+            scalarcoords=array.dca.scalarcoords, attrs=array.attrs, name=array.name
         )
     else:
         return dc.empty(array.shape, dtype)
