@@ -85,9 +85,22 @@ class DecodeCubeAccessor(BaseAccessor):
 
         array.coords.update({'index': index})
         griddedarray = array.groupby('index').mean('t')
-        cubedata     = griddedarray.values.reshape((ny_grid, nx_grid, nz_grid)).swapaxes(0, 1)
+        template     = np.zeros([nx_grid*ny_grid, nz_grid])
+        template[griddedarray.index.values] = griddedarray.values
+        cubedata     = template.reshape((ny_grid, nx_grid, nz_grid)).swapaxes(0, 1)
 
         xcoords  = {'ra': x_grid.values}
         ycoords  = {'dec': y_grid.values}
 
         return dc.cube(cubedata, xcoords=xcoords, ycoords=ycoords)
+
+    def toFITS(self, fitsname, clobber=clobber):
+        cdelt1 = float((self.ra[1] - self.ra[0]).values)
+        crval1 = float(self.ra[0].values)
+        cdelt2 = float((self.dec[1] - self.dec[0]).values)
+        crval2 = float(self.dec[0].values)
+
+        header = fits.Header(OrderedDict([('CTYPE1', 'deg'), ('CDELT1', cdelt1),
+        ('CRVAL1', crval1), ('CRPIX1', 1), ('CTYPE2', 'deg'), ('CDELT2', cdelt2),
+        ('CRVAL2', crval2), ('CRPIX2', 1), ('CTYPE3', 'freq')]))
+        fits.writeto(fitsname, self.values.T, header, clobber=clobber)

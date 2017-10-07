@@ -1,5 +1,12 @@
 # coding: utf-8
 
+# public items
+__all__ = [
+    'cube',
+    'tocube',
+    'toFITS'
+]
+
 # dependent packages
 import decode as dc
 import numpy as np
@@ -45,3 +52,7 @@ def cube(data, xcoords=None, ycoords=None, chcoords=None, scalarcoords=None, att
 
 def tocube(array, x_grid, y_grid):
     return array.dcc.fromarray(x_grid, y_grid)
+
+
+def toFITS(cubearray, fitsname, clobber=False):
+    cubearray.dcc.toFITS(fitsname, clobber=clobber)

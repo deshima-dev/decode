@@ -3,6 +3,7 @@
 # public items
 __all__ = [
     'array',
+    'fromDFITS',
     'ones',
     'zeros',
     'full',
@@ -23,6 +24,7 @@ import decode as dc
 import numpy as np
 import xarray as xr
 from astropy import units as u
+from astropy.io import fits
 
 
 # functions
@@ -55,6 +57,42 @@ def array(data, tcoords=None, chcoords=None, scalarcoords=None, attrs=None, name
     if scalarcoords is not None:
         array.coords.update(scalarcoords)
 
+    return array
+
+
+def fromDFITS(fitsname, pixelids='all', scantype='all'):
+    hdulist = fits.open(fitsname)
+
+    ### readout
+    readout   = hdulist['READOUT'].data
+    t_out     = np.array(readout['starttime']).astype(np.datetime64)
+    pixelid   = readout['pixelid']
+    arraydata = readout['arraydata']
+
+    ### antenna
+    antlog = hdulist['ANTENNA'].data
+    t_ant  = np.array(antlog['starttime']).astype(np.datetime64)
+    az     = antlog['az']
+    el     = antlog['el']
+
+    ### some interpolation
+    ### will be implemented later
+    t_ant_last = np.where(t_ant >= t_out[-1])[0][0]
+    t_ant_sub  = t_ant[:t_ant_last+1]
+    az_sub     = az[:t_ant_last+1]
+    el_sub     = el[:t_ant_last+1]
+    dt_out     = (t_out - t_out[0]).astype(np.float64)
+    dt_ant_sub = (t_ant_sub - t_out[0]).astype(np.float64)
+    az_sub_i   = np.interp(dt_out, dt_ant_sub, az_sub)
+    el_sub_i   = np.interp(dt_out, dt_ant_sub, el_sub)
+
+    ### coordinates
+    tcoords  = {'x': az_sub_i, 'y': el_sub_i, 'time': t_out}
+
+    ### make array
+    array = dc.array(arraydata, tcoords=tcoords)
+
+    hdulist.close()
     return array
 
 
