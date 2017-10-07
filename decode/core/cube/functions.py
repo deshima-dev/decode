@@ -49,10 +49,8 @@ def cube(data, xcoords=None, ycoords=None, chcoords=None, scalarcoords=None, att
 
     return cube
 
-
 def tocube(array, x_grid, y_grid):
     return array.dcc.fromarray(x_grid, y_grid)
-
 
 def toFITS(cubearray, fitsname, clobber=False):
     cubearray.dcc.toFITS(fitsname, clobber=clobber)

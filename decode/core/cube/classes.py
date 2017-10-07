@@ -94,7 +94,7 @@ class DecodeCubeAccessor(BaseAccessor):
 
         return dc.cube(cubedata, xcoords=xcoords, ycoords=ycoords)
 
-    def toFITS(self, fitsname, clobber=clobber):
+    def toFITS(self, fitsname, clobber):
         cdelt1 = float((self.ra[1] - self.ra[0]).values)
         crval1 = float(self.ra[0].values)
         cdelt2 = float((self.dec[1] - self.dec[0]).values)
