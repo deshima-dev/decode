@@ -2,6 +2,7 @@
 
 from . import utils
 from .core import *
+from . import io
 from .logging import *
 
 # default logger

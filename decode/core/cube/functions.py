@@ -3,13 +3,12 @@
 # public items
 __all__ = [
     'cube',
+    'fromcube',
     'tocube',
-    'toFITS'
 ]
 
 # dependent packages
 import decode as dc
-import numpy as np
 import xarray as xr
 
 
@@ -49,8 +48,13 @@ def cube(data, xcoords=None, ycoords=None, chcoords=None, scalarcoords=None, att
 
     return cube
 
-def tocube(array, x_grid, y_grid):
-    return array.dcc.fromarray(x_grid, y_grid)
 
-def toFITS(cubearray, fitsname, clobber=False):
-    cubearray.dcc.toFITS(fitsname, clobber=clobber)
+def fromcube(cube):
+    """cube to array"""
+    pass
+    # return xr.DataArray.dcc.fromcube(cube)
+
+
+def tocube(array, x_grid, y_grid):
+    """array to cube"""
+    return xr.DataArray.dcc.tocube(array, x_grid, y_grid)

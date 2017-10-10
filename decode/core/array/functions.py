@@ -3,7 +3,6 @@
 # public items
 __all__ = [
     'array',
-    'fromDFITS',
     'ones',
     'zeros',
     'full',
@@ -12,8 +11,6 @@ __all__ = [
     'zeros_like',
     'full_like',
     'empty_like',
-    'save',
-    'load',
 ]
 
 # standard library
@@ -57,42 +54,6 @@ def array(data, tcoords=None, chcoords=None, scalarcoords=None, attrs=None, name
     if scalarcoords is not None:
         array.coords.update(scalarcoords)
 
-    return array
-
-
-def fromDFITS(fitsname, pixelids='all', scantype='all'):
-    hdulist = fits.open(fitsname)
-
-    ### readout
-    readout   = hdulist['READOUT'].data
-    t_out     = np.array(readout['starttime']).astype(np.datetime64)
-    pixelid   = readout['pixelid']
-    arraydata = readout['arraydata']
-
-    ### antenna
-    antlog = hdulist['ANTENNA'].data
-    t_ant  = np.array(antlog['starttime']).astype(np.datetime64)
-    az     = antlog['az']
-    el     = antlog['el']
-
-    ### some interpolation
-    ### will be implemented later
-    t_ant_last = np.where(t_ant >= t_out[-1])[0][0]
-    t_ant_sub  = t_ant[:t_ant_last+1]
-    az_sub     = az[:t_ant_last+1]
-    el_sub     = el[:t_ant_last+1]
-    dt_out     = (t_out - t_out[0]).astype(np.float64)
-    dt_ant_sub = (t_ant_sub - t_out[0]).astype(np.float64)
-    az_sub_i   = np.interp(dt_out, dt_ant_sub, az_sub)
-    el_sub_i   = np.interp(dt_out, dt_ant_sub, el_sub)
-
-    ### coordinates
-    tcoords  = {'x': az_sub_i, 'y': el_sub_i, 'time': t_out}
-
-    ### make array
-    array = dc.array(arraydata, tcoords=tcoords)
-
-    hdulist.close()
     return array
 
 
@@ -246,52 +207,3 @@ def empty_like(array, dtype=None, keepmeta=True):
         )
     else:
         return dc.empty(array.shape, dtype)
-
-
-def save(dataarray, filename=None):
-    """Save a dataarray to a NetCDF file.
-
-    Args:
-        dataarray (xarray.DataArray): A dataarray to be saved.
-        filename (str): A filename (used as <filename>.nc).
-            If not spacified, random 8-character name will be used.
-
-    """
-    if filename is None:
-        if dataarray.name is not None:
-            filename = dataarray.name
-        else:
-            filename = uuid4().hex[:8]
-
-    if not filename.endswith('.nc'):
-        filename += '.nc'
-
-    dataarray.to_netcdf(filename)
-
-
-def load(filename, copy=True):
-    """Load a dataarray from a NetCDF file.
-
-    Args:
-        filename (str): A file name (*.nc).
-        copy (bool): If True, dataarray is copied in memory. Default is True.
-
-    Returns:
-        dataarray (xarray.DataArray): A loaded dataarray.
-
-    """
-    if copy:
-        dataarray = xr.open_dataarray(filename).copy()
-    else:
-        dataarray = xr.open_dataarray(filename)
-
-    if dataarray.name is None:
-        dataarray.name = filename.rstrip('.nc')
-
-    for key, val in dataarray.coords.items():
-        if val.dtype.kind == 'S':
-            dataarray[key] = val.astype('U')
-        elif val.dtype == np.int32:
-            dataarray[key] = val.astype('i8')
-
-    return dataarray

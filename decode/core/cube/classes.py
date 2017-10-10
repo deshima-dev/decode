@@ -11,7 +11,7 @@ import decode as dc
 import numpy as np
 import xarray as xr
 from astropy.io import fits
-from ..classes import BaseAccessor
+from .. import BaseAccessor
 
 # local constants
 XCOORDS = lambda array: OrderedDict([
@@ -31,6 +31,7 @@ SCALARCOORDS = OrderedDict([
     ('coordsys', 'RADEC'),
     ('xref', 0.0),
     ('yref', 0.0),
+    ('type', 'dcc'),
 ])
 
 
@@ -63,8 +64,27 @@ class DecodeCubeAccessor(BaseAccessor):
         self.coords.update(CHCOORDS(self))
         self.coords.update(SCALARCOORDS)
 
-    def fromarray(self, x_grid, y_grid):
-        array   = self._dataarray.copy()
+    @property
+    def xcoords(self):
+        """A dictionary of arrays that label x axis."""
+        return {k: v.values for k, v in self.coords.items() if v.dims==('x',)}
+
+    @property
+    def ycoords(self):
+        """A dictionary of arrays that label y axis."""
+        return {k: v.values for k, v in self.coords.items() if v.dims==('y',)}
+
+    @property
+    def chcoords(self):
+        """A dictionary of arrays that label channel axis."""
+        return {k: v.values for k, v in self.coords.items() if v.dims==('ch',)}
+
+    @staticmethod
+    def fromcube(cube):
+        pass
+
+    @staticmethod
+    def tocube(array, x_grid, y_grid):
         nx_grid = len(x_grid)
         ny_grid = len(y_grid)
         nz_grid = len(array.ch)
@@ -79,8 +99,8 @@ class DecodeCubeAccessor(BaseAccessor):
         elif isinstance(y_grid, np.ndarray):
             y_grid = xr.DataArray(y_grid, dims='grid')
 
-        i     = np.abs(self.x - x_grid).argmin('grid')
-        j     = np.abs(self.y - y_grid).argmin('grid')
+        i     = np.abs(array.x - x_grid).argmin('grid')
+        j     = np.abs(array.y - y_grid).argmin('grid')
         index = i + j * nx_grid
 
         array.coords.update({'index': index})
@@ -94,13 +114,14 @@ class DecodeCubeAccessor(BaseAccessor):
 
         return dc.cube(cubedata, xcoords=xcoords, ycoords=ycoords)
 
-    def toFITS(self, fitsname, clobber):
-        cdelt1 = float((self.ra[1] - self.ra[0]).values)
-        crval1 = float(self.ra[0].values)
-        cdelt2 = float((self.dec[1] - self.dec[0]).values)
-        crval2 = float(self.dec[0].values)
+    @staticmethod
+    def savefits(cube, fitsname, clobber):
+        cdelt1 = float((cube.ra[1] - cube.ra[0]).values)
+        crval1 = float(cube.ra[0].values)
+        cdelt2 = float((cube.dec[1] - cube.dec[0]).values)
+        crval2 = float(cube.dec[0].values)
 
         header = fits.Header(OrderedDict([('CTYPE1', 'deg'), ('CDELT1', cdelt1),
-        ('CRVAL1', crval1), ('CRPIX1', 1), ('CTYPE2', 'deg'), ('CDELT2', cdelt2),
-        ('CRVAL2', crval2), ('CRPIX2', 1), ('CTYPE3', 'freq')]))
-        fits.writeto(fitsname, self.values.T, header, clobber=clobber)
+                                          ('CRVAL1', crval1), ('CRPIX1', 1), ('CTYPE2', 'deg'), ('CDELT2', cdelt2),
+                                          ('CRVAL2', crval2), ('CRPIX2', 1), ('CTYPE3', 'freq')]))
+        fits.writeto(fitsname, cube.values.T, header, clobber=clobber)

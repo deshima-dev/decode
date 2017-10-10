@@ -11,6 +11,7 @@ from datetime import datetime
 import decode as dc
 import numpy as np
 import xarray as xr
+from .. import BaseAccessor
 
 # local constants
 TCOORDS = lambda array: OrderedDict([
@@ -29,50 +30,8 @@ SCALARCOORDS = OrderedDict([
     ('coordsys', 'RADEC'),
     ('xref', 0.0),
     ('yref', 0.0),
+    ('type', 'dca'),
 ])
-
-
-# classes
-class BaseAccessor(object):
-    def __init__(self, dataarray):
-        """Initialize the base accessor."""
-        self._dataarray = dataarray
-
-    def __getattr__(self, name):
-        """self._dataarray.name <=> self.name."""
-        return getattr(self._dataarray, name)
-
-    def __setstate__(self, state):
-        """A method used for pickling."""
-        self.__dict__ = state
-
-    def __getstate__(self):
-        """A method used for unpickling."""
-        return self.__dict__
-
-    @property
-    def xcoords(self):
-        """A dictionary of arrays that label x axis."""
-        return {k: v.values for k, v in self.coords.items() if v.dims==('x',)}
-
-    def ycoords(self):
-        """A dictionary of arrays that label y axis."""
-        return {k: v.values for k, v in self.coords.items() if v.dims==('y',)}
-
-    @property
-    def tcoords(self):
-        """A dictionary of arrays that label time axis."""
-        return {k: v.values for k, v in self.coords.items() if v.dims==('t',)}
-
-    @property
-    def chcoords(self):
-        """A dictionary of arrays that label channel axis."""
-        return {k: v.values for k, v in self.coords.items() if v.dims==('ch',)}
-
-    @property
-    def scalarcoords(self):
-        """A dictionary of values that don't label any axes (point-like)."""
-        return {k: v.values for k, v in self.coords.items() if v.dims==()}
 
 
 @xr.register_dataarray_accessor('dca')
@@ -101,3 +60,13 @@ class DecodeArrayAccessor(BaseAccessor):
         self.coords.update(TCOORDS(self))
         self.coords.update(CHCOORDS(self))
         self.coords.update(SCALARCOORDS)
+
+    @property
+    def tcoords(self):
+        """A dictionary of arrays that label time axis."""
+        return {k: v.values for k, v in self.coords.items() if v.dims==('t',)}
+
+    @property
+    def chcoords(self):
+        """A dictionary of arrays that label channel axis."""
+        return {k: v.values for k, v in self.coords.items() if v.dims==('ch',)}
