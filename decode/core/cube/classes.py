@@ -4,6 +4,7 @@
 __all__ = []
 
 # standard library
+import sys
 from collections import OrderedDict
 
 # dependent packages
@@ -15,11 +16,11 @@ from .. import BaseAccessor
 
 # local constants
 XCOORDS = lambda array: OrderedDict([
-    ('ra', ('x', np.zeros(array.shape[0], dtype=float))),
+    ('x', ('x', np.zeros(array.shape[0], dtype=float))),
 ])
 
 YCOORDS = lambda array: OrderedDict([
-    ('dec', ('y', np.zeros(array.shape[1], dtype=float))),
+    ('y', ('y', np.zeros(array.shape[1], dtype=float))),
 ])
 
 CHCOORDS = lambda array: OrderedDict([
@@ -84,23 +85,30 @@ class DecodeCubeAccessor(BaseAccessor):
         pass
 
     @staticmethod
-    def tocube(array, x_grid, y_grid):
+    def tocube(array, **kwargs):
+        """
+            xarr, yarr (numpy.ndarry or list): grid array
+            nx, ny (int): the number of pixels
+        """
+        if 'xarr' in kwargs and 'yarr' in kwargs:
+            x_grid = xr.DataArray(kwargs['xarr'], dims='grid')
+            y_grid = xr.DataArray(kwargs['yarr'], dims='grid')
+        elif 'nx' in kwargs and 'ny' in kwargs:
+            xmin, xmax = array.x.min(), array.x.max()
+            ymin, ymax = array.y.min(), array.y.max()
+
+            x_grid = xr.DataArray(np.linspace(xmin, xmax, kwargs['nx']), dims='grid')
+            y_grid = xr.DataArray(np.linspace(ymin, ymax, kwargs['ny']), dims='grid')
+        else:
+            print('Arguments are wrong.')
+            sys.exit(1)
+
         nx_grid = len(x_grid)
         ny_grid = len(y_grid)
         nz_grid = len(array.ch)
 
-        if isinstance(x_grid, list):
-            x_grid = xr.DataArray(np.array(x_grid), dims='grid')
-        elif isinstance(x_grid, np.ndarray):
-            x_grid = xr.DataArray(x_grid, dims='grid')
-
-        if isinstance(y_grid, list):
-            y_grid = xr.DataArray(np.array(y_grid), dims='grid')
-        elif isinstance(y_grid, np.ndarray):
-            y_grid = xr.DataArray(y_grid, dims='grid')
-
-        xcoords  = {'ra': x_grid.values}
-        ycoords  = {'dec': y_grid.values}
+        xcoords  = {'x': x_grid.values}
+        ycoords  = {'y': y_grid.values}
         chcoords = {'kidid': array.kidid, 'kidfq': array.kidfq}
 
         i     = np.abs(array.x - x_grid).argmin('grid')
@@ -108,21 +116,25 @@ class DecodeCubeAccessor(BaseAccessor):
         index = i + j * nx_grid
 
         array.coords.update({'index': index})
-        griddedarray = array.groupby('index').mean('t')
-        template     = np.zeros([nx_grid*ny_grid, nz_grid])
-        template[griddedarray.index.values] = griddedarray.values
-        cubedata     = template.reshape((ny_grid, nx_grid, nz_grid)).swapaxes(0, 1)
+        griddedarray   = array.groupby('index').mean('t')
+        template       = np.zeros([nx_grid*ny_grid, nz_grid])
+        mask           = griddedarray.index.values
+        template[mask] = griddedarray.values
+        cubedata       = template.reshape((ny_grid, nx_grid, nz_grid)).swapaxes(0, 1)
 
         return dc.cube(cubedata, xcoords=xcoords, ycoords=ycoords, chcoords=chcoords)
 
     @staticmethod
     def savefits(cube, fitsname, clobber):
-        cdelt1 = float((cube.ra[1] - cube.ra[0]).values)
-        crval1 = float(cube.ra[0].values)
-        cdelt2 = float((cube.dec[1] - cube.dec[0]).values)
-        crval2 = float(cube.dec[0].values)
+        # should be modified in the future
+        cdelt1 = float((cube.x[1] - cube.x[0]).values)
+        crval1 = float(cube.x[0].values)
+        cdelt2 = float((cube.y[1] - cube.y[0]).values)
+        crval2 = float(cube.y[0].values)
+        cdelt3 = float((cube.kidfq[1] - cube.kidfq[0]).values)
+        crval3 = float(cube.kidfq[0].values)
 
-        header = fits.Header(OrderedDict([('CTYPE1', 'deg'), ('CDELT1', cdelt1),
-                                          ('CRVAL1', crval1), ('CRPIX1', 1), ('CTYPE2', 'deg'), ('CDELT2', cdelt2),
-                                          ('CRVAL2', crval2), ('CRPIX2', 1), ('CTYPE3', 'freq')]))
+        header = fits.Header(OrderedDict([('CTYPE1', 'deg'), ('CDELT1', cdelt1), ('CRVAL1', crval1), ('CRPIX1', 1),
+                                          ('CTYPE2', 'deg'), ('CDELT2', cdelt2), ('CRVAL2', crval2), ('CRPIX2', 1),
+                                          ('CTYPE3', 'Hz'),  ('CDELT3', cdelt3), ('CRVAL3', crval3), ('CRPIX3', 1)]))
         fits.writeto(fitsname, cube.values.T, header, clobber=clobber)

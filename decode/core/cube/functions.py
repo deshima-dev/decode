@@ -55,6 +55,6 @@ def fromcube(cube):
     # return xr.DataArray.dcc.fromcube(cube)
 
 
-def tocube(array, x_grid, y_grid):
+def tocube(array, **kwargs):
     """array to cube"""
-    return xr.DataArray.dcc.tocube(array, x_grid, y_grid)
+    return xr.DataArray.dcc.tocube(array, **kwargs)
