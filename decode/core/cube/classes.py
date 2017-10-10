@@ -99,6 +99,10 @@ class DecodeCubeAccessor(BaseAccessor):
         elif isinstance(y_grid, np.ndarray):
             y_grid = xr.DataArray(y_grid, dims='grid')
 
+        xcoords  = {'ra': x_grid.values}
+        ycoords  = {'dec': y_grid.values}
+        chcoords = {'kidid': array.kidid, 'kidfq': array.kidfq}
+
         i     = np.abs(array.x - x_grid).argmin('grid')
         j     = np.abs(array.y - y_grid).argmin('grid')
         index = i + j * nx_grid
@@ -109,10 +113,7 @@ class DecodeCubeAccessor(BaseAccessor):
         template[griddedarray.index.values] = griddedarray.values
         cubedata     = template.reshape((ny_grid, nx_grid, nz_grid)).swapaxes(0, 1)
 
-        xcoords  = {'ra': x_grid.values}
-        ycoords  = {'dec': y_grid.values}
-
-        return dc.cube(cubedata, xcoords=xcoords, ycoords=ycoords)
+        return dc.cube(cubedata, xcoords=xcoords, ycoords=ycoords, chcoords=chcoords)
 
     @staticmethod
     def savefits(cube, fitsname, clobber):

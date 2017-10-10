@@ -19,6 +19,11 @@ def loaddfits(fitsname, pixelids='all', scantype='all'):
     """DFITS to array"""
     hdulist = fits.open(fitsname)
 
+    ### obsinfo
+    obsinfo  = hdulist['OBSINFO'].data
+    kidids   = obsinfo['kidids'][0]
+    kidfreqs = obsinfo['kidfreqs'][0]
+
     ### readout
     readout   = hdulist['READOUT'].data
     t_out     = np.array(readout['starttime']).astype(np.datetime64)
@@ -51,9 +56,10 @@ def loaddfits(fitsname, pixelids='all', scantype='all'):
 
     ### coordinates
     tcoords  = {'x': raz_sub_i, 'y': rel_sub_i, 'time': t_out}
+    chcoords = {'kidid': kidids, 'kidfq': kidfreqs}
 
     ### make array
-    array = dc.array(arraydata, tcoords=tcoords)
+    array = dc.array(arraydata, tcoords=tcoords, chcoords=chcoords)
 
     ### close hdu
     hdulist.close()
