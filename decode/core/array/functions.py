@@ -29,12 +29,12 @@ def array(data, tcoords=None, chcoords=None, scalarcoords=None, attrs=None, name
     """Create an array as an instance of xarray.DataArray with Decode accessor.
 
     Args:
-        data (numpy.ndarray): A 2D (time x channel) array.
-        tcoords (dict, optional): A dictionary of arrays that label time axis.
-        chcoords (dict, optional): A dictionary of arrays that label channel axis.
-        scalarcoords (dict, optional): A dictionary of values that don't label any axes (point-like).
-        attrs (dict, optional): A dictionary of attributes to add to the instance.
-        name (str, optional): A string that names the instance.
+        data (numpy.ndarray): 2D (time x channel) array.
+        tcoords (dict, optional): Dictionary of arrays that label time axis.
+        chcoords (dict, optional): Dictionary of arrays that label channel axis.
+        scalarcoords (dict, optional): Dictionary of values that don't label any axes (point-like).
+        attrs (dict, optional): Dictionary of attributes to add to the instance.
+        name (str, optional): String that names the instance.
 
     Returns:
         array (xarray.DataArray): An array.
@@ -62,11 +62,11 @@ def zeros(shape, dtype=None, **kwargs):
 
     Args:
         shape (sequence of ints): 2D shape of the array.
-        dtype (data-type, optional): The desired data-type for the array.
+        dtype (data-type, optional): Desired data-type for the array.
         kwargs (optional): Other arguments of the array (*coords, attrs, and name).
 
     Returns:
-        array (xarray.DataArray): An array filled with zeros.
+        array (xarray.DataArray): Array filled with zeros.
 
     """
     data = np.zeros(shape, dtype)
@@ -78,11 +78,11 @@ def ones(shape, dtype=None, **kwargs):
 
     Args:
         shape (sequence of ints): 2D shape of the array.
-        dtype (data-type, optional): The desired data-type for the array.
+        dtype (data-type, optional): Desired data-type for the array.
         kwargs (optional): Other arguments of the array (*coords, attrs, and name).
 
     Returns:
-        array (xarray.DataArray): An array filled with ones.
+        array (xarray.DataArray): Array filled with ones.
 
     """
     data = np.ones(shape, dtype)
@@ -95,11 +95,11 @@ def full(shape, fill_value, dtype=None, **kwargs):
     Args:
         shape (sequence of ints): 2D shape of the array.
         fill_value (scalar or numpy.ndarray): Fill value or array.
-        dtype (data-type, optional): The desired data-type for the array.
+        dtype (data-type, optional): Desired data-type for the array.
         kwargs (optional): Other arguments of the array (*coords, attrs, and name).
 
     Returns:
-        array (xarray.DataArray): An array filled with `fill_value`.
+        array (xarray.DataArray): Array filled with `fill_value`.
 
     """
     return (dc.zeros(shape, **kwargs) + fill_value).astype(dtype)
@@ -110,11 +110,11 @@ def empty(shape, dtype=None, **kwargs):
 
     Args:
         shape (sequence of ints): 2D shape of the array.
-        dtype (data-type, optional): The desired data-type for the array.
+        dtype (data-type, optional): Desired data-type for the array.
         kwargs (optional): Other arguments of the array (*coords, attrs, and name).
 
     Returns:
-        array (xarray.DataArray): An array without initializing entries.
+        array (xarray.DataArray): Array without initializing entries.
 
     """
     data = np.empty(shape, dtype)
@@ -127,13 +127,13 @@ def zeros_like(array, dtype=None, keepmeta=True):
     Args:
         array (xarray.DataArray): The shape and data-type of it define
             these same attributes of the output array.
-        dtype (data-type, optional): If spacified, this function overrides
+        dtype (data-type, optional): If specified, this function overrides
             the data-type of the output array.
         keepmeta (bool, optional): Whether *coords, attrs, and name of the input
             array are kept in the output one. Default is True.
 
     Returns:
-        array (xarray.DataArray): An array filled with zeros.
+        array (xarray.DataArray): Array filled with zeros.
 
     """
     if keepmeta:
@@ -154,7 +154,7 @@ def ones_like(array, dtype=None, keepmeta=True):
             array are kept in the output one. Default is True.
 
     Returns:
-        array (xarray.DataArray): An array filled with ones.
+        array (xarray.DataArray): Array filled with ones.
 
     """
     if keepmeta:
@@ -176,7 +176,7 @@ def full_like(array, fill_value, reverse=False, dtype=None, keepmeta=True):
             array are kept in the output one. Default is True.
 
     Returns:
-        array (xarray.DataArray): An array filled with `fill_value`.
+        array (xarray.DataArray): Array filled with `fill_value`.
 
     """
     if keepmeta:
@@ -197,7 +197,7 @@ def empty_like(array, dtype=None, keepmeta=True):
             array are kept in the output one. Default is True.
 
     Returns:
-        array (xarray.DataArray): An array without initializing entries.
+        array (xarray.DataArray): Array without initializing entries.
 
     """
     if keepmeta:

@@ -40,11 +40,11 @@ def numpyfunc(func):
         >>> result = func(array)
 
     Args:
-        func (function): A function to be wrapped. The first argument
+        func (function): Function to be wrapped. The first argument
             of the function must be an array to be processed.
 
     Returns:
-        wrapper (function): A wrapped function.
+        wrapper (function): Wrapped function.
 
     """
     @wraps(func)

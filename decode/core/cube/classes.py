@@ -67,17 +67,17 @@ class DecodeCubeAccessor(BaseAccessor):
 
     @property
     def xcoords(self):
-        """A dictionary of arrays that label x axis."""
+        """Dictionary of arrays that label x axis."""
         return {k: v.values for k, v in self.coords.items() if v.dims==('x',)}
 
     @property
     def ycoords(self):
-        """A dictionary of arrays that label y axis."""
+        """Dictionary of arrays that label y axis."""
         return {k: v.values for k, v in self.coords.items() if v.dims==('y',)}
 
     @property
     def chcoords(self):
-        """A dictionary of arrays that label channel axis."""
+        """Dictionary of arrays that label channel axis."""
         return {k: v.values for k, v in self.coords.items() if v.dims==('ch',)}
 
     @staticmethod
@@ -86,11 +86,6 @@ class DecodeCubeAccessor(BaseAccessor):
 
     @staticmethod
     def tocube(array, **kwargs):
-        """
-            xarr, yarr (numpy.ndarry or list): grid array
-            nx, ny (int): the number of pixels
-            xmin, xmax, ymin, ymax (float)
-        """
         array = array.copy()
 
         if 'xarr' in kwargs and 'yarr' in kwargs:

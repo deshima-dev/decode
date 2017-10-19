@@ -63,10 +63,10 @@ class DecodeArrayAccessor(BaseAccessor):
 
     @property
     def tcoords(self):
-        """A dictionary of arrays that label time axis."""
+        """Dictionary of arrays that label time axis."""
         return {k: v.values for k, v in self.coords.items() if v.dims==('t',)}
 
     @property
     def chcoords(self):
-        """A dictionary of arrays that label channel axis."""
+        """Dictionary of arrays that label channel axis."""
         return {k: v.values for k, v in self.coords.items() if v.dims==('ch',)}

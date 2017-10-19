@@ -17,16 +17,16 @@ def cube(data, xcoords=None, ycoords=None, chcoords=None, scalarcoords=None, att
     """Create a cube as an instance of xarray.DataArray with Decode accessor.
 
     Args:
-        data (numpy.ndarray): A 3D (x x y x channel) array.
-        xcoords (dict, optional): A dictionary of arrays that label x axis.
-        ycoords (dict, optional): A dictionary of arrays that label y axis.
-        chcoords (dict, optional): A dictionary of arrays that label channel axis.
-        scalarcoords (dict, optional): A dictionary of values that don't label any axes (point-like).
-        attrs (dict, optional): A dictionary of attributes to add to the instance.
-        name (str, optional): A string that names the instance.
+        data (numpy.ndarray): 3D (x x y x channel) array.
+        xcoords (dict, optional): Dictionary of arrays that label x axis.
+        ycoords (dict, optional): Dictionary of arrays that label y axis.
+        chcoords (dict, optional): Dictionary of arrays that label channel axis.
+        scalarcoords (dict, optional): Dictionary of values that don't label any axes (point-like).
+        attrs (dict, optional): Dictionary of attributes to add to the instance.
+        name (str, optional): String that names the instance.
 
     Returns:
-        cube (xarray.DataArray): a cube.
+        decode cube (decode.cube): Decode cube.
 
     """
     # initialize coords with default values
@@ -50,10 +50,42 @@ def cube(data, xcoords=None, ycoords=None, chcoords=None, scalarcoords=None, att
 
 
 def fromcube(cube):
-    """cube to array"""
+    """Covert a decode cube to a decode array.
+
+    Args:
+        cube (decode.cube): Decode cube which will be converted.
+
+    Returns:
+        decode array (decode.array): Decode array.
+
+    Notes:
+        This functions is under development.
+
+    """
     return xr.DataArray.dcc.fromcube(cube)
 
 
 def tocube(array, **kwargs):
-    """array to cube"""
+    """Convert a decode array to decode cube.
+
+    Args:
+        array (decode.array): Decode array which will be converted.
+        kwargs (optional): Other arguments.
+            xarr (list or numpy.ndarray): Grid array of x direction.
+            yarr (list or numpy.ndarray): Grid array of y direction.
+            nx (int): The number of grid of x direction.
+            ny (int): The number of grid of y direction.
+            xmin (float): Minimum value of x.
+            xmax (float): Maximum value of x.
+            ymin (float): Minimum value of y.
+            ymax (float): Maximum value of y.
+
+    Returns:
+        decode cube (decode.cube): Decode cube.
+
+    Notes:
+        When xarr and yarr are specified, the remaining optional keywaords
+        will be ignored.
+
+    """
     return xr.DataArray.dcc.tocube(array, **kwargs)

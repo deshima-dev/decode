@@ -16,12 +16,12 @@ def copy_function(func, name=None):
     """Copy a function object with different name.
 
     Args:
-        func (function): A function to be copied.
-        name (string, optional): A name of the new function.
+        func (function): Function to be copied.
+        name (string, optional): Name of the new function.
             If not spacified, the same name of `func` will be used.
 
     Returns:
-        newfunc (function): A new function with different name.
+        newfunc (function): New function with different name.
 
     """
     code = func.__code__

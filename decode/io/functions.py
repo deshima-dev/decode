@@ -16,7 +16,26 @@ from astropy.io import fits
 
 
 def loaddfits(fitsname, coordtype='azel', starttime=None, endtime=None, pixelids=None, scantype=None):
-    """DFITS to array"""
+    """Load a decode array from a DFITS file.
+
+    Args:
+        fitsname (str): Name of DFITS file.
+        coordtype (str): Coordinate type included into a decode array, azel or radec.
+        starttime (int, str or numpy.datetime64): Start time of loaded data.
+            It can be specified by the start index (int), the time compatible with numpy.datetime64 (str),
+            or numpy.datetime64 (numpy.datetime64). Default is None and it means the data will be loaded
+            from the first record.
+        endtime (int, str or numpy.datetime64): End time of loaded data.
+            It can be specified by the end index (int), the time compatible with numpy.datetime64 (str),
+            or numpy.datetime64 (numpy.datetime64). Default is None and it means the data will be loaded
+            until the last record.
+        pixelids (int or list): Under development.
+        scantype (str): Under development.
+
+    Returns:
+        decode array (decode.array): Loaded decode array.
+
+    """
     hdulist = fits.open(fitsname)
 
     ### obsinfo
@@ -99,6 +118,14 @@ def loaddfits(fitsname, coordtype='azel', starttime=None, endtime=None, pixelids
 
 
 def savefits(dataarray, fitsname, **kwargs):
+    """Save a dataarray to a 3D-cube FITS file.
+
+    Args:
+        dataarray (xarray.DataArray): Dataarray to be saved.
+        fitsname (str): Name of output FITS file.
+        kwargs (optional): Other arguments common with astropy.io.fits.writeto().
+
+    """
     if dataarray.type == 'dca':
         pass
     elif dataarray.type == 'dcc':
@@ -113,11 +140,11 @@ def loadnetcdf(filename, copy=True):
     """Load a dataarray from a NetCDF file.
 
     Args:
-        filename (str): A file name (*.nc).
+        filename (str): Filename (*.nc).
         copy (bool): If True, dataarray is copied in memory. Default is True.
 
     Returns:
-        dataarray (xarray.DataArray): A loaded dataarray.
+        dataarray (xarray.DataArray): Loaded dataarray.
 
     """
     if copy:
@@ -141,8 +168,8 @@ def savenetcdf(dataarray, filename=None):
     """Save a dataarray to a NetCDF file.
 
     Args:
-        dataarray (xarray.DataArray): A dataarray to be saved.
-        filename (str): A filename (used as <filename>.nc).
+        dataarray (xarray.DataArray): Dataarray to be saved.
+        filename (str): Filename (used as <filename>.nc).
             If not spacified, random 8-character name will be used.
 
     """
