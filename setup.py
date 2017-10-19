@@ -3,7 +3,7 @@
 "DESHIMA Code for data analysis"
 
 # standard library
-from setuptools import setup, find_packages
+from setuptools import setup
 
 # module constants
 INSTALL_REQUIRES = [
