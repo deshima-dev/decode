@@ -5,7 +5,8 @@
 # standard library
 from setuptools import setup, find_packages
 
-install_requires = [
+# module constants
+INSTALL_REQUIRES = [
     'astropy',
     'numpy',
     'scipy',
@@ -13,7 +14,7 @@ install_requires = [
     'xarray',
 ]
 
-packages = [
+PACKAGES = [
     'decode',
     'decode.core',
     'decode.core.array',
@@ -24,6 +25,7 @@ packages = [
     'decode.utils.misc',
 ]
 
+
 # main
 setup(
     name = 'decode',
@@ -32,6 +34,6 @@ setup(
     author = 'snoopython',
     author_email = 'taniguchi@ioa.s.u-tokyo.ac.jp',
     url = 'https://github.com/deshima-dev/decode',
-    install_requires = install_requires,
-    packages = packages,
+    install_requires = INSTALL_REQUIRES,
+    packages = PACKAGES,
 )
