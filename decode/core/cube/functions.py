@@ -51,8 +51,7 @@ def cube(data, xcoords=None, ycoords=None, chcoords=None, scalarcoords=None, att
 
 def fromcube(cube):
     """cube to array"""
-    pass
-    # return xr.DataArray.dcc.fromcube(cube)
+    return xr.DataArray.dcc.fromcube(cube)
 
 
 def tocube(array, **kwargs):

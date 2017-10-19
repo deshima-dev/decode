@@ -15,7 +15,7 @@ import xarray as xr
 from astropy.io import fits
 
 
-def loaddfits(fitsname, pixelids='all', scantype='all'):
+def loaddfits(fitsname, coordtype='azel', starttime=None, endtime=None, pixelids=None, scantype=None):
     """DFITS to array"""
     hdulist = fits.open(fitsname)
 
@@ -24,38 +24,69 @@ def loaddfits(fitsname, pixelids='all', scantype='all'):
     kidids   = obsinfo['kidids'][0]
     kidfreqs = obsinfo['kidfreqs'][0]
 
-    ### readout
-    readout   = hdulist['READOUT'].data
-    t_out     = np.array(readout['starttime']).astype(np.datetime64)
-    pixelid   = readout['pixelid']
-    arraydata = readout['arraydata']
-
     ### antenna
     antlog = hdulist['ANTENNA'].data
-    t_ant  = np.array(antlog['starttime']).astype(np.datetime64)
-    az     = antlog['az']
-    el     = antlog['el']
-    try:
-        az_c = antlog['az-prog(center)']
-        el_c = antlog['el-prog(center)']
-    except KeyError:
-        az_c = 0
-        el_c = 0
-    raz    = az - az_c
-    rel    = el - el_c
+    t_ant  = np.array(antlog['time']).astype(np.datetime64)
+    if coordtype == 'azel':
+        _x = antlog['az']
+        _y = antlog['el']
+        try:
+            x_c = antlog['az_center']
+            y_c = antlog['el_center']
+        except KeyError:
+            dc.logger.warning('Az_center/el_center are not included in the antenna log! They are asuumed as 0.')
+            x_c = 0
+            y_c = 0
+        x = _x - x_c
+        y = _y - y_c
+    elif coordtype == 'radec':
+        x = antlog['ra']
+        y = antlog['dec']
+
+    ### readout
+    readout = hdulist['READOUT'].data
+    t_out   = np.array(readout['starttime']).astype(np.datetime64)
+
+    if starttime is None:
+        startindex = 0
+    elif isinstance(starttime, int):
+        startindex = starttime
+    elif isinstance(starttime, str):
+        startindex = np.where(t_out >= np.datetime64(starttime))[0][0]
+    elif isinstance(starttime, np.datetime64):
+        startindex = np.where(t_out >= starttime)[0][0]
+
+    if endtime is None:
+        endindex = t_out.shape[0]
+    elif isinstance(endtime, int):
+        endindex = endtime
+    elif isinstance(endtime, str):
+        endindex = np.where(t_out <= np.datetime64(endtime))[0][-1]
+    elif isinstance(endtime, np.datetime64):
+        endindex = np.where(t_out <= endtime)[0][-1]
+    endindex_ant = np.where(t_out <= t_ant[-1])[0][-1]
+    if endindex > endindex_ant:
+        dc.logger.warning('Endtime of readout is adjusted to the one of anttena log.')
+        endindex = endindex_ant
+
+    t_out      = t_out[startindex:endindex]
+    pixelid    = readout['pixelid'][startindex:endindex]
+    arraydata  = readout['arraydata'][startindex:endindex]
 
     ### interpolation
-    t_ant_last = np.where(t_ant >= t_out[-1])[0][0]
-    t_ant_sub  = t_ant[:t_ant_last+1]
-    raz_sub    = raz[:t_ant_last+1]
-    rel_sub    = rel[:t_ant_last+1]
+    # t_ant_last = np.where(t_ant[-1] > t_out)[0][-1]
+    # t_ant_sub  = t_ant[:t_ant_last]
+    # x_sub      = x[:t_ant_last]
+    # y_sub      = y[:t_ant_last]
     dt_out     = (t_out - t_out[0]).astype(np.float64)
-    dt_ant_sub = (t_ant_sub - t_out[0]).astype(np.float64)
-    raz_sub_i  = np.interp(dt_out, dt_ant_sub, raz_sub)
-    rel_sub_i  = np.interp(dt_out, dt_ant_sub, rel_sub)
+    dt_ant     = (t_ant - t_out[0]).astype(np.float64)
+    # x_sub_i    = np.interp(dt_out, dt_ant_sub, x_sub)
+    # y_sub_i    = np.interp(dt_out, dt_ant_sub, y_sub)
+    x_i = np.interp(dt_out, dt_ant, x)
+    y_i = np.interp(dt_out, dt_ant, y)
 
     ### coordinates
-    tcoords  = {'x': raz_sub_i, 'y': rel_sub_i, 'time': t_out}
+    tcoords  = {'x': x_i, 'y': y_i, 'time': t_out}
     chcoords = {'kidid': kidids, 'kidfq': kidfreqs}
 
     ### make array
@@ -67,11 +98,11 @@ def loaddfits(fitsname, pixelids='all', scantype='all'):
     return array
 
 
-def savefits(dataarray, fitsname, clobber=False):
+def savefits(dataarray, fitsname, **kwargs):
     if dataarray.type == 'dca':
         pass
     elif dataarray.type == 'dcc':
-        xr.DataArray.dcc.savefits(dataarray, fitsname, clobber=clobber)
+        xr.DataArray.dcc.savefits(dataarray, fitsname, **kwargs)
     elif dataarray.type == 'dcs':
         pass
     else:
