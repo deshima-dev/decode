@@ -5,9 +5,6 @@
 # standard library
 from setuptools import setup, find_packages
 
-# dependent packages
-import decode as dc
-
 
 # main
 setup(
@@ -17,6 +14,6 @@ setup(
     author = 'snoopython',
     author_email = 'taniguchi@ioa.s.u-tokyo.ac.jp',
     url = 'https://github.com/deshima-dev/decode',
-    install_requires = ['astropy', 'numpy', 'xarray'],
+    install_requires = ['astropy', 'numpy', 'scipy', 'pyyaml', 'xarray'],
     packages = find_packages(),
 )
