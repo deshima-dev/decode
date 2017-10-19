@@ -37,7 +37,7 @@ def array(data, tcoords=None, chcoords=None, scalarcoords=None, attrs=None, name
         name (str, optional): String that names the instance.
 
     Returns:
-        array (xarray.DataArray): An array.
+        array (xarray.DataArray): Array.
 
     """
     # initialize coords with default values

@@ -44,7 +44,7 @@ class DecodeArrayAccessor(BaseAccessor):
             Users can create an array with Decode accessor using dc.array.
 
         Args:
-            array (xarray.DataArray): An array to which Decode accessor is added.
+            array (xarray.DataArray): Array to which Decode accessor is added.
 
         """
         super().__init__(array)
