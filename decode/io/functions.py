@@ -253,7 +253,7 @@ def loaddfits_2017oct(fitsname, coordtype='azel', starttime=None, endtime=None, 
             raise ValueError(endtime)
 
         if t_out[endindex-1] > t_ant[-1]:
-            logger.warning('endtime of readout is adjusted to the one of anttena log')
+            logger.warning('endtime of readout is adjusted to that of ANTENNA HDU')
             endindex = np.searchsorted(t_out, t_ant[-1], 'right')
 
         logger.debug('startindex: {}'.format(startindex))
@@ -271,11 +271,11 @@ def loaddfits_2017oct(fitsname, coordtype='azel', starttime=None, endtime=None, 
             try:
                 x -= antlog['az_center']
             except KeyError:
-                logger.warning('az_center is not included in the antenna HDU')
+                logger.warning('az_center is not included in the ANTENNA HDU')
             try:
                 y -= antlog['el_center']
             except KeyError:
-                logger.warning('el_center is not included in the antenna HDU')
+                logger.warning('el_center is not included in the ANTENNA HDU')
             # relative az/el原点の問題が解消したらここでcos(el)を反映させる
             # finally:
             #     x *= np.cos(np.deg2rad(antlog['el']))
