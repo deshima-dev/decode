@@ -8,6 +8,9 @@ __all__ = [
     'savenetcdf',
 ]
 
+# standard library
+from logging import getLogger
+
 # dependent packages
 import decode as dc
 import numpy as np
@@ -17,6 +20,8 @@ from astropy.io import fits
 
 def loaddfits(fitsname, coordtype='azel', starttime=None, endtime=None, pixelids=None, scantype=None):
     """Load a decode array from a DFITS file.
+
+    Please use `loaddfits_2017oct` until Az/El origins in antenna log are fixed.
 
     Args:
         fitsname (str): Name of DFITS file.
@@ -36,6 +41,9 @@ def loaddfits(fitsname, coordtype='azel', starttime=None, endtime=None, pixelids
         decode array (decode.array): Loaded decode array.
 
     """
+    logger = getLogger('decode.io.loaddfits')
+    logger.warning('please use loaddfits_2017oct before Az/El origins in antenna log are fixed')
+
     hdulist = fits.open(fitsname)
 
     ### obsinfo
@@ -53,7 +61,7 @@ def loaddfits(fitsname, coordtype='azel', starttime=None, endtime=None, pixelids
             x_c = antlog['az_center']
             y_c = antlog['el_center']
         except KeyError:
-            dc.logger.warning('Az_center/el_center are not included in the antenna log! They are asuumed as 0.')
+            logger.warning('Az_center/el_center are not included in the antenna log! They are asuumed as 0.')
             x_c = 0
             y_c = 0
         x = _x - x_c
@@ -85,7 +93,7 @@ def loaddfits(fitsname, coordtype='azel', starttime=None, endtime=None, pixelids
         endindex = np.where(t_out <= endtime)[0][-1]
     endindex_ant = np.where(t_out <= t_ant[-1])[0][-1]
     if endindex > endindex_ant:
-        dc.logger.warning('Endtime of readout is adjusted to the one of anttena log.')
+        logger.warning('Endtime of readout is adjusted to the one of anttena log.')
         endindex = endindex_ant
 
     t_out      = t_out[startindex:endindex]
