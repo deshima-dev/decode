@@ -212,7 +212,7 @@ def loaddfits_2017oct(fitsname, coordtype='azel', starttime=None, endtime=None, 
         scantype (str): Under development.
 
     Returns:
-        decode array (decode.array): Loaded decode array.
+        array (xarray.DataArray): Loaded decode array.
 
     """
     logger = getLogger('decode.io.loaddfits_2017oct')
@@ -226,7 +226,7 @@ def loaddfits_2017oct(fitsname, coordtype='azel', starttime=None, endtime=None, 
         kidids   = obsinfo['kidids'][0]
         kidfreqs = obsinfo['kidfreqs'][0]
 
-        ### start/end time
+        ### parse start/end time
         t_ant = np.array(antlog['time']).astype(np.datetime64)
         t_out = np.array(readout['starttime']).astype(np.datetime64)
 
@@ -253,7 +253,7 @@ def loaddfits_2017oct(fitsname, coordtype='azel', starttime=None, endtime=None, 
             raise ValueError(endtime)
 
         if t_out[endindex-1] > t_ant[-1]:
-            logger.warning('endtime of readout is adjusted to the one of anttena log.')
+            logger.warning('endtime of readout is adjusted to the one of anttena log')
             endindex = np.searchsorted(t_out, t_ant[-1], 'right')
 
         logger.debug('startindex: {}'.format(startindex))
@@ -270,10 +270,13 @@ def loaddfits_2017oct(fitsname, coordtype='azel', starttime=None, endtime=None, 
             y = antlog['el'].copy()
             try:
                 x -= antlog['az_center']
+            except KeyError:
+                logger.warning('az_center is not included in the antenna HDU')
+            try:
                 y -= antlog['el_center']
             except KeyError:
-                logger.warning('az/el_center are not included in the antenna log')
-                logger.warning('--> they are assumed as 0')
+                logger.warning('el_center is not included in the antenna HDU')
+            # relative az/el原点の問題が解消したらここでcos(el)を反映させる
             # finally:
             #     x *= np.cos(np.deg2rad(antlog['el']))
         elif coordtype == 'radec':
@@ -286,6 +289,7 @@ def loaddfits_2017oct(fitsname, coordtype='azel', starttime=None, endtime=None, 
         y_i = np.interp(dt_out, dt_ant, y)
 
         ### temporal correction of az/el origins
+        ### relative az/el原点の問題が解消するまでの暫定的な処置
         el_i = np.interp(dt_out, dt_ant, antlog['el'])
         x_i -= np.median(x_i)
         y_i -= np.median(y_i)
