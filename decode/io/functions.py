@@ -6,6 +6,7 @@ __all__ = [
     'savefits',
     'loadnetcdf',
     'savenetcdf',
+    'loaddfits_2017oct',
 ]
 
 # standard library
@@ -191,3 +192,106 @@ def savenetcdf(dataarray, filename=None):
         filename += '.nc'
 
     dataarray.to_netcdf(filename)
+
+
+def loaddfits_2017oct(fitsname, coordtype='azel', starttime=None, endtime=None, pixelids=None, scantype=None):
+    """Load a decode array from a DFITS file.
+
+    Args:
+        fitsname (str): Name of DFITS file.
+        coordtype (str): Coordinate type included into a decode array, azel or radec.
+        starttime (int, str or numpy.datetime64): Start time of loaded data.
+            It can be specified by the start index (int), the time compatible with numpy.datetime64 (str),
+            or numpy.datetime64 (numpy.datetime64). Default is None and it means the data will be loaded
+            from the first record.
+        endtime (int, str or numpy.datetime64): End time of loaded data.
+            It can be specified by the end index (int), the time compatible with numpy.datetime64 (str),
+            or numpy.datetime64 (numpy.datetime64). Default is None and it means the data will be loaded
+            until the last record.
+        pixelids (int or list): Under development.
+        scantype (str): Under development.
+
+    Returns:
+        decode array (decode.array): Loaded decode array.
+
+    """
+    logger = getLogger('decode.io.loaddfits_2017oct')
+
+    with fits.open(fitsname) as hdulist:
+        obsinfo = hdulist['OBSINFO'].data
+        antlog  = hdulist['ANTENNA'].data
+        readout = hdulist['READOUT'].data
+
+        ### obsinfo
+        kidids   = obsinfo['kidids'][0]
+        kidfreqs = obsinfo['kidfreqs'][0]
+
+        ### start/end time
+        t_ant = np.array(antlog['time']).astype(np.datetime64)
+        t_out = np.array(readout['starttime']).astype(np.datetime64)
+
+        if starttime is None:
+            startindex = 0
+        elif isinstance(starttime, int):
+            startindex = starttime
+        elif isinstance(starttime, str):
+            startindex = np.searchsorted(t_out, np.datetime64(starttime))
+        elif isinstance(starttime, np.datetime64):
+            startindex = np.searchsorted(t_out, starttime)
+        else:
+            raise ValueError(starttime)
+
+        if endtime is None:
+            endindex = len(t_out)
+        elif isinstance(endtime, int):
+            endindex = endtime
+        elif isinstance(endtime, str):
+            endindex = np.searchsorted(t_out, np.datetime64(endtime), 'right')
+        elif isinstance(endtime, np.datetime64):
+            endindex = np.searchsorted(t_out, endtime, 'right')
+        else:
+            raise ValueError(endtime)
+
+        if t_out[endindex-1] > t_ant[-1]:
+            logger.warning('endtime of readout is adjusted to the one of anttena log.')
+            endindex = np.searchsorted(t_out, t_ant[-1], 'right')
+
+        logger.debug('startindex: {}'.format(startindex))
+        logger.debug('endindex: {}'.format(endindex))
+        t_out = t_out[startindex:endindex]
+
+        ### readout
+        pixelid   = readout['pixelid'][startindex:endindex]
+        arraydata = readout['arraydata'][startindex:endindex]
+
+        ### antenna
+        if coordtype == 'azel':
+            x = antlog['az'].copy()
+            y = antlog['el'].copy()
+            try:
+                x -= antlog['az_center']
+                y -= antlog['el_center']
+            except KeyError:
+                logger.warning('az/el_center are not included in the antenna log')
+                logger.warning('--> they are assumed as 0')
+            # finally:
+            #     x *= np.cos(np.deg2rad(antlog['el']))
+        elif coordtype == 'radec':
+            x = antlog['ra'].copy()
+            y = antlog['dec'].copy()
+
+        dt_out = (t_out - t_out[0]).astype(np.float64)
+        dt_ant = (t_ant - t_out[0]).astype(np.float64)
+        x_i = np.interp(dt_out, dt_ant, x)
+        y_i = np.interp(dt_out, dt_ant, y)
+
+        ### temporal correction of az/el origins
+        el_i = np.interp(dt_out, dt_ant, antlog['el'])
+        x_i -= np.median(x_i)
+        y_i -= np.median(y_i)
+        x_i *= np.cos(np.deg2rad(el_i))
+
+        ### make array
+        tcoords  = {'x': x_i, 'y': y_i, 'time': t_out}
+        chcoords = {'kidid': kidids, 'kidfq': kidfreqs}
+        return dc.array(arraydata, tcoords=tcoords, chcoords=chcoords)
