@@ -30,10 +30,10 @@ PACKAGES = [
 setup(
     name = 'decode',
     description = __doc__,
-    version = '0.2',
+    version = '0.2.1',
     author = 'snoopython',
     author_email = 'taniguchi@ioa.s.u-tokyo.ac.jp',
     url = 'https://github.com/deshima-dev/decode',
-    install_requires = INSTALL_REQUIRES,
+    # install_requires = INSTALL_REQUIRES,
     packages = PACKAGES,
 )
