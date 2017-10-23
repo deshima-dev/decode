@@ -201,5 +201,5 @@ class DecodeCubeAccessor(BaseAccessor):
         plt.figure()
         plt.plot(cube.kidid.values, flux)
         plt.xlabel('kidid')
-        plt.ylabel('flux')
+        plt.ylabel('flux [arbitrary unit]')
         plt.show()
