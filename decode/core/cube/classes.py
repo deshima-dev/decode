@@ -87,33 +87,49 @@ class DecodeCubeAccessor(BaseAccessor):
     def tocube(array, **kwargs):
         array = array.copy()
 
+        xc = kwargs['xc'] if ('xc' in kwargs) else 0
+        yc = kwargs['yc'] if ('yc' in kwargs) else 0
+
         if 'xarr' in kwargs and 'yarr' in kwargs:
             x_grid = xr.DataArray(kwargs['xarr'], dims='grid')
             y_grid = xr.DataArray(kwargs['yarr'], dims='grid')
         else:
-            if 'xmin' in kwargs:
-                xmin = kwargs['xmin']
-            else:
-                xmin = array.x.min()
-            if 'xmax' in kwargs:
-                xmax = kwargs['xmax']
-            else:
-                xmax = array.x.max()
-            if 'ymin' in kwargs:
-                ymin = kwargs['ymin']
-            else:
-                ymin = array.y.min()
-            if 'ymax' in kwargs:
-                ymax = kwargs['ymax']
-            else:
-                ymax = array.y.max()
+            xmin = kwargs['xmin'] if ('xmin' in kwargs) else array.x.min()
+            xmax = kwargs['xmax'] if ('xmax' in kwargs) else array.x.max()
+            ymin = kwargs['ymin'] if ('ymin' in kwargs) else array.y.min()
+            ymax = kwargs['ymax'] if ('ymax' in kwargs) else array.y.max()
 
             if 'gx' in kwargs and 'gy' in kwargs:
-                x_grid = xr.DataArray(np.arange(xmin, xmax+kwargs['gx'], kwargs['gx']), dims='grid')
-                y_grid = xr.DataArray(np.arange(ymin, ymax+kwargs['gy'], kwargs['gy']), dims='grid')
+                gx = kwargs['gx']
+                gy = kwargs['gy']
+
+                gxmin = (xmin - xc) / gx
+                gxmax = (xmax - xc) / gx
+                gymin = (ymin - yc) / gy
+                gymax = (ymax - yc) / gy
+
+                gxmin = np.floor(gxmin) if (gxmin < 0) else np.ceil(gxmin)
+                gxmax = np.floor(gxmax) if (gxmax < 0) else np.ceil(gxmax)
+                gymin = np.floor(gymin) if (gymin < 0) else np.ceil(gymin)
+                gymax = np.floor(gymax) if (gymax < 0) else np.ceil(gymax)
+
+                xmin = gxmin * gx
+                xmax = gxmax * gx
+                ymin = gymin * gy
+                ymax = gymax * gy
+
+                x_grid = xr.DataArray(np.arange(xmin, xmax, gx), dims='grid')
+                y_grid = xr.DataArray(np.arange(ymin, ymax, gy), dims='grid')
             elif 'nx' in kwargs and 'ny' in kwargs:
-                x_grid = xr.DataArray(np.linspace(xmin, xmax, kwargs['nx']), dims='grid')
-                y_grid = xr.DataArray(np.linspace(ymin, ymax, kwargs['ny']), dims='grid')
+                nx = kwargs['nx']
+                ny = kwargs['ny']
+
+                ### nx/ny does not support xc/yc
+                xc = 0
+                yc = 0
+
+                x_grid = xr.DataArray(np.linspace(xmin, xmax, nx), dims='grid')
+                y_grid = xr.DataArray(np.linspace(ymin, ymax, ny), dims='grid')
             else:
                 raise KeyError('Arguments are wrong.')
 
@@ -125,8 +141,8 @@ class DecodeCubeAccessor(BaseAccessor):
         ycoords  = {'y': y_grid.values}
         chcoords = {'kidid': array.kidid, 'kidfq': array.kidfq}
 
-        i     = np.abs(array.x - x_grid).argmin('grid')
-        j     = np.abs(array.y - y_grid).argmin('grid')
+        i     = np.abs((array.x - xc) - x_grid).argmin('grid')
+        j     = np.abs((array.y - yc) - y_grid).argmin('grid')
         index = i + j * nx_grid
 
         array.coords.update({'index': index})

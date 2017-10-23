@@ -81,6 +81,8 @@ def tocube(array, **kwargs):
             xmax (float): Maximum value of x.
             ymin (float): Minimum value of y.
             ymax (float): Maximum value of y.
+            xc (float): Center of x.
+            yc (float): Center of y.
 
     Returns:
         decode cube (decode.cube): Decode cube.
