@@ -39,7 +39,7 @@ def loaddfits(fitsname, coordtype='azel', starttime=None, endtime=None, pixelids
         pixelids (int or list): Under development.
         scantype (str): Under development.
         mode (str):
-            '2017oct': The origin of relative az/el is temporaly corrected.
+            '2017oct': The origin of relative az/el is temporally corrected.
             'old': The original loaddfits.
 
     Returns:

@@ -8,6 +8,8 @@ from collections import OrderedDict
 
 # dependent packages
 import decode as dc
+import matplotlib.pyplot as plt
+plt.style.use('ggplot')
 import numpy as np
 import xarray as xr
 from astropy.io import fits
@@ -136,8 +138,8 @@ class DecodeCubeAccessor(BaseAccessor):
         ycoords  = {'y': y_grid.values}
         chcoords = {'kidid': array.kidid, 'kidfq': array.kidfq}
 
-        i     = np.abs((array.x - xc) - x_grid).argmin('grid')
-        j     = np.abs((array.y - yc) - y_grid).argmin('grid')
+        i = np.abs((array.x - xc) - x_grid).argmin('grid')
+        j = np.abs((array.y - yc) - y_grid).argmin('grid')
         index = i + j * nx_grid
 
         array.coords.update({'index': index})
@@ -163,3 +165,41 @@ class DecodeCubeAccessor(BaseAccessor):
                                           ('CTYPE2', 'deg'), ('CDELT2', cdelt2), ('CRVAL2', crval2), ('CRPIX2', 1),
                                           ('CTYPE3', 'Hz'),  ('CDELT3', cdelt3), ('CRVAL3', crval3), ('CRPIX3', 1)]))
         fits.writeto(fitsname, cube.values.T, header, **kwargs)
+
+    @staticmethod
+    def plotspectrum(cube, shape, **kwargs):
+        cube = cube.copy()
+        if shape == 'box':
+            if 'xc' in kwargs and 'yc' in kwargs and 'width' in kwargs and 'height' in kwargs:
+                xc     = kwargs['xc']
+                yc     = kwargs['yc']
+                width  = kwargs['width']
+                height = kwargs['height']
+
+                xmin, xmax = int(xc - width / 2), int(xc + width / 2)
+                ymin, ymax = int(yc - width / 2), int(yc + width / 2)
+            elif 'xmin' in kwargs and 'xmax' in kwargs and 'ymin' in kwargs and 'ymax' in kwargs:
+                xmin, xmax = kwargs['xmin'], kwargs['xmax']
+                ymin, ymax = kwargs['ymin'], kwargs['ymax']
+            else:
+                raise KeyError('Arguments are wrong.')
+
+            flux = cube[xmin:xmax, ymin:ymax, :].sum(dim=('x', 'y'))
+        elif shape == 'circle':
+            if 'xc' in kwargs and 'yc' in kwargs and 'radius' in kwargs:
+                xc     = kwargs['xc']
+                yc     = kwargs['yc']
+                radius = kwargs['radius']
+            else:
+                raise KeyError('Arguments are wrong.')
+
+            x, y = np.ogrid[0:len(cube.x), 0:len(cube.y)]
+            mask = ((x - xc)**2 + (y - yc)**2 < radius**2)
+            mask = mask[:, :, np.newaxis]
+            flux = np.ma.array(cube.T.values, mask=~np.broadcast_to(mask.T, cube.T.shape)).sum(axis=1).sum(axis=1).data
+
+        plt.figure()
+        plt.plot(cube.kidid.values, flux)
+        plt.xlabel('kidid')
+        plt.ylabel('flux')
+        plt.show()
