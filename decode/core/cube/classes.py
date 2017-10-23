@@ -110,7 +110,7 @@ class DecodeCubeAccessor(BaseAccessor):
 
             if 'gx' in kwargs and 'gy' in kwargs:
                 x_grid = xr.DataArray(np.arange(xmin, xmax+kwargs['gx'], kwargs['gx']), dims='grid')
-                y_grid = xr.DataArray(np.arange(ymin, ymax+kwargs['gx'], kwargs['gx']), dims='grid')
+                y_grid = xr.DataArray(np.arange(ymin, ymax+kwargs['gy'], kwargs['gy']), dims='grid')
             elif 'nx' in kwargs and 'ny' in kwargs:
                 x_grid = xr.DataArray(np.linspace(xmin, xmax, kwargs['nx']), dims='grid')
                 y_grid = xr.DataArray(np.linspace(ymin, ymax, kwargs['ny']), dims='grid')
