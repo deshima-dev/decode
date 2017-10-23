@@ -103,23 +103,18 @@ class DecodeCubeAccessor(BaseAccessor):
                 gx = kwargs['gx']
                 gy = kwargs['gy']
 
-                gxmin = (xmin - xc) / gx
-                gxmax = (xmax - xc) / gx
-                gymin = (ymin - yc) / gy
-                gymax = (ymax - yc) / gy
-
-                gxmin = np.floor(gxmin) if (gxmin < 0) else np.ceil(gxmin)
-                gxmax = np.floor(gxmax) if (gxmax < 0) else np.ceil(gxmax)
-                gymin = np.floor(gymin) if (gymin < 0) else np.ceil(gymin)
-                gymax = np.floor(gymax) if (gymax < 0) else np.ceil(gymax)
+                gxmin = np.floor((xmin - xc) / gx)
+                gxmax = np.ceil((xmax - xc) / gx)
+                gymin = np.floor((ymin - yc) / gy)
+                gymax = np.ceil((ymax - yc) / gy)
 
                 xmin = gxmin * gx
                 xmax = gxmax * gx
                 ymin = gymin * gy
                 ymax = gymax * gy
 
-                x_grid = xr.DataArray(np.arange(xmin, xmax, gx), dims='grid')
-                y_grid = xr.DataArray(np.arange(ymin, ymax, gy), dims='grid')
+                x_grid = xr.DataArray(np.arange(xmin, xmax+gx, gx), dims='grid')
+                y_grid = xr.DataArray(np.arange(ymin, ymax+gy, gy), dims='grid')
             elif 'nx' in kwargs and 'ny' in kwargs:
                 nx = kwargs['nx']
                 ny = kwargs['ny']
