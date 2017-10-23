@@ -88,8 +88,10 @@ def tocube(array, **kwargs):
         decode cube (decode.cube): Decode cube.
 
     Notes:
-        When xarr and yarr are specified, the remaining optional keywaords
-        will be ignored.
+        Available combination of kwargs are
+            (1) xarr/yarr and xc/yc
+            (2) gx/gy and xmin/xmax/ymin/ymax and xc/yc
+            (3) nx/ny and xmin/xmax/ymin/ymax
 
     """
     return xr.DataArray.dcc.tocube(array, **kwargs)
