@@ -195,8 +195,8 @@ class DecodeCubeAccessor(BaseAccessor):
 
             x, y = np.ogrid[0:len(cube.x), 0:len(cube.y)]
             mask = ((x - xc)**2 + (y - yc)**2 < radius**2)
-            mask = mask[:, :, np.newaxis]
-            flux = np.ma.array(cube.T.values, mask=~np.broadcast_to(mask.T, cube.T.shape)).sum(axis=1).sum(axis=1).data
+            mask = ~np.broadcast_to(mask[:, :, np.newaxis].T, cube.T.shape)
+            flux = np.nansum(np.nansum(np.ma.array(cube.T.values, mask=mask), axis=1), axis=1).data
 
         plt.figure()
         plt.plot(cube.kidid.values, flux)
