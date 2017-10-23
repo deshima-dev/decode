@@ -19,7 +19,8 @@ import xarray as xr
 from astropy.io import fits
 
 
-def loaddfits(fitsname, coordtype='azel', starttime=None, endtime=None, pixelids=None, scantype=None):
+def loaddfits(fitsname, coordtype='azel', starttime=None, endtime=None, pixelids=None,
+              scantype=None, mode='2017oct'):
     """Load a decode array from a DFITS file.
 
     Please use `loaddfits_2017oct` until Az/El origins in antenna log are fixed.
@@ -37,81 +38,98 @@ def loaddfits(fitsname, coordtype='azel', starttime=None, endtime=None, pixelids
             until the last record.
         pixelids (int or list): Under development.
         scantype (str): Under development.
+        mode (str):
+            '2017oct': The origin of relative az/el is temporaly corrected.
+            'old': The original loaddfits.
 
     Returns:
         decode array (decode.array): Loaded decode array.
 
     """
-    logger = getLogger('decode.io.loaddfits')
-    logger.warning('please use loaddfits_2017oct before Az/El origins in antenna log are fixed')
+    if mode == '2017oct':
+        logger = getLogger('decode.io.loaddfits_2017oct')
+    elif mode == 'old':
+        logger = getLogger('decode.io.loaddfits')
+        logger.warning('Please use loaddfits_2017oct before Az/El origins in antenna log are fixed.')
+    else:
+        raise KeyError(mode)
 
+    ### open hdulist
     hdulist = fits.open(fitsname)
 
+    ### load data
+    obsinfo = hdulist['OBSINFO'].data
+    antlog  = hdulist['ANTENNA'].data
+    readout = hdulist['READOUT'].data
+
     ### obsinfo
-    obsinfo  = hdulist['OBSINFO'].data
     kidids   = obsinfo['kidids'][0]
     kidfreqs = obsinfo['kidfreqs'][0]
 
-    ### antenna
-    antlog = hdulist['ANTENNA'].data
-    t_ant  = np.array(antlog['time']).astype(np.datetime64)
-    if coordtype == 'azel':
-        _x = antlog['az']
-        _y = antlog['el']
-        try:
-            x_c = antlog['az_center']
-            y_c = antlog['el_center']
-        except KeyError:
-            logger.warning('Az_center/el_center are not included in the antenna log! They are asuumed as 0.')
-            x_c = 0
-            y_c = 0
-        x = _x - x_c
-        y = _y - y_c
-    elif coordtype == 'radec':
-        x = antlog['ra']
-        y = antlog['dec']
-
-    ### readout
-    readout = hdulist['READOUT'].data
-    t_out   = np.array(readout['starttime']).astype(np.datetime64)
+    ### parse start/end time
+    t_ant = np.array(antlog['time']).astype(np.datetime64)
+    t_out = np.array(readout['starttime']).astype(np.datetime64)
 
     if starttime is None:
         startindex = 0
     elif isinstance(starttime, int):
         startindex = starttime
     elif isinstance(starttime, str):
-        startindex = np.where(t_out >= np.datetime64(starttime))[0][0]
+        startindex = np.searchsorted(t_out, np.datetime64(starttime))
     elif isinstance(starttime, np.datetime64):
-        startindex = np.where(t_out >= starttime)[0][0]
+        startindex = np.searchsorted(t_out, starttime)
+    else:
+        raise ValueError(starttime)
 
     if endtime is None:
         endindex = t_out.shape[0]
     elif isinstance(endtime, int):
         endindex = endtime
     elif isinstance(endtime, str):
-        endindex = np.where(t_out <= np.datetime64(endtime))[0][-1]
+        endindex = np.searchsorted(t_out, np.datetime64(endtime), 'right')
     elif isinstance(endtime, np.datetime64):
-        endindex = np.where(t_out <= endtime)[0][-1]
-    endindex_ant = np.where(t_out <= t_ant[-1])[0][-1]
-    if endindex > endindex_ant:
-        logger.warning('Endtime of readout is adjusted to the one of anttena log.')
-        endindex = endindex_ant
+        endindex = np.searchsorted(t_out, endtime, 'right')
+    else:
+        raise ValueError(starttime)
 
-    t_out      = t_out[startindex:endindex]
-    pixelid    = readout['pixelid'][startindex:endindex]
-    arraydata  = readout['arraydata'][startindex:endindex]
+    if t_out[endindex-1] > t_ant[-1]:
+        logger.warning('Endtime of readout is adjusted to that of ANTENNA HDU.')
+        endindex = np.searchsorted(t_out, t_ant[-1], 'right')
+
+    logger.debug('startindex: {}'.format(startindex))
+    logger.debug('endindex: {}'.format(endindex))
+    t_out = t_out[startindex:endindex]
+
+    ### readout
+    pixelid   = readout['pixelid'][startindex:endindex]
+    arraydata = readout['arraydata'][startindex:endindex]
+
+    ### antenna
+    if coordtype == 'azel':
+        x = antlog['az'].copy()
+        y = antlog['el'].copy()
+        try:
+            x -= antlog['az_center']
+            y -= antlog['el_center']
+        except KeyError:
+            logger.warning('Az_center/el_center are not included in the ANTENNA HDU.')
+    elif coordtype == 'radec':
+        x = antlog['ra'].copy()
+        y = antlog['dec'].copy()
 
     ### interpolation
-    # t_ant_last = np.where(t_ant[-1] > t_out)[0][-1]
-    # t_ant_sub  = t_ant[:t_ant_last]
-    # x_sub      = x[:t_ant_last]
-    # y_sub      = y[:t_ant_last]
-    dt_out     = (t_out - t_out[0]).astype(np.float64)
-    dt_ant     = (t_ant - t_out[0]).astype(np.float64)
-    # x_sub_i    = np.interp(dt_out, dt_ant_sub, x_sub)
-    # y_sub_i    = np.interp(dt_out, dt_ant_sub, y_sub)
-    x_i = np.interp(dt_out, dt_ant, x)
-    y_i = np.interp(dt_out, dt_ant, y)
+    dt_out  = (t_out - t_out[0]).astype(np.float64)
+    dt_ant  = (t_ant - t_out[0]).astype(np.float64)
+    x_i     = np.interp(dt_out, dt_ant, x)
+    y_i     = np.interp(dt_out, dt_ant, y)
+
+    ### temporal correction of az/el origins
+    ### relative az/el原点の問題が解消するまでの暫定的な処置
+    if mode == '2017oct':
+        el_i = np.interp(dt_out, dt_ant, antlog['el'])
+        x_i -= np.median(x_i)
+        y_i -= np.median(y_i)
+        x_i *= np.cos(np.deg2rad(el_i))
 
     ### coordinates
     tcoords  = {'x': x_i, 'y': y_i, 'time': t_out}
@@ -216,6 +234,7 @@ def loaddfits_2017oct(fitsname, coordtype='azel', starttime=None, endtime=None, 
 
     """
     logger = getLogger('decode.io.loaddfits_2017oct')
+    logger.warning('This is duplicated by loaddfits(mode=\'2017oct\'). In the future, this function will be removed.')
 
     with fits.open(fitsname) as hdulist:
         obsinfo = hdulist['OBSINFO'].data

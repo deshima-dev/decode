@@ -73,6 +73,8 @@ def tocube(array, **kwargs):
         kwargs (optional): Other arguments.
             xarr (list or numpy.ndarray): Grid array of x direction.
             yarr (list or numpy.ndarray): Grid array of y direction.
+            gx (float): The size of grid of x.
+            gy (float): The size of grid of y.
             nx (int): The number of grid of x direction.
             ny (int): The number of grid of y direction.
             xmin (float): Minimum value of x.

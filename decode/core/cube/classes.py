@@ -4,7 +4,6 @@
 __all__ = []
 
 # standard library
-import sys
 from collections import OrderedDict
 
 # dependent packages
@@ -91,25 +90,32 @@ class DecodeCubeAccessor(BaseAccessor):
         if 'xarr' in kwargs and 'yarr' in kwargs:
             x_grid = xr.DataArray(kwargs['xarr'], dims='grid')
             y_grid = xr.DataArray(kwargs['yarr'], dims='grid')
-        elif 'nx' in kwargs and 'ny' in kwargs:
-            if 'xmin' in kwargs and 'xmax' in kwargs:
-                xmin, xmax = kwargs['xmin'], kwargs['xmax']
-                if 'ymin' in kwargs and 'ymax' in kwargs:
-                    ymin, ymax = kwargs['ymin'], kwargs['ymax']
-                else:
-                    ymin, ymax = array.y.min(), array.y.max()
-            else:
-                xmin, xmax = array.x.min(), array.x.max()
-                if 'ymin' in kwargs and 'ymax' in kwargs:
-                    ymin, ymax = kwargs['ymin'], kwargs['ymax']
-                else:
-                    ymin, ymax = array.y.min(), array.y.max()
-
-            x_grid = xr.DataArray(np.linspace(xmin, xmax, kwargs['nx']), dims='grid')
-            y_grid = xr.DataArray(np.linspace(ymin, ymax, kwargs['ny']), dims='grid')
         else:
-            print('Arguments are wrong.')
-            sys.exit(1)
+            if 'xmin' in kwargs:
+                xmin = kwargs['xmin']
+            else:
+                xmin = array.x.min()
+            if 'xmax' in kwargs:
+                xmax = kwargs['xmax']
+            else:
+                xmax = array.x.max()
+            if 'ymin' in kwargs:
+                ymin = kwargs['ymin']
+            else:
+                ymin = array.y.min()
+            if 'ymax' in kwargs:
+                ymax = kwargs['ymax']
+            else:
+                ymax = array.y.max()
+
+            if 'gx' in kwargs and 'gy' in kwargs:
+                x_grid = xr.DataArray(np.arange(xmin, xmax+kwargs['gx'], kwargs['gx']), dims='grid')
+                y_grid = xr.DataArray(np.arange(ymin, ymax+kwargs['gx'], kwargs['gx']), dims='grid')
+            elif 'nx' in kwargs and 'ny' in kwargs:
+                x_grid = xr.DataArray(np.linspace(xmin, xmax, kwargs['nx']), dims='grid')
+                y_grid = xr.DataArray(np.linspace(ymin, ymax, kwargs['ny']), dims='grid')
+            else:
+                raise KeyError('Arguments are wrong.')
 
         nx_grid = len(x_grid)
         ny_grid = len(y_grid)
