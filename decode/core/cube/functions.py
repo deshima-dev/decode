@@ -5,6 +5,7 @@ __all__ = [
     'cube',
     'fromcube',
     'tocube',
+    'makecontinuum',
 ]
 
 # dependent packages
@@ -95,3 +96,15 @@ def tocube(array, **kwargs):
 
     """
     return xr.DataArray.dcc.tocube(array, **kwargs)
+
+
+def makecontinuum(cube, **kwargs):
+    """Make a continuum array.
+
+    Args:
+        cube (decode.cube): Decode cube which will be averaged over channels.
+
+    Returns:
+        decode cube (decode.cube): Decode cube (2d).
+    """
+    return xr.DataArray.dcc.makecontinuum(cube, **kwargs)

@@ -162,18 +162,25 @@ class DecodeCubeAccessor(BaseAccessor):
         return dc.cube(cubedata, xcoords=xcoords, ycoords=ycoords, chcoords=chcoords)
 
     @staticmethod
+    def makecontinuum(cube, **kwargs):
+        ### some weighting procedure
+        pass
+
+    @staticmethod
     def savefits(cube, fitsname, **kwargs):
         # should be modified in the future
         cdelt1 = float(cube.x[1] - cube.x[0])
         crval1 = float(cube.x[0])
         cdelt2 = float(cube.y[1] - cube.y[0])
         crval2 = float(cube.y[0])
-        cdelt3 = float(cube.kidfq[1] - cube.kidfq[0])
-        crval3 = float(cube.kidfq[0])
-
         header = fits.Header(OrderedDict([('CTYPE1', 'deg'), ('CDELT1', cdelt1), ('CRVAL1', crval1), ('CRPIX1', 1),
-                                          ('CTYPE2', 'deg'), ('CDELT2', cdelt2), ('CRVAL2', crval2), ('CRPIX2', 1),
-                                          ('CTYPE3', 'Hz'),  ('CDELT3', cdelt3), ('CRVAL3', crval3), ('CRPIX3', 1)]))
+                                          ('CTYPE2', 'deg'), ('CDELT2', cdelt2), ('CRVAL2', crval2), ('CRPIX2', 1)]))
+
+        if cube.dims == ('x', 'y', 'ch'):
+            cdelt3 = float(cube.kidfq[1] - cube.kidfq[0])
+            crval3 = float(cube.kidfq[0])
+            header.update(OrderedDict([('CTYPE3', 'Hz'),  ('CDELT3', cdelt3), ('CRVAL3', crval3), ('CRPIX3', 1)]))
+
         fits.writeto(fitsname, cube.values.T, header, **kwargs)
 
     @staticmethod
