@@ -193,13 +193,18 @@ class DecodeCubeAccessor(BaseAccessor):
             else:
                 raise KeyError('Arguments are wrong.')
 
-            x, y = np.ogrid[0:len(cube.x), 0:len(cube.y)]
-            mask = ((x - xc)**2 + (y - yc)**2 < radius**2)
-            mask = ~np.broadcast_to(mask[:, :, np.newaxis].T, cube.T.shape)
-            flux = np.nansum(np.nansum(np.ma.array(cube.T.values, mask=mask), axis=1), axis=1).data
+            x, y   = np.ogrid[0:len(cube.x), 0:len(cube.y)]
+            mask   = ((x - xc)**2 + (y - yc)**2 < radius**2)
+            mask   = np.broadcast_to(mask[:, :, np.newaxis], cube.shape)
+            masked = np.ma.array(cube.values, mask=~mask)
+            flux   = np.nansum(np.nansum(masked, axis=0), axis=0).data
 
         plt.figure()
         plt.plot(cube.kidid.values, flux)
         plt.xlabel('kidid')
         plt.ylabel('flux [arbitrary unit]')
+        if 'xlim' in kwargs:
+            plt.xlim(kwargs['xlim'])
+        if 'ylim' in kwargs:
+            plt.ylim(kwargs['ylim'])
         plt.show()

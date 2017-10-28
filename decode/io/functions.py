@@ -125,7 +125,7 @@ def loaddfits(fitsname, coordtype='azel', starttime=None, endtime=None, pixelids
 
     ### temporal correction of az/el origins
     ### relative az/el原点の問題が解消するまでの暫定的な処置
-    if mode == '2017oct':
+    if mode == '2017oct' and coordtype == 'azel':
         el_i = np.interp(dt_out, dt_ant, antlog['el'])
         x_i -= np.median(x_i)
         y_i -= np.median(y_i)
