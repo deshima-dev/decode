@@ -29,6 +29,10 @@ CHCOORDS = lambda array: OrderedDict([
     ('kidfq', ('ch', np.zeros(array.shape[2], dtype=float))),
 ])
 
+DATACOORDS = lambda array: OrderedDict([
+    ('weight', (('x', 'y', 'ch'), np.ones(array.shape, dtype=float)))
+])
+
 SCALARCOORDS = OrderedDict([
     ('coordsys', 'RADEC'),
     ('xref', 0.0),
@@ -64,6 +68,7 @@ class DecodeCubeAccessor(BaseAccessor):
         self.coords.update(XCOORDS(self))
         self.coords.update(YCOORDS(self))
         self.coords.update(CHCOORDS(self))
+        self.coords.update(DATACOORDS(self))
         self.coords.update(SCALARCOORDS)
 
     @property
@@ -80,6 +85,11 @@ class DecodeCubeAccessor(BaseAccessor):
     def chcoords(self):
         """Dictionary of arrays that label channel axis."""
         return {k: v.values for k, v in self.coords.items() if v.dims==('ch',)}
+
+    @property
+    def datacoords(self):
+        """Dictionary of arrays that label x, y, and channel axis."""
+        return {k: v.values for k, v in self.coords.items() if v.dims==('x', 'y', 'ch')}
 
     @staticmethod
     def fromcube(cube, array):

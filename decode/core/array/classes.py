@@ -26,6 +26,10 @@ CHCOORDS = lambda array: OrderedDict([
     ('kidfq', ('ch', np.zeros(array.shape[1], dtype=float))),
 ])
 
+DATACOORDS = lambda array: OrderedDict([
+    ('weight', (('t', 'ch'), np.ones(array.shape, dtype=float)))
+])
+
 SCALARCOORDS = OrderedDict([
     ('coordsys', 'RADEC'),
     ('xref', 0.0),
@@ -59,6 +63,7 @@ class DecodeArrayAccessor(BaseAccessor):
         """
         self.coords.update(TCOORDS(self))
         self.coords.update(CHCOORDS(self))
+        self.coords.update(DATACOORDS(self))
         self.coords.update(SCALARCOORDS)
 
     @property
@@ -70,3 +75,8 @@ class DecodeArrayAccessor(BaseAccessor):
     def chcoords(self):
         """Dictionary of arrays that label channel axis."""
         return {k: v.values for k, v in self.coords.items() if v.dims==('ch',)}
+
+    @property
+    def datacoords(self):
+        """Dictionary of arrays that label time and channel axis."""
+        return {k: v.values for k, v in self.coords.items() if v.dims==('t', 'ch')}
