@@ -12,6 +12,7 @@ INSTALL_REQUIRES = [
     'scipy',
     'pyyaml',
     'xarray',
+    'matplotlib',
 ]
 
 PACKAGES = [
@@ -30,7 +31,7 @@ PACKAGES = [
 setup(
     name = 'decode',
     description = __doc__,
-    version = '0.2.2',
+    version = '0.2.3',
     author = 'snoopython',
     author_email = 'taniguchi@ioa.s.u-tokyo.ac.jp',
     url = 'https://github.com/deshima-dev/decode',
