@@ -20,7 +20,7 @@ from astropy.io import fits
 
 
 def loaddfits(fitsname, coordtype='azel', starttime=None, endtime=None, pixelids=None,
-              scantype=None, mode='2017oct'):
+              scantype=None, mode='2017oct', **kwargs):
     """Load a decode array from a DFITS file.
 
     Please use `loaddfits_2017oct` until Az/El origins in antenna log are fixed.
@@ -65,6 +65,7 @@ def loaddfits(fitsname, coordtype='azel', starttime=None, endtime=None, pixelids
     ### obsinfo
     kidids   = obsinfo['kidids'][0]
     kidfreqs = obsinfo['kidfreqs'][0]
+    kidtypes = obsinfo['kidtypes'][0]
 
     ### parse start/end time
     t_ant = np.array(antlog['time']).astype(np.datetime64)
@@ -102,7 +103,9 @@ def loaddfits(fitsname, coordtype='azel', starttime=None, endtime=None, pixelids
 
     ### readout
     pixelid   = readout['pixelid'][startindex:endindex]
-    arraydata = readout['arraydata'][startindex:endindex]
+    # arraydata = readout['arraydata'][startindex:endindex]
+    phase     = readout['phase'][startindex:endindex]
+    amplitude = readout['amplitude'][startindex:endindex]
 
     ### antenna
     if coordtype == 'azel':
@@ -126,17 +129,26 @@ def loaddfits(fitsname, coordtype='azel', starttime=None, endtime=None, pixelids
     ### temporal correction of az/el origins
     ### relative az/el原点の問題が解消するまでの暫定的な処置
     if mode == '2017oct' and coordtype == 'azel':
+        if 'x_m' in kwargs and 'y_m' in kwargs:
+            x_m = kwargs['x_m']
+            y_m = kwargs['y_m']
+        else:
+            x_m  = np.median(x_i)
+            y_m  = np.median(y_i)
+        logger.debug('x_median: {}'.format(x_m))
+        logger.debug('y_median: {}'.format(y_m))
+        x_i -= x_m
+        y_i -= y_m
         el_i = np.interp(dt_out, dt_ant, antlog['el'])
-        x_i -= np.median(x_i)
-        y_i -= np.median(y_i)
         x_i *= np.cos(np.deg2rad(el_i))
 
     ### coordinates
     tcoords  = {'x': x_i, 'y': y_i, 'time': t_out}
-    chcoords = {'kidid': kidids, 'kidfq': kidfreqs}
+    chcoords = {'kidid': kidids, 'kidfq': kidfreqs, 'kidtp': kidtypes}
 
     ### make array
-    array = dc.array(arraydata, tcoords=tcoords, chcoords=chcoords)
+    # array = dc.array(arraydata, tcoords=tcoords, chcoords=chcoords)
+    array = dc.array(phase, tcoords=tcoords, chcoords=chcoords)
 
     ### close hdu
     hdulist.close()

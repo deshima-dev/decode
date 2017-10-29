@@ -98,13 +98,17 @@ def tocube(array, **kwargs):
     return xr.DataArray.dcc.tocube(array, **kwargs)
 
 
-def makecontinuum(cube, **kwargs):
+def makecontinuum(cube, kidtp, **kwargs):
     """Make a continuum array.
 
     Args:
         cube (decode.cube): Decode cube which will be averaged over channels.
+        kidtp (int): Kid types which will be used
+            0: wideband
+            1: filter
+            2: blind
 
     Returns:
         decode cube (decode.cube): Decode cube (2d).
     """
-    return xr.DataArray.dcc.makecontinuum(cube, **kwargs)
+    return xr.DataArray.dcc.makecontinuum(cube, kidtp, **kwargs)

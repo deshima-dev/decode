@@ -22,8 +22,9 @@ TCOORDS = lambda array: OrderedDict([
 ])
 
 CHCOORDS = lambda array: OrderedDict([
-    ('kidid', ('ch', np.zeros(array.shape[1], dtype=float))),
+    ('kidid', ('ch', np.zeros(array.shape[1], dtype=int))),
     ('kidfq', ('ch', np.zeros(array.shape[1], dtype=float))),
+    ('kidtp', ('ch', np.zeros(array.shape[1], dtype=int)))
 ])
 
 DATACOORDS = lambda array: OrderedDict([

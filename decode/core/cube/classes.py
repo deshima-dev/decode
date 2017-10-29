@@ -25,8 +25,9 @@ YCOORDS = lambda array: OrderedDict([
 ])
 
 CHCOORDS = lambda array: OrderedDict([
-    ('kidid', ('ch', np.zeros(array.shape[2], dtype=float))),
+    ('kidid', ('ch', np.zeros(array.shape[2], dtype=int))),
     ('kidfq', ('ch', np.zeros(array.shape[2], dtype=float))),
+    ('kidtp', ('ch', np.zeros(array.shape[2], dtype=int)))
 ])
 
 DATACOORDS = lambda array: OrderedDict([
@@ -146,7 +147,7 @@ class DecodeCubeAccessor(BaseAccessor):
 
         xcoords  = {'x': x_grid.values}
         ycoords  = {'y': y_grid.values}
-        chcoords = {'kidid': array.kidid, 'kidfq': array.kidfq}
+        chcoords = {'kidid': array.kidid, 'kidfq': array.kidfq, 'kidtp': array.kidtp}
 
         i = np.abs((array.x - xc) - x_grid).argmin('grid')
         j = np.abs((array.y - yc) - y_grid).argmin('grid')
@@ -162,9 +163,10 @@ class DecodeCubeAccessor(BaseAccessor):
         return dc.cube(cubedata, xcoords=xcoords, ycoords=ycoords, chcoords=chcoords)
 
     @staticmethod
-    def makecontinuum(cube, **kwargs):
+    def makecontinuum(cube, kidtp, **kwargs):
         ### some weighting procedure
-        pass
+        cont = cube[:, :, cube.kidtp==kidtp].mean(dim='ch')
+        return cont
 
     @staticmethod
     def savefits(cube, fitsname, **kwargs):
@@ -177,9 +179,9 @@ class DecodeCubeAccessor(BaseAccessor):
                                           ('CTYPE2', 'deg'), ('CDELT2', cdelt2), ('CRVAL2', crval2), ('CRPIX2', 1)]))
 
         if cube.dims == ('x', 'y', 'ch'):
-            cdelt3 = float(cube.kidfq[1] - cube.kidfq[0])
-            crval3 = float(cube.kidfq[0])
-            header.update(OrderedDict([('CTYPE3', 'Hz'),  ('CDELT3', cdelt3), ('CRVAL3', crval3), ('CRPIX3', 1)]))
+            cdelt3 = float(cube.kidid[1] - cube.kidid[0])
+            crval3 = float(cube.kidid[0])
+            header.update(OrderedDict([('CTYPE3', 'ID'),  ('CDELT3', cdelt3), ('CRVAL3', crval3), ('CRPIX3', 1)]))
 
         fits.writeto(fitsname, cube.values.T, header, **kwargs)
 
