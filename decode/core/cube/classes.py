@@ -25,12 +25,14 @@ YCOORDS = lambda array: OrderedDict([
 ])
 
 CHCOORDS = lambda array: OrderedDict([
+    ('masterid', ('ch', np.zeros(array.shape[2], dtype=int))),
     ('kidid', ('ch', np.zeros(array.shape[2], dtype=int))),
     ('kidfq', ('ch', np.zeros(array.shape[2], dtype=float))),
     ('kidtp', ('ch', np.zeros(array.shape[2], dtype=int)))
 ])
 
 DATACOORDS = lambda array: OrderedDict([
+    ('Psignal', (('x', 'y', 'ch'), np.ones(array.shape, dtype=float))),
     ('weight', (('x', 'y', 'ch'), np.ones(array.shape, dtype=float)))
 ])
 
@@ -147,7 +149,7 @@ class DecodeCubeAccessor(BaseAccessor):
 
         xcoords  = {'x': x_grid.values}
         ycoords  = {'y': y_grid.values}
-        chcoords = {'kidid': array.kidid, 'kidfq': array.kidfq, 'kidtp': array.kidtp}
+        chcoords = {'masterid': array.masterid, 'kidid': array.kidid, 'kidfq': array.kidfq, 'kidtp': array.kidtp}
 
         i = np.abs((array.x - xc) - x_grid).argmin('grid')
         j = np.abs((array.y - yc) - y_grid).argmin('grid')
@@ -165,7 +167,10 @@ class DecodeCubeAccessor(BaseAccessor):
     @staticmethod
     def makecontinuum(cube, kidtp, **kwargs):
         ### some weighting procedure
-        cont = cube[:, :, cube.kidtp==kidtp].mean(dim='ch')
+        mask = (cube.kidtp == kidtp).values
+        if 'exchs' in kwargs:
+            mask[kwargs['exchs']] = False
+        cont = cube[:, :, mask].mean(dim='ch')
         return cont
 
     @staticmethod
@@ -218,10 +223,23 @@ class DecodeCubeAccessor(BaseAccessor):
             masked = np.ma.array(cube.values, mask=~mask)
             flux   = np.nansum(np.nansum(masked, axis=0), axis=0).data
 
+        xtick = kwargs['xtick'] if 'xtick' in kwargs else 'freq'
+
         plt.figure()
-        plt.plot(cube.kidid.values, flux)
-        plt.xlabel('kidid')
-        plt.ylabel('flux [arbitrary unit]')
+        if xtick == 'freq':
+            freqrange = ~np.isnan(cube.kidfq.values)
+            if 'exchs' in kwargs:
+                freqrange[kwargs['exchs']] = False
+            x = cube.kidfq.values[freqrange]
+            y = flux[freqrange]
+            plt.step(x[np.argsort(x)], y[np.argsort(x)], where='mid')
+            plt.xlabel('Frequency [GHz]')
+        elif xtick == 'id':
+            x = cube.kidid.values
+            y = flux
+            plt.step(x, y, where='mid')
+            plt.xlabel('id')
+        plt.ylabel('Temperature [K]')
         if 'xlim' in kwargs:
             plt.xlim(kwargs['xlim'])
         if 'ylim' in kwargs:

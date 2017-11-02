@@ -25,7 +25,7 @@ from astropy.io import fits
 
 
 # functions
-def array(data, tcoords=None, chcoords=None, scalarcoords=None, attrs=None, name=None):
+def array(data, tcoords=None, chcoords=None, scalarcoords=None, datacoords=None, attrs=None, name=None):
     """Create an array as an instance of xarray.DataArray with Decode accessor.
 
     Args:
@@ -53,6 +53,9 @@ def array(data, tcoords=None, chcoords=None, scalarcoords=None, attrs=None, name
 
     if scalarcoords is not None:
         array.coords.update(scalarcoords)
+
+    if datacoords is not None:
+        array.coords.update({key: (('t', 'ch'), datacoords[key]) for key in datacoords})
 
     return array
 
