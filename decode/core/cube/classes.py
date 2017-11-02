@@ -32,12 +32,12 @@ CHCOORDS = lambda array: OrderedDict([
 ])
 
 DATACOORDS = lambda array: OrderedDict([
-    ('Psignal', (('x', 'y', 'ch'), np.ones(array.shape, dtype=float))),
     ('weight', (('x', 'y', 'ch'), np.ones(array.shape, dtype=float)))
 ])
 
 SCALARCOORDS = OrderedDict([
     ('coordsys', 'RADEC'),
+    ('datatype', 'temperature'),
     ('xref', 0.0),
     ('yref', 0.0),
     ('type', 'dcc'),
@@ -147,9 +147,11 @@ class DecodeCubeAccessor(BaseAccessor):
         ny_grid = len(y_grid)
         nz_grid = len(array.ch)
 
-        xcoords  = {'x': x_grid.values}
-        ycoords  = {'y': y_grid.values}
-        chcoords = {'masterid': array.masterid, 'kidid': array.kidid, 'kidfq': array.kidfq, 'kidtp': array.kidtp}
+        xcoords      = {'x': x_grid.values}
+        ycoords      = {'y': y_grid.values}
+        chcoords     = {'masterid': array.masterid.values, 'kidid': array.kidid.values,
+                        'kidfq': array.kidfq.values, 'kidtp': array.kidtp.values}
+        scalarcoords = {'datatype': array.datatype.values}
 
         i = np.abs((array.x - xc) - x_grid).argmin('grid')
         j = np.abs((array.y - yc) - y_grid).argmin('grid')
@@ -162,7 +164,7 @@ class DecodeCubeAccessor(BaseAccessor):
         template[mask] = griddedarray.values
         cubedata       = template.reshape((ny_grid, nx_grid, nz_grid)).swapaxes(0, 1)
 
-        return dc.cube(cubedata, xcoords=xcoords, ycoords=ycoords, chcoords=chcoords)
+        return dc.cube(cubedata, xcoords=xcoords, ycoords=ycoords, chcoords=chcoords, scalarcoords=scalarcoords)
 
     @staticmethod
     def makecontinuum(cube, kidtp, **kwargs):
@@ -171,6 +173,7 @@ class DecodeCubeAccessor(BaseAccessor):
         if 'exchs' in kwargs:
             mask[kwargs['exchs']] = False
         cont = cube[:, :, mask].mean(dim='ch')
+
         return cont
 
     @staticmethod
@@ -223,7 +226,8 @@ class DecodeCubeAccessor(BaseAccessor):
             masked = np.ma.array(cube.values, mask=~mask)
             flux   = np.nansum(np.nansum(masked, axis=0), axis=0).data
 
-        xtick = kwargs['xtick'] if 'xtick' in kwargs else 'freq'
+        xtick    = kwargs['xtick'] if 'xtick' in kwargs else 'freq'
+        datatype = cube.datatype
 
         plt.figure()
         if xtick == 'freq':
@@ -239,9 +243,13 @@ class DecodeCubeAccessor(BaseAccessor):
             y = flux
             plt.step(x, y, where='mid')
             plt.xlabel('id')
-        plt.ylabel('Temperature [K]')
+        if datatype == 'temperature':
+            plt.ylabel('Temperature [K]')
+        elif datatype == 'power':
+            plt.ylabel('Power [W]')
         if 'xlim' in kwargs:
             plt.xlim(kwargs['xlim'])
         if 'ylim' in kwargs:
             plt.ylim(kwargs['ylim'])
+
         plt.show()

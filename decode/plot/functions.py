@@ -36,6 +36,8 @@ def plotspectrum(dataarray, shape, **kwargs):
                 xc: Center of x.
                 yc: Center of y.
                 radius: Radius.
+            xlim (list): Range of x.
+            ylim (list): Range of y.
 
     Notes:
         All kwargs should be specified as pixel coordinates.

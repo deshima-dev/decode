@@ -38,7 +38,6 @@ def array(data, tcoords=None, chcoords=None, scalarcoords=None, datacoords=None,
 
     Returns:
         array (xarray.DataArray): Array.
-
     """
     # initialize coords with default values
     array = xr.DataArray(data, dims=('t', 'ch'), attrs=attrs, name=name)
@@ -70,7 +69,6 @@ def zeros(shape, dtype=None, **kwargs):
 
     Returns:
         array (xarray.DataArray): Array filled with zeros.
-
     """
     data = np.zeros(shape, dtype)
     return dc.array(data, **kwargs)
@@ -86,7 +84,6 @@ def ones(shape, dtype=None, **kwargs):
 
     Returns:
         array (xarray.DataArray): Array filled with ones.
-
     """
     data = np.ones(shape, dtype)
     return dc.array(data, **kwargs)
@@ -103,7 +100,6 @@ def full(shape, fill_value, dtype=None, **kwargs):
 
     Returns:
         array (xarray.DataArray): Array filled with `fill_value`.
-
     """
     return (dc.zeros(shape, **kwargs) + fill_value).astype(dtype)
 
@@ -118,7 +114,6 @@ def empty(shape, dtype=None, **kwargs):
 
     Returns:
         array (xarray.DataArray): Array without initializing entries.
-
     """
     data = np.empty(shape, dtype)
     return dc.array(data, **kwargs)
@@ -137,7 +132,6 @@ def zeros_like(array, dtype=None, keepmeta=True):
 
     Returns:
         array (xarray.DataArray): Array filled with zeros.
-
     """
     if keepmeta:
         return xr.zeros_like(array, dtype)
@@ -158,7 +152,6 @@ def ones_like(array, dtype=None, keepmeta=True):
 
     Returns:
         array (xarray.DataArray): Array filled with ones.
-
     """
     if keepmeta:
         return xr.ones_like(array, dtype)
@@ -180,7 +173,6 @@ def full_like(array, fill_value, reverse=False, dtype=None, keepmeta=True):
 
     Returns:
         array (xarray.DataArray): Array filled with `fill_value`.
-
     """
     if keepmeta:
         return (dc.zeros_like(array) + fill_value).astype(dtype)
@@ -201,7 +193,6 @@ def empty_like(array, dtype=None, keepmeta=True):
 
     Returns:
         array (xarray.DataArray): Array without initializing entries.
-
     """
     if keepmeta:
         return dc.empty(array.shape, dtype,

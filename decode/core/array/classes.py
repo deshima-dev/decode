@@ -29,12 +29,12 @@ CHCOORDS = lambda array: OrderedDict([
 ])
 
 DATACOORDS = lambda array: OrderedDict([
-    ('Psignal', (('t', 'ch'), np.ones(array.shape, dtype=float))),
     ('weight', (('t', 'ch'), np.ones(array.shape, dtype=float)))
 ])
 
 SCALARCOORDS = OrderedDict([
     ('coordsys', 'RADEC'),
+    ('datatype', 'Temperature'),
     ('xref', 0.0),
     ('yref', 0.0),
     ('type', 'dca'),
@@ -52,7 +52,6 @@ class DecodeArrayAccessor(BaseAccessor):
 
         Args:
             array (xarray.DataArray): Array to which Decode accessor is added.
-
         """
         super().__init__(array)
 
@@ -62,7 +61,6 @@ class DecodeArrayAccessor(BaseAccessor):
         Warning:
             Do not use this method after an array is created.
             This forcibly replaces all vaules of coords with default ones.
-
         """
         self.coords.update(TCOORDS(self))
         self.coords.update(CHCOORDS(self))

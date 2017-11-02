@@ -14,7 +14,7 @@ import xarray as xr
 
 
 # functions
-def cube(data, xcoords=None, ycoords=None, chcoords=None, scalarcoords=None, attrs=None, name=None):
+def cube(data, xcoords=None, ycoords=None, chcoords=None, scalarcoords=None, datacoords=None, attrs=None, name=None):
     """Create a cube as an instance of xarray.DataArray with Decode accessor.
 
     Args:
@@ -44,6 +44,9 @@ def cube(data, xcoords=None, ycoords=None, chcoords=None, scalarcoords=None, att
     if chcoords is not None:
         cube.coords.update({key: ('ch', chcoords[key]) for key in chcoords})
 
+    if datacoords is not None:
+        cube.coords.update({key: (('x', 'y', 'ch'), datacoords[key]) for key in datacoords})
+
     if scalarcoords is not None:
         cube.coords.update(scalarcoords)
 
@@ -61,7 +64,6 @@ def fromcube(cube):
 
     Notes:
         This functions is under development.
-
     """
     return xr.DataArray.dcc.fromcube(cube)
 
@@ -107,6 +109,8 @@ def makecontinuum(cube, kidtp, **kwargs):
             0: wideband
             1: filter
             2: blind
+        kwargs (optional): Other arguments.
+            exchs (list): Excluded channel kidids
 
     Returns:
         decode cube (decode.cube): Decode cube (2d).
