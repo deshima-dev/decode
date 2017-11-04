@@ -9,7 +9,6 @@ from collections import OrderedDict
 # dependent packages
 import decode as dc
 import matplotlib.pyplot as plt
-plt.style.use('ggplot')
 import numpy as np
 import xarray as xr
 from astropy.io import fits
@@ -195,6 +194,8 @@ class DecodeCubeAccessor(BaseAccessor):
 
     @staticmethod
     def plotspectrum(cube, shape, **kwargs):
+        plt.style.use('ggplot')
+
         cube = cube.copy()
         if shape == 'box':
             if 'xc' in kwargs and 'yc' in kwargs and 'width' in kwargs and 'height' in kwargs:
@@ -211,7 +212,8 @@ class DecodeCubeAccessor(BaseAccessor):
             else:
                 raise KeyError('Arguments are wrong.')
 
-            flux = cube[xmin:xmax, ymin:ymax, :].sum(dim=('x', 'y'))
+            # flux = cube[xmin:xmax, ymin:ymax, :].sum(dim=('x', 'y'))
+            peak = cube[xmin:xmax, ymin:ymax, :].max(axis=(0, 1))
         elif shape == 'circle':
             if 'xc' in kwargs and 'yc' in kwargs and 'radius' in kwargs:
                 xc     = kwargs['xc']
@@ -224,32 +226,34 @@ class DecodeCubeAccessor(BaseAccessor):
             mask   = ((x - xc)**2 + (y - yc)**2 < radius**2)
             mask   = np.broadcast_to(mask[:, :, np.newaxis], cube.shape)
             masked = np.ma.array(cube.values, mask=~mask)
-            flux   = np.nansum(np.nansum(masked, axis=0), axis=0).data
+            # flux   = np.nansum(np.nansum(masked, axis=0), axis=0).data
+            peak   = np.nanmax(masked, axis=(0, 1))
 
         xtick    = kwargs['xtick'] if 'xtick' in kwargs else 'freq'
         datatype = cube.datatype
 
-        plt.figure()
+        fig = plt.figure(dpi=200)
+        ax = fig.add_subplot(111)
         if xtick == 'freq':
             freqrange = ~np.isnan(cube.kidfq.values)
             if 'exchs' in kwargs:
                 freqrange[kwargs['exchs']] = False
             x = cube.kidfq.values[freqrange]
-            y = flux[freqrange]
-            plt.step(x[np.argsort(x)], y[np.argsort(x)], where='mid')
-            plt.xlabel('Frequency [GHz]')
+            y = peak[freqrange]
+            ax.step(x[np.argsort(x)], y[np.argsort(x)], where='mid')
+            ax.set_xlabel('Frequency [GHz]')
         elif xtick == 'id':
             x = cube.kidid.values
-            y = flux
-            plt.step(x, y, where='mid')
-            plt.xlabel('id')
+            y = peak
+            ax.step(x, y, where='mid')
+            ax.set_xlabel('id')
         if datatype == 'temperature':
-            plt.ylabel('Temperature [K]')
+            ax.set_ylabel(r'$T_\mathrm{peak}$ [K]')
         elif datatype == 'power':
-            plt.ylabel('Power [W]')
+            ax.set_ylabel(r'$P_\mathrm{peak}$ [W]')
         if 'xlim' in kwargs:
-            plt.xlim(kwargs['xlim'])
+            ax.set_xlim(kwargs['xlim'])
         if 'ylim' in kwargs:
-            plt.ylim(kwargs['ylim'])
+            ax.set_ylim(kwargs['ylim'])
 
-        plt.show()
+        fig.show()

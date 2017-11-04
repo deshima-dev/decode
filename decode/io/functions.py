@@ -60,6 +60,7 @@ def loaddfits(fitsname, coordtype='azel', loadtype='temperature', starttime=None
     obshdr  = hdulist['OBSINFO'].header
     antlog  = hdulist['ANTENNA'].data
     readout = hdulist['READOUT'].data
+    wealog  = hdulist['WEATHER'].data
 
     ### obsinfo
     masterids = obsinfo['masterids'][0].astype(np.int64)
@@ -70,6 +71,7 @@ def loaddfits(fitsname, coordtype='azel', loadtype='temperature', starttime=None
     ### parse start/end time
     t_ant = np.array(antlog['time']).astype(np.datetime64)
     t_out = np.array(readout['starttime']).astype(np.datetime64)
+    t_wea = np.array(wealog['time']).astype(np.datetime64)
 
     if starttime is None:
         startindex = 0
@@ -126,11 +128,25 @@ def loaddfits(fitsname, coordtype='azel', loadtype='temperature', starttime=None
         x -= obshdr['RA']
         y -= obshdr['DEC']
 
+    ### weatherlog
+    temp      = wealog['temperature']
+    pressure  = wealog['pressure']
+    vpressure = wealog['vapor-pressure']
+    windspd   = wealog['windspd']
+    winddir   = wealog['winddir']
+
     ### interpolation
     dt_out  = (t_out - t_out[0]).astype(np.float64)
     dt_ant  = (t_ant - t_out[0]).astype(np.float64)
+    dt_wea  = (t_wea - t_out[0]).astype(np.float64)
     x_i     = np.interp(dt_out, dt_ant, x)
     y_i     = np.interp(dt_out, dt_ant, y)
+
+    temp_i       = np.interp(dt_out, dt_wea, temp)
+    pressure_i   = np.interp(dt_out, dt_wea, pressure)
+    vpressure_i  = np.interp(dt_out, dt_wea, vpressure)
+    windspd_i    = np.interp(dt_out, dt_wea, windspd)
+    winddir_i    = np.interp(dt_out, dt_wea, winddir)
 
     ### temporal correction of az/el origins
     ### relative az/el原点の問題が解消するまでの暫定的な処置
@@ -150,7 +166,8 @@ def loaddfits(fitsname, coordtype='azel', loadtype='temperature', starttime=None
             x_i *= np.cos(np.deg2rad(el_i))
 
     ### coordinates
-    tcoords      = {'x': x_i, 'y': y_i, 'time': t_out}
+    tcoords      = {'x': x_i, 'y': y_i, 'time': t_out, 'temp': temp_i, 'pressure': pressure_i,
+                    'vapor-pressure': vpressure_i, 'windspd': windspd_i, 'winddir': winddir_i}
     chcoords     = {'masterid': masterids, 'kidid': kidids, 'kidfq': kidfreqs, 'kidtp': kidtypes}
     scalarcoords = {'datatype': loadtype}
 

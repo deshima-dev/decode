@@ -18,7 +18,12 @@ TCOORDS = lambda array: OrderedDict([
     ('vrad', ('t', np.zeros(array.shape[0], dtype=float))),
     ('x',    ('t', np.zeros(array.shape[0], dtype=float))),
     ('y',    ('t', np.zeros(array.shape[0], dtype=float))),
-    ('time', ('t', np.full(array.shape[0], datetime(2000,1,1)))),
+    ('time', ('t', np.zeros(array.shape[0], dtype=float))),
+    ('temp', ('t', np.zeros(array.shape[0], dtype=float))),
+    ('pressure', ('t', np.zeros(array.shape[0], dtype=float))),
+    ('vapor-pressure', ('t', np.zeros(array.shape[0], dtype=float))),
+    ('windspd', ('t', np.zeros(array.shape[0], dtype=float))),
+    ('winddir', ('t', np.zeros(array.shape[0], dtype=float))),
 ])
 
 CHCOORDS = lambda array: OrderedDict([
