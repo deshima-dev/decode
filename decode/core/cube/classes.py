@@ -186,7 +186,10 @@ class DecodeCubeAccessor(BaseAccessor):
                                           ('CTYPE2', 'deg'), ('CDELT2', cdelt2), ('CRVAL2', crval2), ('CRPIX2', 1)]))
 
         if cube.dims == ('x', 'y', 'ch'):
-            cdelt3 = float(cube.kidid[1] - cube.kidid[0])
+            try:
+                cdelt3 = float(cube.kidid[1] - cube.kidid[0])
+            except IndexError:
+                cdelt3 = 0
             crval3 = float(cube.kidid[0])
             header.update(OrderedDict([('CTYPE3', 'ID'),  ('CDELT3', cdelt3), ('CRVAL3', crval3), ('CRPIX3', 1)]))
 

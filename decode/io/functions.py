@@ -165,11 +165,18 @@ def loaddfits(fitsname, coordtype='azel', loadtype='temperature', starttime=None
             el_i = np.interp(dt_out, dt_ant, antlog['el'])
             x_i *= np.cos(np.deg2rad(el_i))
 
+    if coordtype == 'azel':
+        xref = np.nanmedian(antlog['az'])
+        yref = np.nanmedian(antlog['el'])
+    else:
+        xref = obshdr['RA']
+        yref = obshdr['DEC']
+
     ### coordinates
     tcoords      = {'x': x_i, 'y': y_i, 'time': t_out, 'temp': temp_i, 'pressure': pressure_i,
                     'vapor-pressure': vpressure_i, 'windspd': windspd_i, 'winddir': winddir_i}
     chcoords     = {'masterid': masterids, 'kidid': kidids, 'kidfq': kidfreqs, 'kidtp': kidtypes}
-    scalarcoords = {'datatype': loadtype}
+    scalarcoords = {'datatype': loadtype, 'xref': xref, 'yref': yref}
 
     ### make array
     array = dc.array(response, tcoords=tcoords, chcoords=chcoords, scalarcoords=scalarcoords)
