@@ -142,6 +142,9 @@ class DecodeCubeAccessor(BaseAccessor):
             else:
                 raise KeyError('Arguments are wrong.')
 
+        if array.coordsys == 'RADEC':
+            x_grid = x_grid[::-1]
+
         nx_grid = len(x_grid)
         ny_grid = len(y_grid)
         nz_grid = len(array.ch)

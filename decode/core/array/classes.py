@@ -24,6 +24,7 @@ TCOORDS = lambda array: OrderedDict([
     ('vapor-pressure', ('t', np.zeros(array.shape[0], dtype=float))),
     ('windspd', ('t', np.zeros(array.shape[0], dtype=float))),
     ('winddir', ('t', np.zeros(array.shape[0], dtype=float))),
+    ('scantype', ('t', np.full(array.shape[0], 'GRAD')))
 ])
 
 CHCOORDS = lambda array: OrderedDict([

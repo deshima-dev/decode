@@ -16,6 +16,7 @@ import decode as dc
 import numpy as np
 import xarray as xr
 from astropy.io import fits
+from scipy.interpolate import interp1d
 
 
 def loaddfits(fitsname, coordtype='azel', loadtype='temperature', starttime=None, endtime=None,
@@ -114,19 +115,25 @@ def loaddfits(fitsname, coordtype='azel', loadtype='temperature', starttime=None
     if coordtype == 'azel':
         x = antlog['az'].copy()
         y = antlog['el'].copy()
-        try:
-            if mode in [0, 1, 2]:
-                x -= antlog['az_center']
-                y -= antlog['el_center']
-            elif mode == 3:
-                pass
-        except KeyError:
-            logger.warning('Az_center/el_center are not included in the ANTENNA HDU.')
+        if mode in [0, 1, 2]:
+            x -= antlog['az_center']
+            y -= antlog['el_center']
+        elif mode == 3:
+            pass
+        else:
+            raise ValueError(mode)
     elif coordtype == 'radec':
         x  = antlog['ra'].copy()
         y  = antlog['dec'].copy()
-        x -= obshdr['RA']
-        y -= obshdr['DEC']
+        if mode in [0, 1]:
+            x -= obshdr['RA']
+            y -= obshdr['DEC']
+        elif mode == 3:
+            pass
+        else:
+            raise ValueError(mode)
+
+    scantype = antlog['scantype']
 
     ### weatherlog
     temp      = wealog['temperature']
@@ -147,6 +154,16 @@ def loaddfits(fitsname, coordtype='azel', loadtype='temperature', starttime=None
     vpressure_i  = np.interp(dt_out, dt_wea, vpressure)
     windspd_i    = np.interp(dt_out, dt_wea, windspd)
     winddir_i    = np.interp(dt_out, dt_wea, winddir)
+
+    scandict     = {t: n for n, t in enumerate(np.unique(scantype))}
+    scantype_v   = np.zeros(scantype.shape[0], dtype=int)
+    for k, v in scandict.items():
+        scantype_v[scantype == k] = v
+    scantype_vi  = interp1d(dt_ant, scantype_v, kind='nearest', bounds_error=False,
+                            fill_value=(scantype_v[0], scantype_v[-1]))(dt_out)
+    scantype_i   = np.full_like(scantype_vi, 'GRAD', dtype='<U8')
+    for k, v in scandict.items():
+        scantype_i[scantype_vi == v] = k
 
     ### temporal correction of az/el origins
     ### relative az/el原点の問題が解消するまでの暫定的な処置
@@ -174,9 +191,10 @@ def loaddfits(fitsname, coordtype='azel', loadtype='temperature', starttime=None
 
     ### coordinates
     tcoords      = {'x': x_i, 'y': y_i, 'time': t_out, 'temp': temp_i, 'pressure': pressure_i,
-                    'vapor-pressure': vpressure_i, 'windspd': windspd_i, 'winddir': winddir_i}
+                    'vapor-pressure': vpressure_i, 'windspd': windspd_i, 'winddir': winddir_i,
+                    'scantype': scantype_i}
     chcoords     = {'masterid': masterids, 'kidid': kidids, 'kidfq': kidfreqs, 'kidtp': kidtypes}
-    scalarcoords = {'datatype': loadtype, 'xref': xref, 'yref': yref}
+    scalarcoords = {'coordsys': coordtype.upper(), 'datatype': loadtype, 'xref': xref, 'yref': yref}
 
     ### make array
     array = dc.array(response, tcoords=tcoords, chcoords=chcoords, scalarcoords=scalarcoords)
