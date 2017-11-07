@@ -40,15 +40,14 @@ def loaddfits(fitsname, coordtype='azel', loadtype='temperature', starttime=None
         pixelids (int or list): Under development.
         scantype (str): Under development.
         mode (int):
-            0: The origin of relative az/el is corrected with cosine projection (RECOMMENDED).
-            1: The origin of relative az/el is corrected without cosine projection.
-            2: The origin of relative az/el is not corrected.
-            3: Absolute az/el.
+            0: Relative coordinates with cosine projection (RECOMMENDED).
+            1: Relative coordinates without cosine projection.
+            2: Absolute coordinates.
 
     Returns:
         decode array (decode.array): Loaded decode array.
     """
-    if mode in [0, 1, 2, 3]:
+    if mode in [0, 1, 2]:
         logger = getLogger('decode.io.loaddfits (mode={})'.format(mode))
     else:
         raise KeyError(mode)
@@ -113,26 +112,25 @@ def loaddfits(fitsname, coordtype='azel', loadtype='temperature', starttime=None
 
     ### antenna
     if coordtype == 'azel':
-        x = antlog['az'].copy()
-        y = antlog['el'].copy()
-        if mode in [0, 1, 2]:
+        x    = antlog['az'].copy()
+        y    = antlog['el'].copy()
+        xref = np.median(antlog['az_center'])
+        yref = np.median(antlog['el_center'])
+        if mode in [0, 1]:
             x -= antlog['az_center']
             y -= antlog['el_center']
-        elif mode == 3:
-            pass
-        else:
-            raise ValueError(mode)
+            if mode == 0:
+                x *= np.cos(np.deg2rad(antlog['el']))
     elif coordtype == 'radec':
-        x  = antlog['ra'].copy()
-        y  = antlog['dec'].copy()
+        x    = antlog['ra'].copy()
+        y    = antlog['dec'].copy()
+        xref = obshdr['RA']
+        yref = obshdr['DEC']
         if mode in [0, 1]:
-            x -= obshdr['RA']
-            y -= obshdr['DEC']
-        elif mode == 3:
-            pass
-        else:
-            raise ValueError(mode)
-
+            x -= xref
+            y -= yref
+            if mode == 0:
+                x *= np.cos(np.deg2rad(antlog['dec']))
     scantype = antlog['scantype']
 
     ### weatherlog
@@ -164,30 +162,6 @@ def loaddfits(fitsname, coordtype='azel', loadtype='temperature', starttime=None
     scantype_i   = np.full_like(scantype_vi, 'GRAD', dtype='<U8')
     for k, v in scandict.items():
         scantype_i[scantype_vi == v] = k
-
-    ### temporal correction of az/el origins
-    ### relative az/el原点の問題が解消するまでの暫定的な処置
-    if (mode in [0, 1]) and (coordtype == 'azel'):
-        if 'x_m' in kwargs and 'y_m' in kwargs:
-            x_m = kwargs['x_m']
-            y_m = kwargs['y_m']
-        else:
-            x_m  = np.median(x_i)
-            y_m  = np.median(y_i)
-        logger.debug('x_median: {}'.format(x_m))
-        logger.debug('y_median: {}'.format(y_m))
-        x_i -= x_m
-        y_i -= y_m
-        if mode == 0:
-            el_i = np.interp(dt_out, dt_ant, antlog['el'])
-            x_i *= np.cos(np.deg2rad(el_i))
-
-    if coordtype == 'azel':
-        xref = np.nanmedian(antlog['az'])
-        yref = np.nanmedian(antlog['el'])
-    else:
-        xref = obshdr['RA']
-        yref = obshdr['DEC']
 
     ### coordinates
     tcoords      = {'x': x_i, 'y': y_i, 'time': t_out, 'temp': temp_i, 'pressure': pressure_i,
