@@ -221,11 +221,12 @@ class DecodeCubeAccessor(BaseAccessor):
         logger.info('{} has been created.'.format(fitsname))
 
     @staticmethod
-    def plotspectrum(cube, shape, **kwargs):
+    def plotspectrum(cube, ax, xtick, ytick, aperture, **kwargs):
         logger = getLogger('decode.plot.plotspectrum')
 
-        cube = cube.copy()
-        if shape == 'box':
+        cube     = cube.copy()
+        datatype = cube.datatype
+        if aperture == 'box':
             if 'xc' in kwargs and 'yc' in kwargs and 'width' in kwargs and 'height' in kwargs:
                 xc     = kwargs['xc']
                 yc     = kwargs['yc']
@@ -240,9 +241,11 @@ class DecodeCubeAccessor(BaseAccessor):
             else:
                 raise KeyError('Arguments are wrong.')
 
-            # flux = cube[xmin:xmax, ymin:ymax, :].sum(dim=('x', 'y'))
-            peak = cube[xmin:xmax, ymin:ymax, :].max(axis=(0, 1))
-        elif shape == 'circle':
+            if ytick == 'sum':
+                value = cube[xmin:xmax, ymin:ymax, :].sum(dim=('x', 'y'))
+            elif ytick == 'peak':
+                value = cube[xmin:xmax, ymin:ymax, :].max(axis=(0, 1))
+        elif aperture == 'circle':
             if 'xc' in kwargs and 'yc' in kwargs and 'radius' in kwargs:
                 xc     = kwargs['xc']
                 yc     = kwargs['yc']
@@ -254,34 +257,31 @@ class DecodeCubeAccessor(BaseAccessor):
             mask   = ((x - xc)**2 + (y - yc)**2 < radius**2)
             mask   = np.broadcast_to(mask[:, :, np.newaxis], cube.shape)
             masked = np.ma.array(cube.values, mask=~mask)
-            # flux   = np.nansum(np.nansum(masked, axis=0), axis=0).data
-            peak   = np.nanmax(masked, axis=(0, 1))
 
-        xtick    = kwargs['xtick'] if 'xtick' in kwargs else 'freq'
-        datatype = cube.datatype
+            if ytick == 'sum':
+                value = np.nansum(np.nansum(masked, axis=0), axis=0).data
+                if datatype == 'temperature':
+                    ax.set_ylabel(r'$T_\mathrm{sum}$ [K]', fontsize=20, color='grey')
+                elif datatype == 'power':
+                    ax.set_ylabel(r'$P_\mathrm{sum}$ [W]', fontsize=20, color='grey')
+            elif ytick == 'peak':
+                value = np.nanmax(masked, axis=(0, 1))
+                if datatype == 'temperature':
+                    ax.set_ylabel(r'$T_\mathrm{peak}$ [K]', fontsize=20, color='grey')
+                elif datatype == 'power':
+                    ax.set_ylabel(r'$P_\mathrm{peak}$ [W]', fontsize=20, color='grey')
 
-        fig = plt.figure(dpi=200)
-        ax = fig.add_subplot(111)
         if xtick == 'freq':
             freqrange = ~np.isnan(cube.kidfq.values)
             if 'exchs' in kwargs:
                 freqrange[kwargs['exchs']] = False
             x = cube.kidfq.values[freqrange]
-            y = peak[freqrange]
+            y = value[freqrange]
             ax.step(x[np.argsort(x)], y[np.argsort(x)], where='mid')
-            ax.set_xlabel('Frequency [GHz]')
+            ax.set_xlabel('Frequency [GHz]', fontsize=20, color='grey')
         elif xtick == 'id':
             x = cube.kidid.values
-            y = peak
+            y = value
             ax.step(x, y, where='mid')
-            ax.set_xlabel('id')
-        if datatype == 'temperature':
-            ax.set_ylabel(r'$T_\mathrm{peak}$ [K]')
-        elif datatype == 'power':
-            ax.set_ylabel(r'$P_\mathrm{peak}$ [W]')
-        if 'xlim' in kwargs:
-            ax.set_xlim(kwargs['xlim'])
-        if 'ylim' in kwargs:
-            ax.set_ylim(kwargs['ylim'])
-
-        fig.show()
+            ax.set_xlabel('kidid', fontsize=20, color='grey')
+        ax.set_title('spectrum', fontsize=20, color='grey')

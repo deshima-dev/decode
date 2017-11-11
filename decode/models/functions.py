@@ -27,6 +27,7 @@ def skewgauss(x, sigma, mu, alpha, a):
     return 2 * a * normpdf * normcdf
 
 
+@dc.xarrayfunc
 def savgol_filter(array, win=2001, polyn=3, iteration=1, threshold=1):
     logger = getLogger('decode.models.savgol_filter')
     logger.info('win polyn iteration threshold')

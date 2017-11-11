@@ -97,40 +97,34 @@ class DecodeArrayAccessor(BaseAccessor):
         return {k: v.values for k, v in self.coords.items() if v.dims==('t', 'ch')}
 
     @staticmethod
-    def plotcoords(array, coords, scantypes=None, save=True, **kwargs):
+    def plotcoords(array, ax, coords, scantypes=None):
         logger = getLogger('decode.plot.plotcoords')
 
-        fig, ax = plt.subplots(1, 1, **kwargs)
         if scantypes is None:
             ax.plot(array[coords[0]], array[coords[1]], label='ALL')
         else:
             for scantype in scantypes:
                 ax.plot(array[coords[0]][array.scantype == scantype],
                         array[coords[1]][array.scantype == scantype], label=scantype)
-        ax.set_xlabel(coords[0])
-        ax.set_ylabel(coords[1])
+        ax.set_xlabel(coords[0], fontsize=20, color='grey')
+        ax.set_ylabel(coords[1], fontsize=20, color='grey')
+        ax.set_title('{} vs {}'.format(coords[1], coords[0]), fontsize=20, color='grey')
         ax.legend()
-        fig.tight_layout()
-        if save:
-            filename = '{}_vs_{}.png'.format(coords[1], coords[0])
-            fig.savefig(filename)
-            logger.info('{} has been created.'.format(filename))
+
+        logger.info('{} vs {} has been plotted.'.format(coords[1], coords[0]))
 
     @staticmethod
-    def plotweather(array, save=True, **kwargs):
+    def plotweather(array, axs):
         logger = getLogger('decode.plot.plotweather')
 
         infos  = ['temp', 'pressure', 'vapor-pressure', 'windspd', 'winddir']
         labels = ['external temperature [C]', 'pressure [hPa]', 'vapor pressure [hPa]',
                   'wind speed [m/s]', 'wind direction [deg]']
-        fig = plt.figure(**kwargs)
-        for n, (info, label) in enumerate(zip(infos, labels)):
-            ax = fig.add_subplot(3, 2, n+1)
+        for (ax, info, label) in zip(axs, infos, labels):
             ax.plot(array['time'], array[info])
             ax.set_xlabel('time')
             ax.set_ylabel(label)
-        fig.tight_layout()
-        if save:
-            filename = 'weather_info.png'
-            fig.savefig(filename)
-            logger.info('{} has been created.'.format(filename))
+            for label in ax.get_xticklabels():
+                label.set_rotation(45)
+
+        logger.info('weather_info has been plotted.')
