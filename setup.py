@@ -7,12 +7,7 @@ from setuptools import setup
 
 # module constants
 INSTALL_REQUIRES = [
-    'astropy',
-    'numpy',
-    'scipy',
-    'pyyaml',
-    'xarray',
-    'matplotlib',
+    'xarray >= 0.9.6',
 ]
 
 PACKAGES = [
@@ -33,10 +28,10 @@ PACKAGES = [
 setup(
     name = 'decode',
     description = __doc__,
-    version = '0.2.10',
+    version = '0.3',
     author = 'snoopython',
     author_email = 'taniguchi@ioa.s.u-tokyo.ac.jp',
     url = 'https://github.com/deshima-dev/decode',
-    # install_requires = INSTALL_REQUIRES,
+    install_requires = INSTALL_REQUIRES,
     packages = PACKAGES,
 )
