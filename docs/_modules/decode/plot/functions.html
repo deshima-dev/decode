@@ -1,0 +1,347 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>decode.plot.functions &mdash; De:code 0.3 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="../../../genindex.html"/>
+        <link rel="search" title="Search" href="../../../search.html"/>
+    <link rel="top" title="De:code 0.3 documentation" href="../../../index.html"/>
+        <link rel="up" title="Module code" href="../../index.html"/> 
+
+  
+  <script src="../../../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../../../index.html" class="icon icon-home"> De:code
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.3
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <!-- Local TOC -->
+              <div class="local-toc"></div>
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">De:code</a>
+        
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+        
+      <li>decode.plot.functions</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for decode.plot.functions</h1><div class="highlight"><pre>
+<span></span><span class="c1"># coding: utf-8</span>
+
+<span class="c1"># public items</span>
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s1">&#39;plotcoords&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;plotweather&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;plotspectrum&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;plottimestream&#39;</span>
+<span class="p">]</span>
+
+<span class="c1"># standard library</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">from</span> <span class="nn">logging</span> <span class="k">import</span> <span class="n">getLogger</span>
+
+<span class="c1"># dependent packages</span>
+<span class="kn">import</span> <span class="nn">decode</span> <span class="k">as</span> <span class="nn">dc</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">style</span><span class="o">.</span><span class="n">use</span><span class="p">(</span><span class="s1">&#39;seaborn-darkgrid&#39;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">style</span><span class="o">.</span><span class="n">use</span><span class="p">(</span><span class="s1">&#39;seaborn-pastel&#39;</span><span class="p">)</span>
+<span class="k">except</span><span class="p">:</span>
+    <span class="k">pass</span>
+<span class="kn">import</span> <span class="nn">xarray</span> <span class="k">as</span> <span class="nn">xr</span>
+<span class="kn">from</span> <span class="nn">astropy.io</span> <span class="k">import</span> <span class="n">fits</span>
+
+
+<span class="c1"># functions</span>
+<div class="viewcode-block" id="plotcoords"><a class="viewcode-back" href="../../../apis/decode.plot.html#decode.plot.functions.plotcoords">[docs]</a><span class="k">def</span> <span class="nf">plotcoords</span><span class="p">(</span><span class="n">dataarray</span><span class="p">,</span> <span class="n">coords</span><span class="p">,</span> <span class="n">scantypes</span><span class="p">,</span> <span class="n">save</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">dataarray</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="s1">&#39;dca&#39;</span><span class="p">:</span>
+        <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="o">.</span><span class="n">dca</span><span class="o">.</span><span class="n">plotcoords</span><span class="p">(</span><span class="n">dataarray</span><span class="p">,</span> <span class="n">coords</span><span class="p">,</span> <span class="n">scantypes</span><span class="p">,</span> <span class="n">save</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">dataarray</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="s1">&#39;dcc&#39;</span><span class="p">:</span>
+        <span class="k">pass</span>
+    <span class="k">elif</span> <span class="n">dataarray</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="s1">&#39;dcs&#39;</span><span class="p">:</span>
+        <span class="k">pass</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">KerError</span><span class="p">(</span><span class="n">dataarray</span><span class="o">.</span><span class="n">type</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="plotweather"><a class="viewcode-back" href="../../../apis/decode.plot.html#decode.plot.functions.plotweather">[docs]</a><span class="k">def</span> <span class="nf">plotweather</span><span class="p">(</span><span class="n">dataarray</span><span class="p">,</span> <span class="n">save</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">dataarray</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="s1">&#39;dca&#39;</span><span class="p">:</span>
+        <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="o">.</span><span class="n">dca</span><span class="o">.</span><span class="n">plotweather</span><span class="p">(</span><span class="n">dataarray</span><span class="p">,</span> <span class="n">save</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">dataarray</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="s1">&#39;dcc&#39;</span><span class="p">:</span>
+        <span class="k">pass</span>
+    <span class="k">elif</span> <span class="n">dataarray</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="s1">&#39;dcs&#39;</span><span class="p">:</span>
+        <span class="k">pass</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">KerError</span><span class="p">(</span><span class="n">dataarray</span><span class="o">.</span><span class="n">type</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="plotspectrum"><a class="viewcode-back" href="../../../apis/decode.plot.html#decode.plot.functions.plotspectrum">[docs]</a><span class="k">def</span> <span class="nf">plotspectrum</span><span class="p">(</span><span class="n">dataarray</span><span class="p">,</span> <span class="n">shape</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Plot a spectrum diagram.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        dataarray (xarray.DataArray): Dataarray with which the spectrum is plotted.</span>
+<span class="sd">        shape (str): The shape of mask, &#39;box&#39; or &#39;circle&#39;.</span>
+<span class="sd">        kwargs (optional):</span>
+<span class="sd">            When &#39;box&#39; is specified as shape,</span>
+<span class="sd">                xc: Center of x.</span>
+<span class="sd">                yc: Center of y.</span>
+<span class="sd">                width: Width.</span>
+<span class="sd">                height: Height.</span>
+<span class="sd">                xmin: Minimum of x.</span>
+<span class="sd">                xmax: Maximum of x.</span>
+<span class="sd">                ymin: Minimum of y.</span>
+<span class="sd">                ymax: Maximum of y.</span>
+<span class="sd">            When &#39;circle&#39; is specified as shape,</span>
+<span class="sd">                xc: Center of x.</span>
+<span class="sd">                yc: Center of y.</span>
+<span class="sd">                radius: Radius.</span>
+<span class="sd">            xlim (list): Range of x.</span>
+<span class="sd">            ylim (list): Range of y.</span>
+
+<span class="sd">    Notes:</span>
+<span class="sd">        All kwargs should be specified as pixel coordinates.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">dataarray</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="s1">&#39;dca&#39;</span><span class="p">:</span>
+        <span class="k">pass</span>
+    <span class="k">elif</span> <span class="n">dataarray</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="s1">&#39;dcc&#39;</span><span class="p">:</span>
+        <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="o">.</span><span class="n">dcc</span><span class="o">.</span><span class="n">plotspectrum</span><span class="p">(</span><span class="n">dataarray</span><span class="p">,</span> <span class="n">shape</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">dataarray</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="s1">&#39;dcs&#39;</span><span class="p">:</span>
+        <span class="k">pass</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">KerError</span><span class="p">(</span><span class="n">dataarray</span><span class="o">.</span><span class="n">type</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="plottimestream"><a class="viewcode-back" href="../../../apis/decode.plot.html#decode.plot.functions.plottimestream">[docs]</a><span class="k">def</span> <span class="nf">plottimestream</span><span class="p">(</span><span class="n">scanarray</span><span class="p">,</span> <span class="n">fittedarray</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">filteredarray</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">chs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">peakfind</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                   <span class="n">save</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="n">logger</span> <span class="o">=</span> <span class="n">getLogger</span><span class="p">(</span><span class="s1">&#39;decode.plot.plottimestream&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">save</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="s1">&#39;timestream&#39;</span><span class="p">):</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="s1">&#39;timestream&#39;</span><span class="p">)</span>
+    <span class="n">kidtps</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="s1">&#39;wideband&#39;</span><span class="p">]</span> <span class="o">*</span> <span class="mi">7</span> <span class="o">+</span> <span class="p">[</span><span class="s1">&#39;filter&#39;</span><span class="p">]</span> <span class="o">*</span> <span class="mi">50</span> <span class="o">+</span> <span class="p">[</span><span class="s1">&#39;blind&#39;</span><span class="p">]</span> <span class="o">*</span> <span class="mi">6</span><span class="p">)</span>
+    <span class="n">peaks</span>  <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">if</span> <span class="n">chs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">chs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ogrid</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">63</span><span class="p">]</span>
+
+    <span class="k">for</span> <span class="n">ch</span> <span class="ow">in</span> <span class="n">chs</span><span class="p">:</span>
+        <span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="c1">### raw dataとfitted dataのplot</span>
+        <span class="n">ax</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">scanarray</span><span class="p">[:,</span> <span class="n">ch</span><span class="p">],</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;scan&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">fittedarray</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">ax</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">fittedarray</span><span class="p">[:,</span> <span class="n">ch</span><span class="p">],</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;fitted&#39;</span><span class="p">)</span>
+        <span class="n">ax</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;time index&#39;</span><span class="p">)</span>
+        <span class="n">ax</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">scanarray</span><span class="o">.</span><span class="n">datatype</span><span class="o">.</span><span class="n">values</span><span class="p">))</span>
+        <span class="n">ax</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;ch #</span><span class="si">{}</span><span class="s1"> (</span><span class="si">{}</span><span class="s1">)&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">ch</span><span class="p">,</span> <span class="n">kidtps</span><span class="p">[</span><span class="n">ch</span><span class="p">]),</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;grey&#39;</span><span class="p">)</span>
+        <span class="n">ax</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+        <span class="c1">### filtered dataのplot</span>
+        <span class="k">if</span> <span class="n">filteredarray</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">ax</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">filteredarray</span><span class="p">[:,</span> <span class="n">ch</span><span class="p">],</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;filtered&#39;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">peakfind</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">kidtps</span><span class="p">[</span><span class="n">ch</span><span class="p">]</span> <span class="o">!=</span> <span class="s1">&#39;blind&#39;</span> <span class="ow">and</span> <span class="n">kidtps</span><span class="p">[</span><span class="n">ch</span><span class="p">]</span> <span class="o">!=</span> <span class="s1">&#39;bad&#39;</span><span class="p">:</span>
+                    <span class="c1">### time stream上でのpeak同定</span>
+                    <span class="n">peak</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nanmax</span><span class="p">(</span><span class="n">filteredarray</span><span class="p">[:,</span> <span class="n">ch</span><span class="p">])</span>
+                    <span class="n">peaks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">peak</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">peaks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
+            <span class="n">ax</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;time index&#39;</span><span class="p">)</span>
+            <span class="n">ax</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">scanarray</span><span class="o">.</span><span class="n">datatype</span><span class="o">.</span><span class="n">values</span><span class="p">))</span>
+            <span class="n">ax</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;ch #</span><span class="si">{}</span><span class="s1"> (</span><span class="si">{}</span><span class="s1">)&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">ch</span><span class="p">,</span> <span class="n">kidtps</span><span class="p">[</span><span class="n">ch</span><span class="p">]),</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;grey&#39;</span><span class="p">)</span>
+            <span class="n">ax</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+        <span class="n">fig</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">save</span><span class="p">:</span>
+            <span class="n">fig</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="s1">&#39;timestream/ch</span><span class="si">{}</span><span class="s1">.png&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">ch</span><span class="p">))</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;timestream/ch</span><span class="si">{}</span><span class="s1">.png has been created.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">ch</span><span class="p">))</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;chs peaks&#39;</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">{}</span><span class="s1"> </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">chs</span><span class="p">,</span> <span class="n">peaks</span><span class="p">))</span></div>
+</pre></div>
+
+           </div>
+           <div class="articleComments">
+            
+           </div>
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, DESHIMA Software Team.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../../../',
+            VERSION:'0.3',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../../../_static/jquery.js"></script>
+      <script type="text/javascript" src="../../../_static/underscore.js"></script>
+      <script type="text/javascript" src="../../../_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

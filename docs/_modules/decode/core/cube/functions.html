@@ -1,0 +1,340 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>decode.core.cube.functions &mdash; De:code 0.3 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="../../../../genindex.html"/>
+        <link rel="search" title="Search" href="../../../../search.html"/>
+    <link rel="top" title="De:code 0.3 documentation" href="../../../../index.html"/>
+        <link rel="up" title="decode.core" href="../../core.html"/> 
+
+  
+  <script src="../../../../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../../../../index.html" class="icon icon-home"> De:code
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.3
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <!-- Local TOC -->
+              <div class="local-toc"></div>
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">De:code</a>
+        
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../../../index.html">Module code</a> &raquo;</li>
+        
+          <li><a href="../../core.html">decode.core</a> &raquo;</li>
+        
+      <li>decode.core.cube.functions</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for decode.core.cube.functions</h1><div class="highlight"><pre>
+<span></span><span class="c1"># coding: utf-8</span>
+
+<span class="c1"># public items</span>
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s1">&#39;cube&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;fromcube&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;tocube&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;makecontinuum&#39;</span><span class="p">,</span>
+<span class="p">]</span>
+
+<span class="c1"># dependent packages</span>
+<span class="kn">import</span> <span class="nn">decode</span> <span class="k">as</span> <span class="nn">dc</span>
+<span class="kn">import</span> <span class="nn">xarray</span> <span class="k">as</span> <span class="nn">xr</span>
+
+
+<span class="c1"># functions</span>
+<div class="viewcode-block" id="cube"><a class="viewcode-back" href="../../../../apis/decode.html#decode.cube">[docs]</a><span class="k">def</span> <span class="nf">cube</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">xcoords</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">ycoords</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">chcoords</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">scalarcoords</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">datacoords</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">attrs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Create a cube as an instance of xarray.DataArray with Decode accessor.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        data (numpy.ndarray): 3D (x x y x channel) array.</span>
+<span class="sd">        xcoords (dict, optional): Dictionary of arrays that label x axis.</span>
+<span class="sd">        ycoords (dict, optional): Dictionary of arrays that label y axis.</span>
+<span class="sd">        chcoords (dict, optional): Dictionary of arrays that label channel axis.</span>
+<span class="sd">        scalarcoords (dict, optional): Dictionary of values that don&#39;t label any axes (point-like).</span>
+<span class="sd">        attrs (dict, optional): Dictionary of attributes to add to the instance.</span>
+<span class="sd">        name (str, optional): String that names the instance.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        decode cube (decode.cube): Decode cube.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># initialize coords with default values</span>
+    <span class="n">cube</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">dims</span><span class="o">=</span><span class="p">(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="s1">&#39;ch&#39;</span><span class="p">),</span> <span class="n">attrs</span><span class="o">=</span><span class="n">attrs</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)</span>
+    <span class="n">cube</span><span class="o">.</span><span class="n">dcc</span><span class="o">.</span><span class="n">_initcoords</span><span class="p">()</span>
+
+    <span class="c1"># update coords with input values (if any)</span>
+    <span class="k">if</span> <span class="n">xcoords</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">cube</span><span class="o">.</span><span class="n">coords</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="n">key</span><span class="p">:</span> <span class="p">(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="n">xcoords</span><span class="p">[</span><span class="n">key</span><span class="p">])</span> <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">xcoords</span><span class="p">})</span>
+
+    <span class="k">if</span> <span class="n">ycoords</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">cube</span><span class="o">.</span><span class="n">coords</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="n">key</span><span class="p">:</span> <span class="p">(</span><span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="n">ycoords</span><span class="p">[</span><span class="n">key</span><span class="p">])</span> <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">ycoords</span><span class="p">})</span>
+
+    <span class="k">if</span> <span class="n">chcoords</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">cube</span><span class="o">.</span><span class="n">coords</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="n">key</span><span class="p">:</span> <span class="p">(</span><span class="s1">&#39;ch&#39;</span><span class="p">,</span> <span class="n">chcoords</span><span class="p">[</span><span class="n">key</span><span class="p">])</span> <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">chcoords</span><span class="p">})</span>
+
+    <span class="k">if</span> <span class="n">datacoords</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">cube</span><span class="o">.</span><span class="n">coords</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="n">key</span><span class="p">:</span> <span class="p">((</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="s1">&#39;ch&#39;</span><span class="p">),</span> <span class="n">datacoords</span><span class="p">[</span><span class="n">key</span><span class="p">])</span> <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">datacoords</span><span class="p">})</span>
+
+    <span class="k">if</span> <span class="n">scalarcoords</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">cube</span><span class="o">.</span><span class="n">coords</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">scalarcoords</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">cube</span></div>
+
+
+<div class="viewcode-block" id="fromcube"><a class="viewcode-back" href="../../../../apis/decode.html#decode.fromcube">[docs]</a><span class="k">def</span> <span class="nf">fromcube</span><span class="p">(</span><span class="n">cube</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Covert a decode cube to a decode array.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        cube (decode.cube): Decode cube which will be converted.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        decode array (decode.array): Decode array.</span>
+
+<span class="sd">    Notes:</span>
+<span class="sd">        This functions is under development.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="o">.</span><span class="n">dcc</span><span class="o">.</span><span class="n">fromcube</span><span class="p">(</span><span class="n">cube</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="tocube"><a class="viewcode-back" href="../../../../apis/decode.html#decode.tocube">[docs]</a><span class="k">def</span> <span class="nf">tocube</span><span class="p">(</span><span class="n">array</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Convert a decode array to decode cube.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        array (decode.array): Decode array which will be converted.</span>
+<span class="sd">        kwargs (optional): Other arguments.</span>
+<span class="sd">            xarr (list or numpy.ndarray): Grid array of x direction.</span>
+<span class="sd">            yarr (list or numpy.ndarray): Grid array of y direction.</span>
+<span class="sd">            gx (float): The size of grid of x.</span>
+<span class="sd">            gy (float): The size of grid of y.</span>
+<span class="sd">            nx (int): The number of grid of x direction.</span>
+<span class="sd">            ny (int): The number of grid of y direction.</span>
+<span class="sd">            xmin (float): Minimum value of x.</span>
+<span class="sd">            xmax (float): Maximum value of x.</span>
+<span class="sd">            ymin (float): Minimum value of y.</span>
+<span class="sd">            ymax (float): Maximum value of y.</span>
+<span class="sd">            xc (float): Center of x.</span>
+<span class="sd">            yc (float): Center of y.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        decode cube (decode.cube): Decode cube.</span>
+
+<span class="sd">    Notes:</span>
+<span class="sd">        Available combination of kwargs are</span>
+<span class="sd">            (1) xarr/yarr and xc/yc</span>
+<span class="sd">            (2) gx/gy and xmin/xmax/ymin/ymax and xc/yc</span>
+<span class="sd">            (3) nx/ny and xmin/xmax/ymin/ymax</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="o">.</span><span class="n">dcc</span><span class="o">.</span><span class="n">tocube</span><span class="p">(</span><span class="n">array</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="makecontinuum"><a class="viewcode-back" href="../../../../apis/decode.html#decode.makecontinuum">[docs]</a><span class="k">def</span> <span class="nf">makecontinuum</span><span class="p">(</span><span class="n">cube</span><span class="p">,</span> <span class="n">kidtp</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Make a continuum array.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        cube (decode.cube): Decode cube which will be averaged over channels.</span>
+<span class="sd">        kidtp (int): Kid types which will be used</span>
+<span class="sd">            0: wideband</span>
+<span class="sd">            1: filter</span>
+<span class="sd">            2: blind</span>
+<span class="sd">        kwargs (optional): Other arguments.</span>
+<span class="sd">            exchs (list): Excluded channel kidids</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        decode cube (decode.cube): Decode cube (2d).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="o">.</span><span class="n">dcc</span><span class="o">.</span><span class="n">makecontinuum</span><span class="p">(</span><span class="n">cube</span><span class="p">,</span> <span class="n">kidtp</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+</pre></div>
+
+           </div>
+           <div class="articleComments">
+            
+           </div>
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, DESHIMA Software Team.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../../../../',
+            VERSION:'0.3',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../../../../_static/jquery.js"></script>
+      <script type="text/javascript" src="../../../../_static/underscore.js"></script>
+      <script type="text/javascript" src="../../../../_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../../../../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

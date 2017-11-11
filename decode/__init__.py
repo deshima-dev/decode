@@ -10,3 +10,6 @@ from .joke import *
 del core
 del logging
 del joke
+
+# for sphinx build
+__all__ = dir()

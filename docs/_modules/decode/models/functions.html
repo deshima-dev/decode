@@ -1,0 +1,321 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>decode.models.functions &mdash; De:code 0.3 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="../../../genindex.html"/>
+        <link rel="search" title="Search" href="../../../search.html"/>
+    <link rel="top" title="De:code 0.3 documentation" href="../../../index.html"/>
+        <link rel="up" title="Module code" href="../../index.html"/> 
+
+  
+  <script src="../../../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../../../index.html" class="icon icon-home"> De:code
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.3
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <!-- Local TOC -->
+              <div class="local-toc"></div>
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">De:code</a>
+        
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+        
+      <li>decode.models.functions</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for decode.models.functions</h1><div class="highlight"><pre>
+<span></span><span class="c1"># coding: utf-8</span>
+
+<span class="c1"># public items</span>
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s1">&#39;skewgauss&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;savgol_filter&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;pca&#39;</span><span class="p">,</span>
+<span class="p">]</span>
+
+<span class="c1"># standard library</span>
+<span class="kn">from</span> <span class="nn">logging</span> <span class="k">import</span> <span class="n">getLogger</span>
+
+<span class="c1"># dependent packages</span>
+<span class="kn">import</span> <span class="nn">decode</span> <span class="k">as</span> <span class="nn">dc</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">scipy.special</span> <span class="k">import</span> <span class="n">erf</span>
+<span class="kn">from</span> <span class="nn">scipy</span> <span class="k">import</span> <span class="n">signal</span>
+<span class="kn">from</span> <span class="nn">sklearn.decomposition</span> <span class="k">import</span> <span class="n">TruncatedSVD</span>
+<span class="kn">import</span> <span class="nn">xarray</span> <span class="k">as</span> <span class="nn">xr</span>
+
+
+<span class="c1">##### skewed Gaussian</span>
+<div class="viewcode-block" id="skewgauss"><a class="viewcode-back" href="../../../apis/decode.models.html#decode.models.functions.skewgauss">[docs]</a><span class="k">def</span> <span class="nf">skewgauss</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">sigma</span><span class="p">,</span> <span class="n">mu</span><span class="p">,</span> <span class="n">alpha</span><span class="p">,</span> <span class="n">a</span><span class="p">):</span>
+    <span class="n">normpdf</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="p">(</span><span class="n">sigma</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)))</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="p">(</span><span class="n">x</span> <span class="o">-</span> <span class="n">mu</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">sigma</span><span class="o">**</span><span class="mi">2</span><span class="p">))</span>
+    <span class="n">normcdf</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">erf</span><span class="p">((</span><span class="n">alpha</span> <span class="o">*</span> <span class="p">((</span><span class="n">x</span> <span class="o">-</span> <span class="n">mu</span><span class="p">)</span> <span class="o">/</span> <span class="n">sigma</span><span class="p">))</span> <span class="o">/</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">2</span><span class="p">))))</span>
+
+    <span class="k">return</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">a</span> <span class="o">*</span> <span class="n">normpdf</span> <span class="o">*</span> <span class="n">normcdf</span></div>
+
+
+<div class="viewcode-block" id="savgol_filter"><a class="viewcode-back" href="../../../apis/decode.models.html#decode.models.functions.savgol_filter">[docs]</a><span class="k">def</span> <span class="nf">savgol_filter</span><span class="p">(</span><span class="n">array</span><span class="p">,</span> <span class="n">win</span><span class="o">=</span><span class="mi">2001</span><span class="p">,</span> <span class="n">polyn</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">iteration</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">threshold</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+    <span class="n">logger</span> <span class="o">=</span> <span class="n">getLogger</span><span class="p">(</span><span class="s1">&#39;decode.models.savgol_filter&#39;</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;win polyn iteration threshold&#39;</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">{}</span><span class="s1"> </span><span class="si">{}</span><span class="s1"> </span><span class="si">{}</span><span class="s1"> </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">win</span><span class="p">,</span> <span class="n">polyn</span><span class="p">,</span> <span class="n">iteration</span><span class="p">,</span> <span class="n">threshold</span><span class="p">))</span>
+    <span class="c1">### 1st estimation</span>
+    <span class="n">array</span>    <span class="o">=</span> <span class="n">array</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="n">fitted</span>   <span class="o">=</span> <span class="n">signal</span><span class="o">.</span><span class="n">savgol_filter</span><span class="p">(</span><span class="n">array</span><span class="p">,</span> <span class="n">win</span><span class="p">,</span> <span class="n">polyn</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">filtered</span> <span class="o">=</span> <span class="n">array</span> <span class="o">-</span> <span class="n">fitted</span>
+    <span class="c1">### nth iteration</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">iteration</span><span class="p">):</span>
+        <span class="n">sigma</span>  <span class="o">=</span> <span class="n">filtered</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">mask</span>   <span class="o">=</span> <span class="p">(</span><span class="n">filtered</span> <span class="o">&gt;=</span> <span class="n">threshold</span> <span class="o">*</span> <span class="n">sigma</span><span class="p">)</span>
+        <span class="n">masked</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ma</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">filtered</span><span class="p">,</span> <span class="n">mask</span><span class="o">=</span><span class="n">mask</span><span class="p">)</span>
+        <span class="c1">### maskされた点についてはthreshold * sigmaのデータで埋める</span>
+        <span class="n">filled</span> <span class="o">=</span> <span class="n">masked</span><span class="o">.</span><span class="n">filled</span><span class="p">(</span><span class="n">threshold</span> <span class="o">*</span> <span class="n">sigma</span><span class="p">)</span>
+        <span class="c1">### fitted dataを足し、このデータに対して再度savgol_filterをかける</span>
+        <span class="n">clipped</span>  <span class="o">=</span> <span class="n">filled</span> <span class="o">+</span> <span class="n">fitted</span>
+        <span class="n">fitted</span>   <span class="o">=</span> <span class="n">signal</span><span class="o">.</span><span class="n">savgol_filter</span><span class="p">(</span><span class="n">clipped</span><span class="p">,</span> <span class="n">win</span><span class="p">,</span> <span class="n">polyn</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">filtered</span> <span class="o">=</span> <span class="n">array</span> <span class="o">-</span> <span class="n">fitted</span>
+
+    <span class="k">return</span> <span class="n">fitted</span></div>
+
+
+<div class="viewcode-block" id="pca"><a class="viewcode-back" href="../../../apis/decode.models.html#decode.models.functions.pca">[docs]</a><span class="k">def</span> <span class="nf">pca</span><span class="p">(</span><span class="n">onarray</span><span class="p">,</span> <span class="n">offarray</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">exchs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">pc</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+    <span class="n">logger</span> <span class="o">=</span> <span class="n">getLogger</span><span class="p">(</span><span class="s1">&#39;decode.models.pca&#39;</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;n_components exchs&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">exchs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">exchs</span> <span class="o">=</span> <span class="p">[</span><span class="mi">16</span><span class="p">,</span> <span class="mi">44</span><span class="p">,</span> <span class="mi">46</span><span class="p">]</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">{}</span><span class="s1"> </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">exchs</span><span class="p">))</span>
+
+    <span class="n">onarray</span>  <span class="o">=</span> <span class="n">onarray</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="n">onarray</span><span class="p">[:,</span> <span class="n">exchs</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">offarray</span> <span class="o">=</span> <span class="n">offarray</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="n">offarray</span><span class="p">[:,</span> <span class="n">exchs</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+
+    <span class="n">offid</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">offarray</span><span class="o">.</span><span class="n">scanid</span><span class="p">)</span>
+    <span class="n">onid</span>  <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">onarray</span><span class="o">.</span><span class="n">scanid</span><span class="p">)</span>
+    <span class="n">Xatms</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">Ps</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">Cs</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">onid</span><span class="p">:</span>
+        <span class="n">leftid</span>  <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">searchsorted</span><span class="p">(</span><span class="n">offid</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
+        <span class="n">rightid</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">searchsorted</span><span class="p">(</span><span class="n">offid</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span>
+
+        <span class="n">Xon</span>  <span class="o">=</span> <span class="n">onarray</span><span class="p">[</span><span class="n">onarray</span><span class="o">.</span><span class="n">scanid</span> <span class="o">==</span> <span class="n">i</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">leftid</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+            <span class="n">Xoff</span>  <span class="o">=</span> <span class="n">offarray</span><span class="p">[</span><span class="n">offarray</span><span class="o">.</span><span class="n">scanid</span> <span class="o">==</span> <span class="n">offid</span><span class="p">[</span><span class="n">rightid</span><span class="p">]]</span>
+            <span class="n">Xoff</span> <span class="o">-=</span> <span class="n">Xoff</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="s1">&#39;t&#39;</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">rightid</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">offid</span><span class="p">):</span>
+            <span class="n">Xoff</span>  <span class="o">=</span> <span class="n">offarray</span><span class="p">[</span><span class="n">offarray</span><span class="o">.</span><span class="n">scanid</span> <span class="o">==</span> <span class="n">offid</span><span class="p">[</span><span class="n">leftid</span><span class="p">]]</span>
+            <span class="n">Xoff</span> <span class="o">-=</span> <span class="n">Xoff</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="s1">&#39;t&#39;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">Xoff_l</span>  <span class="o">=</span> <span class="n">offarray</span><span class="p">[</span><span class="n">offarray</span><span class="o">.</span><span class="n">scanid</span> <span class="o">==</span> <span class="n">offid</span><span class="p">[</span><span class="n">leftid</span><span class="p">]]</span>
+            <span class="n">Xoff_l</span> <span class="o">-=</span> <span class="n">Xoff_l</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="s1">&#39;t&#39;</span><span class="p">)</span>
+            <span class="n">Xoff_r</span>  <span class="o">=</span> <span class="n">offarray</span><span class="p">[</span><span class="n">offarray</span><span class="o">.</span><span class="n">scanid</span> <span class="o">==</span> <span class="n">offid</span><span class="p">[</span><span class="n">rightid</span><span class="p">]]</span>
+            <span class="n">Xoff_r</span> <span class="o">-=</span> <span class="n">Xoff_r</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="s1">&#39;t&#39;</span><span class="p">)</span>
+            <span class="n">Xoff</span>    <span class="o">=</span> <span class="n">dc</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">Xoff_l</span><span class="p">,</span> <span class="n">Xoff_r</span><span class="p">],</span> <span class="n">dim</span><span class="o">=</span><span class="s1">&#39;t&#39;</span><span class="p">)</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">TruncatedSVD</span><span class="p">(</span><span class="n">n_components</span><span class="o">=</span><span class="n">n</span><span class="p">)</span>
+        <span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">Xoff</span><span class="p">)</span>
+        <span class="n">P</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">components_</span>
+        <span class="n">Ps</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">P</span><span class="p">)</span>
+        <span class="n">C</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">Xon</span> <span class="o">-</span> <span class="n">Xon</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="s1">&#39;t&#39;</span><span class="p">))</span>
+        <span class="n">Cs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">C</span><span class="p">)</span>
+
+        <span class="n">Xatm</span> <span class="o">=</span> <span class="n">Xon</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">Xatm</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">C</span> <span class="o">@</span> <span class="n">P</span> <span class="o">+</span> <span class="n">Xon</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="s1">&#39;t&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">values</span>
+        <span class="n">Xatms</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Xatm</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">pc</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">dc</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">Xatms</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="s1">&#39;t&#39;</span><span class="p">),</span> <span class="n">Ps</span><span class="p">,</span> <span class="n">Cs</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">dc</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">Xatms</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="s1">&#39;t&#39;</span><span class="p">)</span></div>
+</pre></div>
+
+           </div>
+           <div class="articleComments">
+            
+           </div>
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, DESHIMA Software Team.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../../../',
+            VERSION:'0.3',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../../../_static/jquery.js"></script>
+      <script type="text/javascript" src="../../../_static/underscore.js"></script>
+      <script type="text/javascript" src="../../../_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>
