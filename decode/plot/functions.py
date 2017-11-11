@@ -26,7 +26,7 @@ from astropy.io import fits
 
 
 # functions
-def plotcoords(dataarray, coords, scantypes, save=True, **kwargs):
+def plotcoords(dataarray, coords, scantypes=None, save=True, **kwargs):
     if dataarray.type == 'dca':
         xr.DataArray.dca.plotcoords(dataarray, coords, scantypes, save, **kwargs)
     elif dataarray.type == 'dcc':
@@ -98,16 +98,16 @@ def plottimestream(scanarray, fittedarray=None, filteredarray=None, chs=None, pe
     for ch in chs:
         fig, ax = plt.subplots(1, 2, **kwargs)
         ### raw dataとfitted dataのplot
-        ax[0].plot(scanarray[:, ch], label='scan')
+        ax[0].plot(scanarray.time, scanarray[:, ch], label='scan')
         if fittedarray is not None:
-            ax[0].plot(fittedarray[:, ch], label='fitted')
-        ax[0].set_xlabel('time index')
+            ax[0].plot(fittedarray.time, fittedarray[:, ch], label='fitted')
+        ax[0].set_xlabel('time')
         ax[0].set_ylabel(str(scanarray.datatype.values))
         ax[0].set_title('ch #{} ({})'.format(ch, kidtps[ch]), color='grey')
         ax[0].legend()
         ### filtered dataのplot
         if filteredarray is not None:
-            ax[1].plot(filteredarray[:, ch], label='filtered')
+            ax[1].plot(filteredarray.time, filteredarray[:, ch], label='filtered')
             if peakfind:
                 if kidtps[ch] != 'blind' and kidtps[ch] != 'bad':
                     ### time stream上でのpeak同定

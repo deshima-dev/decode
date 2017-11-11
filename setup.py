@@ -19,6 +19,7 @@ PACKAGES = [
     'decode.logging',
     'decode.plot',
     'decode.models',
+    'decode.joke',
     'decode.utils',
     'decode.utils.misc',
 ]
@@ -28,7 +29,7 @@ PACKAGES = [
 setup(
     name = 'decode',
     description = __doc__,
-    version = '0.3',
+    version = '0.3.1',
     author = 'snoopython',
     author_email = 'taniguchi@ioa.s.u-tokyo.ac.jp',
     url = 'https://github.com/deshima-dev/decode',

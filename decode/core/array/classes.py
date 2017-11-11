@@ -97,13 +97,16 @@ class DecodeArrayAccessor(BaseAccessor):
         return {k: v.values for k, v in self.coords.items() if v.dims==('t', 'ch')}
 
     @staticmethod
-    def plotcoords(array, coords, scantypes, save=True, **kwargs):
+    def plotcoords(array, coords, scantypes=None, save=True, **kwargs):
         logger = getLogger('decode.plot.plotcoords')
 
         fig, ax = plt.subplots(1, 1, **kwargs)
-        for scantype in scantypes:
-            ax.plot(array[coords[0]][array.scantype == scantype],
-                    array[coords[1]][array.scantype == scantype], label=scantype)
+        if scantypes is None:
+            ax.plot(array[coords[0]], array[coords[1]], label='ALL')
+        else:
+            for scantype in scantypes:
+                ax.plot(array[coords[0]][array.scantype == scantype],
+                        array[coords[1]][array.scantype == scantype], label=scantype)
         ax.set_xlabel(coords[0])
         ax.set_ylabel(coords[1])
         ax.legend()
