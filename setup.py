@@ -23,6 +23,7 @@ PACKAGES = [
     'decode.io',
     'decode.logging',
     'decode.plot',
+    'decode.models',
     'decode.utils',
     'decode.utils.misc',
 ]

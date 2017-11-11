@@ -20,7 +20,7 @@ from scipy.interpolate import interp1d
 
 
 def loaddfits(fitsname, coordtype='azel', loadtype='temperature', starttime=None, endtime=None,
-              pixelids=None, scantype=None, mode=0, **kwargs):
+              pixelids=None, scantypes=None, mode=0, **kwargs):
     """Load a decode array from a DFITS file.
 
     Args:
@@ -48,9 +48,11 @@ def loaddfits(fitsname, coordtype='azel', loadtype='temperature', starttime=None
         decode array (decode.array): Loaded decode array.
     """
     if mode in [0, 1, 2]:
-        logger = getLogger('decode.io.loaddfits (mode={})'.format(mode))
+        logger = getLogger('decode.io.loaddfits')
     else:
         raise KeyError(mode)
+    logger.info('coordtype starttime endtime mode loadtype')
+    logger.info('{} {} {} {} {}'.format(coordtype, starttime, endtime, mode, loadtype))
 
     ### open hdulist
     hdulist = fits.open(fitsname)
@@ -99,8 +101,6 @@ def loaddfits(fitsname, coordtype='azel', loadtype='temperature', starttime=None
         logger.warning('Endtime of readout is adjusted to that of ANTENNA HDU.')
         endindex = np.searchsorted(t_out, t_ant[-1], 'right')
 
-    logger.debug('startindex: {}'.format(startindex))
-    logger.debug('endindex: {}'.format(endindex))
     t_out = t_out[startindex:endindex]
 
     ### readout
@@ -163,20 +163,29 @@ def loaddfits(fitsname, coordtype='azel', loadtype='temperature', starttime=None
     for k, v in scandict.items():
         scantype_i[scantype_vi == v] = k
 
+    ### scanid
+    scanid_i = np.cumsum(np.hstack([False, scantype_i[1:] != scantype_i[:-1]]))
+
     ### coordinates
     tcoords      = {'x': x_i, 'y': y_i, 'time': t_out, 'temp': temp_i, 'pressure': pressure_i,
                     'vapor-pressure': vpressure_i, 'windspd': windspd_i, 'winddir': winddir_i,
-                    'scantype': scantype_i}
+                    'scantype': scantype_i, 'scanid': scanid_i}
     chcoords     = {'masterid': masterids, 'kidid': kidids, 'kidfq': kidfreqs, 'kidtp': kidtypes}
     scalarcoords = {'coordsys': coordtype.upper(), 'datatype': loadtype, 'xref': xref, 'yref': yref}
 
     ### make array
     array = dc.array(response, tcoords=tcoords, chcoords=chcoords, scalarcoords=scalarcoords)
+    if scantypes is not None:
+        arrays = []
+        for scantype in scantypes:
+            arrays.append(array.copy()[array.scantype == scantype])
+    else:
+        arrays = array.copy()
 
     ### close hdu
     hdulist.close()
 
-    return array
+    return arrays
 
 
 def savefits(dataarray, fitsname, **kwargs):
@@ -207,6 +216,7 @@ def loadnetcdf(filename, copy=True):
     Returns:
         dataarray (xarray.DataArray): Loaded dataarray.
     """
+    logger = getLogger('decode.io.loadnetcdf')
     if copy:
         dataarray = xr.open_dataarray(filename).copy()
     else:
@@ -232,6 +242,7 @@ def savenetcdf(dataarray, filename=None):
         filename (str): Filename (used as <filename>.nc).
             If not spacified, random 8-character name will be used.
     """
+    logger = getLogger('decode.io.savenetcdf')
     if filename is None:
         if dataarray.name is not None:
             filename = dataarray.name
@@ -242,3 +253,4 @@ def savenetcdf(dataarray, filename=None):
         filename += '.nc'
 
     dataarray.to_netcdf(filename)
+    logger.info('{} has been created.'.format(filename))

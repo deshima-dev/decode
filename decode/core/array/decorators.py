@@ -3,7 +3,7 @@
 # public items
 __all__ = [
     'chunk',
-    'numpyfunc',
+    'xarrayfunc',
 ]
 
 # standard library
@@ -27,12 +27,12 @@ except:
 
 
 # decorators
-def numpyfunc(func):
+def xarrayfunc(func):
     """Make a function compatible with xarray.DataArray.
 
     This function is intended to be used as a decorator like::
 
-        >>> @dc.numpyfunc
+        >>> @dc.xarrayfunc
         >>> def func(array):
         ...     # do something
         ...     return newarray

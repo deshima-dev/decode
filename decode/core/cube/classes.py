@@ -5,10 +5,16 @@ __all__ = []
 
 # standard library
 from collections import OrderedDict
+from logging import getLogger
 
 # dependent packages
 import decode as dc
 import matplotlib.pyplot as plt
+try:
+    plt.style.use('seaborn-darkgrid')
+    plt.style.use('seaborn-pastel')
+except:
+    pass
 import numpy as np
 import xarray as xr
 from astropy.io import fits
@@ -95,11 +101,13 @@ class DecodeCubeAccessor(BaseAccessor):
 
     @staticmethod
     def fromcube(cube, array):
+        logger = getLogger('decode.fromcube')
         pass
 
     @staticmethod
     def tocube(array, **kwargs):
-        array = array.copy()
+        logger = getLogger('decode.tocube')
+        array  = array.copy()
 
         xc = kwargs['xc'] if ('xc' in kwargs) else 0
         yc = kwargs['yc'] if ('yc' in kwargs) else 0
@@ -112,10 +120,14 @@ class DecodeCubeAccessor(BaseAccessor):
             xmax = kwargs['xmax'] if ('xmax' in kwargs) else array.x.max()
             ymin = kwargs['ymin'] if ('ymin' in kwargs) else array.y.min()
             ymax = kwargs['ymax'] if ('ymax' in kwargs) else array.y.max()
+            logger.info('xmin xmax ymin ymax')
+            logger.info('{} {} {} {}'.format(xmin, xmax, ymin, ymax))
 
             if 'gx' in kwargs and 'gy' in kwargs:
                 gx = kwargs['gx']
                 gy = kwargs['gy']
+                logger.info('xc yc gx gy')
+                logger.info('{} {} {} {}'.format(xc, yc, gx, gy))
 
                 gxmin = np.floor((xmin - xc) / gx)
                 gxmax = np.ceil((xmax - xc) / gx)
@@ -132,6 +144,8 @@ class DecodeCubeAccessor(BaseAccessor):
             elif 'nx' in kwargs and 'ny' in kwargs:
                 nx = kwargs['nx']
                 ny = kwargs['ny']
+                logger.info('nx ny')
+                logger.info('{} {}'.format(nx, ny))
 
                 ### nx/ny does not support xc/yc
                 xc = 0
@@ -170,9 +184,15 @@ class DecodeCubeAccessor(BaseAccessor):
 
     @staticmethod
     def makecontinuum(cube, kidtp, **kwargs):
+        logger = getLogger('decode.makecontinuum')
+        logger.info('kidtp')
+        logger.info('{}'.format(kidtp))
+
         ### some weighting procedure
         mask = (cube.kidtp == kidtp).values
         if 'exchs' in kwargs:
+            logger.info('exchs')
+            logger.info('{}'.format(kwargs['exchs']))
             mask[kwargs['exchs']] = False
         cont = cube[:, :, mask].mean(dim='ch')
 
@@ -180,6 +200,7 @@ class DecodeCubeAccessor(BaseAccessor):
 
     @staticmethod
     def savefits(cube, fitsname, **kwargs):
+        logger = getLogger('decode.io.savefits')
         # should be modified in the future
         cdelt1 = float(cube.x[1] - cube.x[0])
         crval1 = float(cube.x[0])
@@ -197,10 +218,11 @@ class DecodeCubeAccessor(BaseAccessor):
             header.update(OrderedDict([('CTYPE3', 'ID'),  ('CDELT3', cdelt3), ('CRVAL3', crval3), ('CRPIX3', 1)]))
 
         fits.writeto(fitsname, cube.values.T, header, **kwargs)
+        logger.info('{} has been created.'.format(fitsname))
 
     @staticmethod
     def plotspectrum(cube, shape, **kwargs):
-        plt.style.use('ggplot')
+        logger = getLogger('decode.plot.plotspectrum')
 
         cube = cube.copy()
         if shape == 'box':

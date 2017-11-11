@@ -6,10 +6,17 @@ __all__ = []
 # standard library
 from collections import OrderedDict
 from datetime import datetime
+from logging import getLogger
 
 # dependent packages
 import decode as dc
 import numpy as np
+import matplotlib.pyplot as plt
+try:
+    plt.style.use('seaborn-darkgrid')
+    plt.style.use('seaborn-pastel')
+except:
+    pass
 import xarray as xr
 from .. import BaseAccessor
 
@@ -24,7 +31,8 @@ TCOORDS = lambda array: OrderedDict([
     ('vapor-pressure', ('t', np.zeros(array.shape[0], dtype=float))),
     ('windspd', ('t', np.zeros(array.shape[0], dtype=float))),
     ('winddir', ('t', np.zeros(array.shape[0], dtype=float))),
-    ('scantype', ('t', np.full(array.shape[0], 'GRAD')))
+    ('scantype', ('t', np.full(array.shape[0], 'GRAD'))),
+    ('scanid', ('t', np.zeros(array.shape[0], dtype=int))),
 ])
 
 CHCOORDS = lambda array: OrderedDict([
@@ -87,3 +95,39 @@ class DecodeArrayAccessor(BaseAccessor):
     def datacoords(self):
         """Dictionary of arrays that label time and channel axis."""
         return {k: v.values for k, v in self.coords.items() if v.dims==('t', 'ch')}
+
+    @staticmethod
+    def plotcoords(array, coords, scantypes, save=True, **kwargs):
+        logger = getLogger('decode.plot.plotcoords')
+
+        fig, ax = plt.subplots(1, 1, **kwargs)
+        for scantype in scantypes:
+            ax.plot(array[coords[0]][array.scantype == scantype],
+                    array[coords[1]][array.scantype == scantype], label=scantype)
+        ax.set_xlabel(coords[0])
+        ax.set_ylabel(coords[1])
+        ax.legend()
+        fig.tight_layout()
+        if save:
+            filename = '{}_vs_{}.png'.format(coords[1], coords[0])
+            fig.savefig(filename)
+            logger.info('{} has been created.'.format(filename))
+
+    @staticmethod
+    def plotweather(array, save=True, **kwargs):
+        logger = getLogger('decode.plot.plotweather')
+
+        infos  = ['temp', 'pressure', 'vapor-pressure', 'windspd', 'winddir']
+        labels = ['external temperature [C]', 'pressure [hPa]', 'vapor pressure [hPa]',
+                  'wind speed [m/s]', 'wind direction [deg]']
+        fig = plt.figure(**kwargs)
+        for n, (info, label) in enumerate(zip(infos, labels)):
+            ax = fig.add_subplot(3, 2, n+1)
+            ax.plot(array['time'], array[info])
+            ax.set_xlabel('time')
+            ax.set_ylabel(label)
+        fig.tight_layout()
+        if save:
+            filename = 'weather_info.png'
+            fig.savefig(filename)
+            logger.info('{} has been created.'.format(filename))

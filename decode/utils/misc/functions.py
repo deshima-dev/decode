@@ -4,11 +4,15 @@
 __all__ = [
     'copy_function',
     'one_thread_per_process',
+    'slicewhere',
 ]
 
 # standard library
 from contextlib import contextmanager
 from types import CodeType, FunctionType
+
+# dependent packages
+from scipy import ndimage
 
 
 # function
@@ -86,3 +90,7 @@ def one_thread_per_process():
             mkl.set_num_threads(n_threads)
     else:
         yield
+
+
+def slicewhere(dataarray, condition):
+    return [region[0] for region in ndimage.find_objects(ndimage.label(condition)[0])]
