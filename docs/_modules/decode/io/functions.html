@@ -1,0 +1,476 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>decode.io.functions &mdash; De:code 0.3 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="../../../genindex.html"/>
+        <link rel="search" title="Search" href="../../../search.html"/>
+    <link rel="top" title="De:code 0.3 documentation" href="../../../index.html"/>
+        <link rel="up" title="Module code" href="../../index.html"/> 
+
+  
+  <script src="../../../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../../../index.html" class="icon icon-home"> De:code
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.3
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <!-- Local TOC -->
+              <div class="local-toc"></div>
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">De:code</a>
+        
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+        
+      <li>decode.io.functions</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for decode.io.functions</h1><div class="highlight"><pre>
+<span></span><span class="c1"># coding: utf-8</span>
+
+<span class="c1"># public items</span>
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s1">&#39;loaddfits&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;savefits&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;loadnetcdf&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;savenetcdf&#39;</span><span class="p">,</span>
+<span class="p">]</span>
+
+<span class="c1"># standard library</span>
+<span class="kn">from</span> <span class="nn">logging</span> <span class="k">import</span> <span class="n">getLogger</span>
+
+<span class="c1"># dependent packages</span>
+<span class="kn">import</span> <span class="nn">decode</span> <span class="k">as</span> <span class="nn">dc</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">xarray</span> <span class="k">as</span> <span class="nn">xr</span>
+<span class="kn">from</span> <span class="nn">astropy.io</span> <span class="k">import</span> <span class="n">fits</span>
+<span class="kn">from</span> <span class="nn">scipy.interpolate</span> <span class="k">import</span> <span class="n">interp1d</span>
+
+
+<div class="viewcode-block" id="loaddfits"><a class="viewcode-back" href="../../../apis/decode.io.html#decode.io.functions.loaddfits">[docs]</a><span class="k">def</span> <span class="nf">loaddfits</span><span class="p">(</span><span class="n">fitsname</span><span class="p">,</span> <span class="n">coordtype</span><span class="o">=</span><span class="s1">&#39;azel&#39;</span><span class="p">,</span> <span class="n">loadtype</span><span class="o">=</span><span class="s1">&#39;temperature&#39;</span><span class="p">,</span> <span class="n">starttime</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">endtime</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+              <span class="n">pixelids</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">scantypes</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Load a decode array from a DFITS file.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        fitsname (str): Name of DFITS file.</span>
+<span class="sd">        coordtype (str): Coordinate type included into a decode array, azel or radec.</span>
+<span class="sd">        loadtype (str): Data format of xarray.</span>
+<span class="sd">            &#39;Tsignal&#39;: Temperature</span>
+<span class="sd">            &#39;Psignal&#39;: Power</span>
+<span class="sd">        starttime (int, str or numpy.datetime64): Start time of loaded data.</span>
+<span class="sd">            It can be specified by the start index (int), the time compatible with numpy.datetime64 (str),</span>
+<span class="sd">            or numpy.datetime64 (numpy.datetime64). Default is None and it means the data will be loaded</span>
+<span class="sd">            from the first record.</span>
+<span class="sd">        endtime (int, str or numpy.datetime64): End time of loaded data.</span>
+<span class="sd">            It can be specified by the end index (int), the time compatible with numpy.datetime64 (str),</span>
+<span class="sd">            or numpy.datetime64 (numpy.datetime64). Default is None and it means the data will be loaded</span>
+<span class="sd">            until the last record.</span>
+<span class="sd">        pixelids (int or list): Under development.</span>
+<span class="sd">        scantype (str): Under development.</span>
+<span class="sd">        mode (int):</span>
+<span class="sd">            0: Relative coordinates with cosine projection (RECOMMENDED).</span>
+<span class="sd">            1: Relative coordinates without cosine projection.</span>
+<span class="sd">            2: Absolute coordinates.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        decode array (decode.array): Loaded decode array.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">mode</span> <span class="ow">in</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">]:</span>
+        <span class="n">logger</span> <span class="o">=</span> <span class="n">getLogger</span><span class="p">(</span><span class="s1">&#39;decode.io.loaddfits&#39;</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="n">mode</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;coordtype starttime endtime mode loadtype&#39;</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">{}</span><span class="s1"> </span><span class="si">{}</span><span class="s1"> </span><span class="si">{}</span><span class="s1"> </span><span class="si">{}</span><span class="s1"> </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">coordtype</span><span class="p">,</span> <span class="n">starttime</span><span class="p">,</span> <span class="n">endtime</span><span class="p">,</span> <span class="n">mode</span><span class="p">,</span> <span class="n">loadtype</span><span class="p">))</span>
+
+    <span class="c1">### open hdulist</span>
+    <span class="n">hdulist</span> <span class="o">=</span> <span class="n">fits</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">fitsname</span><span class="p">)</span>
+
+    <span class="c1">### load data</span>
+    <span class="n">obsinfo</span> <span class="o">=</span> <span class="n">hdulist</span><span class="p">[</span><span class="s1">&#39;OBSINFO&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">data</span>
+    <span class="n">obshdr</span>  <span class="o">=</span> <span class="n">hdulist</span><span class="p">[</span><span class="s1">&#39;OBSINFO&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">header</span>
+    <span class="n">antlog</span>  <span class="o">=</span> <span class="n">hdulist</span><span class="p">[</span><span class="s1">&#39;ANTENNA&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">data</span>
+    <span class="n">readout</span> <span class="o">=</span> <span class="n">hdulist</span><span class="p">[</span><span class="s1">&#39;READOUT&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">data</span>
+    <span class="n">wealog</span>  <span class="o">=</span> <span class="n">hdulist</span><span class="p">[</span><span class="s1">&#39;WEATHER&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">data</span>
+
+    <span class="c1">### obsinfo</span>
+    <span class="n">masterids</span> <span class="o">=</span> <span class="n">obsinfo</span><span class="p">[</span><span class="s1">&#39;masterids&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">)</span>
+    <span class="n">kidids</span>    <span class="o">=</span> <span class="n">obsinfo</span><span class="p">[</span><span class="s1">&#39;kidids&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">)</span>
+    <span class="n">kidfreqs</span>  <span class="o">=</span> <span class="n">obsinfo</span><span class="p">[</span><span class="s1">&#39;kidfreqs&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+    <span class="n">kidtypes</span>  <span class="o">=</span> <span class="n">obsinfo</span><span class="p">[</span><span class="s1">&#39;kidtypes&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">)</span>
+
+    <span class="c1">### parse start/end time</span>
+    <span class="n">t_ant</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">antlog</span><span class="p">[</span><span class="s1">&#39;time&#39;</span><span class="p">])</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">datetime64</span><span class="p">)</span>
+    <span class="n">t_out</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">readout</span><span class="p">[</span><span class="s1">&#39;starttime&#39;</span><span class="p">])</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">datetime64</span><span class="p">)</span>
+    <span class="n">t_wea</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">wealog</span><span class="p">[</span><span class="s1">&#39;time&#39;</span><span class="p">])</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">datetime64</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">starttime</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">startindex</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">starttime</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+        <span class="n">startindex</span> <span class="o">=</span> <span class="n">starttime</span>
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">starttime</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="n">startindex</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">searchsorted</span><span class="p">(</span><span class="n">t_out</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">datetime64</span><span class="p">(</span><span class="n">starttime</span><span class="p">))</span>
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">starttime</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">datetime64</span><span class="p">):</span>
+        <span class="n">startindex</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">searchsorted</span><span class="p">(</span><span class="n">t_out</span><span class="p">,</span> <span class="n">starttime</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">starttime</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">endtime</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">endindex</span> <span class="o">=</span> <span class="n">t_out</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">endtime</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+        <span class="n">endindex</span> <span class="o">=</span> <span class="n">endtime</span>
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">endtime</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="n">endindex</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">searchsorted</span><span class="p">(</span><span class="n">t_out</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">datetime64</span><span class="p">(</span><span class="n">endtime</span><span class="p">),</span> <span class="s1">&#39;right&#39;</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">endtime</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">datetime64</span><span class="p">):</span>
+        <span class="n">endindex</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">searchsorted</span><span class="p">(</span><span class="n">t_out</span><span class="p">,</span> <span class="n">endtime</span><span class="p">,</span> <span class="s1">&#39;right&#39;</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">starttime</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">t_out</span><span class="p">[</span><span class="n">endindex</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">t_ant</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s1">&#39;Endtime of readout is adjusted to that of ANTENNA HDU.&#39;</span><span class="p">)</span>
+        <span class="n">endindex</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">searchsorted</span><span class="p">(</span><span class="n">t_out</span><span class="p">,</span> <span class="n">t_ant</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="s1">&#39;right&#39;</span><span class="p">)</span>
+
+    <span class="n">t_out</span> <span class="o">=</span> <span class="n">t_out</span><span class="p">[</span><span class="n">startindex</span><span class="p">:</span><span class="n">endindex</span><span class="p">]</span>
+
+    <span class="c1">### readout</span>
+    <span class="n">pixelid</span> <span class="o">=</span> <span class="n">readout</span><span class="p">[</span><span class="s1">&#39;pixelid&#39;</span><span class="p">][</span><span class="n">startindex</span><span class="p">:</span><span class="n">endindex</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">loadtype</span> <span class="o">==</span> <span class="s1">&#39;temperature&#39;</span><span class="p">:</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="n">readout</span><span class="p">[</span><span class="s1">&#39;Tsignal&#39;</span><span class="p">][</span><span class="n">startindex</span><span class="p">:</span><span class="n">endindex</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">loadtype</span> <span class="o">==</span> <span class="s1">&#39;power&#39;</span><span class="p">:</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="n">readout</span><span class="p">[</span><span class="s1">&#39;Psignal&#39;</span><span class="p">][</span><span class="n">startindex</span><span class="p">:</span><span class="n">endindex</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+
+    <span class="c1">### antenna</span>
+    <span class="k">if</span> <span class="n">coordtype</span> <span class="o">==</span> <span class="s1">&#39;azel&#39;</span><span class="p">:</span>
+        <span class="n">x</span>    <span class="o">=</span> <span class="n">antlog</span><span class="p">[</span><span class="s1">&#39;az&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">y</span>    <span class="o">=</span> <span class="n">antlog</span><span class="p">[</span><span class="s1">&#39;el&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">xref</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">median</span><span class="p">(</span><span class="n">antlog</span><span class="p">[</span><span class="s1">&#39;az_center&#39;</span><span class="p">])</span>
+        <span class="n">yref</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">median</span><span class="p">(</span><span class="n">antlog</span><span class="p">[</span><span class="s1">&#39;el_center&#39;</span><span class="p">])</span>
+        <span class="k">if</span> <span class="n">mode</span> <span class="ow">in</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]:</span>
+            <span class="n">x</span> <span class="o">-=</span> <span class="n">antlog</span><span class="p">[</span><span class="s1">&#39;az_center&#39;</span><span class="p">]</span>
+            <span class="n">y</span> <span class="o">-=</span> <span class="n">antlog</span><span class="p">[</span><span class="s1">&#39;el_center&#39;</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">mode</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">x</span> <span class="o">*=</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">deg2rad</span><span class="p">(</span><span class="n">antlog</span><span class="p">[</span><span class="s1">&#39;el&#39;</span><span class="p">]))</span>
+    <span class="k">elif</span> <span class="n">coordtype</span> <span class="o">==</span> <span class="s1">&#39;radec&#39;</span><span class="p">:</span>
+        <span class="n">x</span>    <span class="o">=</span> <span class="n">antlog</span><span class="p">[</span><span class="s1">&#39;ra&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">y</span>    <span class="o">=</span> <span class="n">antlog</span><span class="p">[</span><span class="s1">&#39;dec&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">xref</span> <span class="o">=</span> <span class="n">obshdr</span><span class="p">[</span><span class="s1">&#39;RA&#39;</span><span class="p">]</span>
+        <span class="n">yref</span> <span class="o">=</span> <span class="n">obshdr</span><span class="p">[</span><span class="s1">&#39;DEC&#39;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">mode</span> <span class="ow">in</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]:</span>
+            <span class="n">x</span> <span class="o">-=</span> <span class="n">xref</span>
+            <span class="n">y</span> <span class="o">-=</span> <span class="n">yref</span>
+            <span class="k">if</span> <span class="n">mode</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">x</span> <span class="o">*=</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">deg2rad</span><span class="p">(</span><span class="n">antlog</span><span class="p">[</span><span class="s1">&#39;dec&#39;</span><span class="p">]))</span>
+    <span class="n">scantype</span> <span class="o">=</span> <span class="n">antlog</span><span class="p">[</span><span class="s1">&#39;scantype&#39;</span><span class="p">]</span>
+
+    <span class="c1">### weatherlog</span>
+    <span class="n">temp</span>      <span class="o">=</span> <span class="n">wealog</span><span class="p">[</span><span class="s1">&#39;temperature&#39;</span><span class="p">]</span>
+    <span class="n">pressure</span>  <span class="o">=</span> <span class="n">wealog</span><span class="p">[</span><span class="s1">&#39;pressure&#39;</span><span class="p">]</span>
+    <span class="n">vpressure</span> <span class="o">=</span> <span class="n">wealog</span><span class="p">[</span><span class="s1">&#39;vapor-pressure&#39;</span><span class="p">]</span>
+    <span class="n">windspd</span>   <span class="o">=</span> <span class="n">wealog</span><span class="p">[</span><span class="s1">&#39;windspd&#39;</span><span class="p">]</span>
+    <span class="n">winddir</span>   <span class="o">=</span> <span class="n">wealog</span><span class="p">[</span><span class="s1">&#39;winddir&#39;</span><span class="p">]</span>
+
+    <span class="c1">### interpolation</span>
+    <span class="n">dt_out</span>  <span class="o">=</span> <span class="p">(</span><span class="n">t_out</span> <span class="o">-</span> <span class="n">t_out</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+    <span class="n">dt_ant</span>  <span class="o">=</span> <span class="p">(</span><span class="n">t_ant</span> <span class="o">-</span> <span class="n">t_out</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+    <span class="n">dt_wea</span>  <span class="o">=</span> <span class="p">(</span><span class="n">t_wea</span> <span class="o">-</span> <span class="n">t_out</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+    <span class="n">x_i</span>     <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">interp</span><span class="p">(</span><span class="n">dt_out</span><span class="p">,</span> <span class="n">dt_ant</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
+    <span class="n">y_i</span>     <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">interp</span><span class="p">(</span><span class="n">dt_out</span><span class="p">,</span> <span class="n">dt_ant</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+
+    <span class="n">temp_i</span>       <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">interp</span><span class="p">(</span><span class="n">dt_out</span><span class="p">,</span> <span class="n">dt_wea</span><span class="p">,</span> <span class="n">temp</span><span class="p">)</span>
+    <span class="n">pressure_i</span>   <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">interp</span><span class="p">(</span><span class="n">dt_out</span><span class="p">,</span> <span class="n">dt_wea</span><span class="p">,</span> <span class="n">pressure</span><span class="p">)</span>
+    <span class="n">vpressure_i</span>  <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">interp</span><span class="p">(</span><span class="n">dt_out</span><span class="p">,</span> <span class="n">dt_wea</span><span class="p">,</span> <span class="n">vpressure</span><span class="p">)</span>
+    <span class="n">windspd_i</span>    <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">interp</span><span class="p">(</span><span class="n">dt_out</span><span class="p">,</span> <span class="n">dt_wea</span><span class="p">,</span> <span class="n">windspd</span><span class="p">)</span>
+    <span class="n">winddir_i</span>    <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">interp</span><span class="p">(</span><span class="n">dt_out</span><span class="p">,</span> <span class="n">dt_wea</span><span class="p">,</span> <span class="n">winddir</span><span class="p">)</span>
+
+    <span class="n">scandict</span>     <span class="o">=</span> <span class="p">{</span><span class="n">t</span><span class="p">:</span> <span class="n">n</span> <span class="k">for</span> <span class="n">n</span><span class="p">,</span> <span class="n">t</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">scantype</span><span class="p">))}</span>
+    <span class="n">scantype_v</span>   <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">scantype</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">scandict</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">scantype_v</span><span class="p">[</span><span class="n">scantype</span> <span class="o">==</span> <span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span>
+    <span class="n">scantype_vi</span>  <span class="o">=</span> <span class="n">interp1d</span><span class="p">(</span><span class="n">dt_ant</span><span class="p">,</span> <span class="n">scantype_v</span><span class="p">,</span> <span class="n">kind</span><span class="o">=</span><span class="s1">&#39;nearest&#39;</span><span class="p">,</span> <span class="n">bounds_error</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                            <span class="n">fill_value</span><span class="o">=</span><span class="p">(</span><span class="n">scantype_v</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">scantype_v</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]))(</span><span class="n">dt_out</span><span class="p">)</span>
+    <span class="n">scantype_i</span>   <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full_like</span><span class="p">(</span><span class="n">scantype_vi</span><span class="p">,</span> <span class="s1">&#39;GRAD&#39;</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="s1">&#39;&lt;U8&#39;</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">scandict</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">scantype_i</span><span class="p">[</span><span class="n">scantype_vi</span> <span class="o">==</span> <span class="n">v</span><span class="p">]</span> <span class="o">=</span> <span class="n">k</span>
+
+    <span class="c1">### scanid</span>
+    <span class="n">scanid_i</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">cumsum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">([</span><span class="kc">False</span><span class="p">,</span> <span class="n">scantype_i</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span> <span class="o">!=</span> <span class="n">scantype_i</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]]))</span>
+
+    <span class="c1">### coordinates</span>
+    <span class="n">tcoords</span>      <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;x&#39;</span><span class="p">:</span> <span class="n">x_i</span><span class="p">,</span> <span class="s1">&#39;y&#39;</span><span class="p">:</span> <span class="n">y_i</span><span class="p">,</span> <span class="s1">&#39;time&#39;</span><span class="p">:</span> <span class="n">t_out</span><span class="p">,</span> <span class="s1">&#39;temp&#39;</span><span class="p">:</span> <span class="n">temp_i</span><span class="p">,</span> <span class="s1">&#39;pressure&#39;</span><span class="p">:</span> <span class="n">pressure_i</span><span class="p">,</span>
+                    <span class="s1">&#39;vapor-pressure&#39;</span><span class="p">:</span> <span class="n">vpressure_i</span><span class="p">,</span> <span class="s1">&#39;windspd&#39;</span><span class="p">:</span> <span class="n">windspd_i</span><span class="p">,</span> <span class="s1">&#39;winddir&#39;</span><span class="p">:</span> <span class="n">winddir_i</span><span class="p">,</span>
+                    <span class="s1">&#39;scantype&#39;</span><span class="p">:</span> <span class="n">scantype_i</span><span class="p">,</span> <span class="s1">&#39;scanid&#39;</span><span class="p">:</span> <span class="n">scanid_i</span><span class="p">}</span>
+    <span class="n">chcoords</span>     <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;masterid&#39;</span><span class="p">:</span> <span class="n">masterids</span><span class="p">,</span> <span class="s1">&#39;kidid&#39;</span><span class="p">:</span> <span class="n">kidids</span><span class="p">,</span> <span class="s1">&#39;kidfq&#39;</span><span class="p">:</span> <span class="n">kidfreqs</span><span class="p">,</span> <span class="s1">&#39;kidtp&#39;</span><span class="p">:</span> <span class="n">kidtypes</span><span class="p">}</span>
+    <span class="n">scalarcoords</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;coordsys&#39;</span><span class="p">:</span> <span class="n">coordtype</span><span class="o">.</span><span class="n">upper</span><span class="p">(),</span> <span class="s1">&#39;datatype&#39;</span><span class="p">:</span> <span class="n">loadtype</span><span class="p">,</span> <span class="s1">&#39;xref&#39;</span><span class="p">:</span> <span class="n">xref</span><span class="p">,</span> <span class="s1">&#39;yref&#39;</span><span class="p">:</span> <span class="n">yref</span><span class="p">}</span>
+
+    <span class="c1">### make array</span>
+    <span class="n">array</span> <span class="o">=</span> <span class="n">dc</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">response</span><span class="p">,</span> <span class="n">tcoords</span><span class="o">=</span><span class="n">tcoords</span><span class="p">,</span> <span class="n">chcoords</span><span class="o">=</span><span class="n">chcoords</span><span class="p">,</span> <span class="n">scalarcoords</span><span class="o">=</span><span class="n">scalarcoords</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">scantypes</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">arrays</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">scantype</span> <span class="ow">in</span> <span class="n">scantypes</span><span class="p">:</span>
+            <span class="n">arrays</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">array</span><span class="o">.</span><span class="n">copy</span><span class="p">()[</span><span class="n">array</span><span class="o">.</span><span class="n">scantype</span> <span class="o">==</span> <span class="n">scantype</span><span class="p">])</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">arrays</span> <span class="o">=</span> <span class="n">array</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+    <span class="c1">### close hdu</span>
+    <span class="n">hdulist</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+    <span class="k">return</span> <span class="n">arrays</span></div>
+
+
+<div class="viewcode-block" id="savefits"><a class="viewcode-back" href="../../../apis/decode.io.html#decode.io.functions.savefits">[docs]</a><span class="k">def</span> <span class="nf">savefits</span><span class="p">(</span><span class="n">dataarray</span><span class="p">,</span> <span class="n">fitsname</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Save a dataarray to a 3D-cube FITS file.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        dataarray (xarray.DataArray): Dataarray to be saved.</span>
+<span class="sd">        fitsname (str): Name of output FITS file.</span>
+<span class="sd">        kwargs (optional): Other arguments common with astropy.io.fits.writeto().</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">dataarray</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="s1">&#39;dca&#39;</span><span class="p">:</span>
+        <span class="k">pass</span>
+    <span class="k">elif</span> <span class="n">dataarray</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="s1">&#39;dcc&#39;</span><span class="p">:</span>
+        <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="o">.</span><span class="n">dcc</span><span class="o">.</span><span class="n">savefits</span><span class="p">(</span><span class="n">dataarray</span><span class="p">,</span> <span class="n">fitsname</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">dataarray</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="s1">&#39;dcs&#39;</span><span class="p">:</span>
+        <span class="k">pass</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">pass</span></div>
+
+
+<div class="viewcode-block" id="loadnetcdf"><a class="viewcode-back" href="../../../apis/decode.io.html#decode.io.functions.loadnetcdf">[docs]</a><span class="k">def</span> <span class="nf">loadnetcdf</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">copy</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Load a dataarray from a NetCDF file.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        filename (str): Filename (*.nc).</span>
+<span class="sd">        copy (bool): If True, dataarray is copied in memory. Default is True.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        dataarray (xarray.DataArray): Loaded dataarray.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">logger</span> <span class="o">=</span> <span class="n">getLogger</span><span class="p">(</span><span class="s1">&#39;decode.io.loadnetcdf&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">copy</span><span class="p">:</span>
+        <span class="n">dataarray</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">open_dataarray</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">dataarray</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">open_dataarray</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">dataarray</span><span class="o">.</span><span class="n">name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">dataarray</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">filename</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s1">&#39;.nc&#39;</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">dataarray</span><span class="o">.</span><span class="n">coords</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">val</span><span class="o">.</span><span class="n">dtype</span><span class="o">.</span><span class="n">kind</span> <span class="o">==</span> <span class="s1">&#39;S&#39;</span><span class="p">:</span>
+            <span class="n">dataarray</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">val</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s1">&#39;U&#39;</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">val</span><span class="o">.</span><span class="n">dtype</span> <span class="o">==</span> <span class="n">np</span><span class="o">.</span><span class="n">int32</span><span class="p">:</span>
+            <span class="n">dataarray</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">val</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s1">&#39;i8&#39;</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">dataarray</span></div>
+
+
+<div class="viewcode-block" id="savenetcdf"><a class="viewcode-back" href="../../../apis/decode.io.html#decode.io.functions.savenetcdf">[docs]</a><span class="k">def</span> <span class="nf">savenetcdf</span><span class="p">(</span><span class="n">dataarray</span><span class="p">,</span> <span class="n">filename</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Save a dataarray to a NetCDF file.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        dataarray (xarray.DataArray): Dataarray to be saved.</span>
+<span class="sd">        filename (str): Filename (used as &lt;filename&gt;.nc).</span>
+<span class="sd">            If not spacified, random 8-character name will be used.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">logger</span> <span class="o">=</span> <span class="n">getLogger</span><span class="p">(</span><span class="s1">&#39;decode.io.savenetcdf&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">filename</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">dataarray</span><span class="o">.</span><span class="n">name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">filename</span> <span class="o">=</span> <span class="n">dataarray</span><span class="o">.</span><span class="n">name</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">filename</span> <span class="o">=</span> <span class="n">uuid4</span><span class="p">()</span><span class="o">.</span><span class="n">hex</span><span class="p">[:</span><span class="mi">8</span><span class="p">]</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">filename</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">&#39;.nc&#39;</span><span class="p">):</span>
+        <span class="n">filename</span> <span class="o">+=</span> <span class="s1">&#39;.nc&#39;</span>
+
+    <span class="n">dataarray</span><span class="o">.</span><span class="n">to_netcdf</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">{}</span><span class="s1"> has been created.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">filename</span><span class="p">))</span></div>
+</pre></div>
+
+           </div>
+           <div class="articleComments">
+            
+           </div>
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, DESHIMA Software Team.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../../../',
+            VERSION:'0.3',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../../../_static/jquery.js"></script>
+      <script type="text/javascript" src="../../../_static/underscore.js"></script>
+      <script type="text/javascript" src="../../../_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>
