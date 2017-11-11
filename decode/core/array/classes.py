@@ -12,11 +12,6 @@ from logging import getLogger
 import decode as dc
 import numpy as np
 import matplotlib.pyplot as plt
-try:
-    plt.style.use('seaborn-darkgrid')
-    plt.style.use('seaborn-pastel')
-except:
-    pass
 import xarray as xr
 from .. import BaseAccessor
 

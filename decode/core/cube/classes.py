@@ -10,11 +10,6 @@ from logging import getLogger
 # dependent packages
 import decode as dc
 import matplotlib.pyplot as plt
-try:
-    plt.style.use('seaborn-darkgrid')
-    plt.style.use('seaborn-pastel')
-except:
-    pass
 import numpy as np
 import xarray as xr
 from astropy.io import fits

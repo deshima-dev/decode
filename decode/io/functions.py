@@ -10,6 +10,7 @@ __all__ = [
 
 # standard library
 from logging import getLogger
+from uuid import uuid4
 
 # dependent packages
 import decode as dc
