@@ -168,25 +168,65 @@
 <span id="decode-plot-functions-module"></span><h2>decode.plot.functions module<a class="headerlink" href="#module-decode.plot.functions" title="Permalink to this headline">¶</a></h2>
 <dl class="function">
 <dt id="decode.plot.functions.plotcoords">
-<code class="descclassname">decode.plot.functions.</code><code class="descname">plotcoords</code><span class="sig-paren">(</span><em>dataarray</em>, <em>coords</em>, <em>scantypes</em>, <em>save=True</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/decode/plot/functions.html#plotcoords"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#decode.plot.functions.plotcoords" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="function">
-<dt id="decode.plot.functions.plotweather">
-<code class="descclassname">decode.plot.functions.</code><code class="descname">plotweather</code><span class="sig-paren">(</span><em>dataarray</em>, <em>save=True</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/decode/plot/functions.html#plotweather"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#decode.plot.functions.plotweather" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="function">
-<dt id="decode.plot.functions.plotspectrum">
-<code class="descclassname">decode.plot.functions.</code><code class="descname">plotspectrum</code><span class="sig-paren">(</span><em>dataarray</em>, <em>shape</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/decode/plot/functions.html#plotspectrum"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#decode.plot.functions.plotspectrum" title="Permalink to this definition">¶</a></dt>
-<dd><p>Plot a spectrum diagram.</p>
+<code class="descclassname">decode.plot.functions.</code><code class="descname">plotcoords</code><span class="sig-paren">(</span><em>dataarray</em>, <em>ax</em>, <em>coords</em>, <em>scantypes=None</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/decode/plot/functions.html#plotcoords"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#decode.plot.functions.plotcoords" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plot coordinates.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>dataarray</strong> (<em>xarray.DataArray</em>) &#8211; Dataarray with which the spectrum is plotted.</li>
-<li><strong>shape</strong> (<em>str</em>) &#8211; The shape of mask, &#8216;box&#8217; or &#8216;circle&#8217;.</li>
+<li><strong>dataarray</strong> (<em>xarray.DataArray</em>) &#8211; Dataarray which the coodinate information is included.</li>
+<li><strong>ax</strong> (<em>matplotlib.axes</em>) &#8211; Axis you want to plot on.</li>
+<li><strong>coords</strong> (<em>list</em>) &#8211; Name of x axis and y axis.</li>
+<li><strong>scantypes</strong> (<em>list</em>) &#8211; Scantypes. If None, all scantypes are used.</li>
+<li><strong>kwargs</strong> (<em>optional</em>) &#8211; Plot options passed to ax.plot().</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="decode.plot.functions.plotweather">
+<code class="descclassname">decode.plot.functions.</code><code class="descname">plotweather</code><span class="sig-paren">(</span><em>dataarray</em>, <em>axs</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/decode/plot/functions.html#plotweather"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#decode.plot.functions.plotweather" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plot weather information.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>dataarray</strong> (<em>xarray.DataArray</em>) &#8211; Dataarray which the weather information is included.</li>
+<li><strong>axs</strong> (<em>list</em><em>(</em><em>matplotlib.axes</em><em>)</em>) &#8211; Axes you want to plot on.</li>
+<li><strong>kwargs</strong> (<em>optional</em>) &#8211; Plot options passed to ax.plot().</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="decode.plot.functions.plotspectrum">
+<code class="descclassname">decode.plot.functions.</code><code class="descname">plotspectrum</code><span class="sig-paren">(</span><em>dataarray</em>, <em>ax</em>, <em>xtick</em>, <em>ytick</em>, <em>aperture</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/decode/plot/functions.html#plotspectrum"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#decode.plot.functions.plotspectrum" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plot a spectrum.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>dataarray</strong> (<em>xarray.DataArray</em>) &#8211; Dataarray which the spectrum information is included.</li>
+<li><strong>ax</strong> (<em>matplotlib.axes</em>) &#8211; Axis you want to plot on.</li>
+<li><strong>xtick</strong> (<em>str</em>) &#8211; Type of x axis.
+&#8216;freq&#8217;: Frequency [GHz].
+&#8216;id&#8217;: Kid id.</li>
+<li><strong>ytick</strong> (<em>str</em>) &#8211; Type of y axis.
+&#8216;peak&#8217;: Peak.
+&#8216;sum&#8217;: Summation.
+&#8216;mean&#8217;: Under construction.</li>
+<li><strong>aperture</strong> (<em>str</em>) &#8211; The shape of aperture.
+&#8216;box&#8217;: Box.
+&#8216;circle&#8217;: Circle.</li>
 <li><strong>kwargs</strong> (<em>optional</em>) &#8211; <dl class="docutils">
 <dt>When &#8216;box&#8217; is specified as shape,</dt>
 <dd>xc: Center of x.
@@ -202,8 +242,6 @@ ymax: Maximum of y.</dd>
 yc: Center of y.
 radius: Radius.</dd>
 </dl>
-<p>xlim (list): Range of x.
-ylim (list): Range of y.</p>
 </li>
 </ul>
 </td>
@@ -216,8 +254,25 @@ ylim (list): Range of y.</p>
 
 <dl class="function">
 <dt id="decode.plot.functions.plottimestream">
-<code class="descclassname">decode.plot.functions.</code><code class="descname">plottimestream</code><span class="sig-paren">(</span><em>scanarray</em>, <em>fittedarray=None</em>, <em>filteredarray=None</em>, <em>chs=None</em>, <em>peakfind=True</em>, <em>save=True</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/decode/plot/functions.html#plottimestream"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#decode.plot.functions.plottimestream" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<code class="descclassname">decode.plot.functions.</code><code class="descname">plottimestream</code><span class="sig-paren">(</span><em>array</em>, <em>ax</em>, <em>xtick='time'</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/decode/plot/functions.html#plottimestream"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#decode.plot.functions.plottimestream" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plot timestream data.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>array</strong> (<em>xarray.DataArray</em>) &#8211; Array which the timestream data are included.</li>
+<li><strong>ax</strong> (<em>matplotlib.axes</em>) &#8211; Axis you want to plot on.</li>
+<li><strong>xtick</strong> (<em>str</em>) &#8211; Type of x axis.
+&#8216;time&#8217;: Time.
+&#8216;index&#8217;: Time index.</li>
+<li><strong>kwargs</strong> (<em>optional</em>) &#8211; Plot options passed to ax.plot().</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
 
 </div>
 <div class="section" id="module-decode.plot">
