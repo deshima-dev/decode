@@ -15,6 +15,11 @@ RESERVED = ';/?:@&=+$,'
 
 
 def youtube(keyword=None):
+    """Open youtube.
+
+    Args:
+        keyword (optional): Search word.
+    """
     if keyword is None:
         web.open('https://www.youtube.com/watch?v=L_mBVT2jBFw')
     else:

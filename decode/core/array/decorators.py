@@ -45,7 +45,6 @@ def xarrayfunc(func):
 
     Returns:
         wrapper (function): Wrapped function.
-
     """
     @wraps(func)
     def wrapper(*args, **kwargs):
@@ -80,7 +79,6 @@ def chunk(*argnames, concatfunc=None):
 
         >>> timechunk = 10
         >>> result = func(array)
-
     """
     def _chunk(func):
         depth = [s.function for s in stack()].index('<module>')

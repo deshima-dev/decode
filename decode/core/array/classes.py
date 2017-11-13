@@ -92,15 +92,15 @@ class DecodeArrayAccessor(BaseAccessor):
         return {k: v.values for k, v in self.coords.items() if v.dims==('t', 'ch')}
 
     @staticmethod
-    def plotcoords(array, ax, coords, scantypes=None):
+    def plotcoords(array, ax, coords, scantypes=None, **kwargs):
         logger = getLogger('decode.plot.plotcoords')
 
         if scantypes is None:
-            ax.plot(array[coords[0]], array[coords[1]], label='ALL')
+            ax.plot(array[coords[0]], array[coords[1]], label='ALL', **kwargs)
         else:
             for scantype in scantypes:
                 ax.plot(array[coords[0]][array.scantype == scantype],
-                        array[coords[1]][array.scantype == scantype], label=scantype)
+                        array[coords[1]][array.scantype == scantype], label=scantype, **kwargs)
         ax.set_xlabel(coords[0], fontsize=20, color='grey')
         ax.set_ylabel(coords[1], fontsize=20, color='grey')
         ax.set_title('{} vs {}'.format(coords[1], coords[0]), fontsize=20, color='grey')
@@ -109,14 +109,14 @@ class DecodeArrayAccessor(BaseAccessor):
         logger.info('{} vs {} has been plotted.'.format(coords[1], coords[0]))
 
     @staticmethod
-    def plotweather(array, axs):
+    def plotweather(array, axs, **kwargs):
         logger = getLogger('decode.plot.plotweather')
 
         infos  = ['temp', 'pressure', 'vapor-pressure', 'windspd', 'winddir']
         labels = ['external temperature [C]', 'pressure [hPa]', 'vapor pressure [hPa]',
                   'wind speed [m/s]', 'wind direction [deg]']
         for (ax, info, label) in zip(axs, infos, labels):
-            ax.plot(array['time'], array[info])
+            ax.plot(array['time'], array[info], **kwargs)
             ax.set_xlabel('time')
             ax.set_ylabel(label)
             for label in ax.get_xticklabels():

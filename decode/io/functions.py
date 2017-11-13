@@ -26,10 +26,12 @@ def loaddfits(fitsname, coordtype='azel', loadtype='temperature', starttime=None
 
     Args:
         fitsname (str): Name of DFITS file.
-        coordtype (str): Coordinate type included into a decode array, azel or radec.
-        loadtype (str): Data format of xarray.
-            'Tsignal': Temperature
-            'Psignal': Power
+        coordtype (str): Coordinate type included into a decode array.
+            'azel': Azimuth / elevation.
+            'radec': Right ascension / declination.
+        loadtype (str): Data unit of xarray.
+            'Tsignal': Temperature [K].
+            'Psignal': Power [W].
         starttime (int, str or numpy.datetime64): Start time of loaded data.
             It can be specified by the start index (int), the time compatible with numpy.datetime64 (str),
             or numpy.datetime64 (numpy.datetime64). Default is None and it means the data will be loaded
@@ -39,8 +41,8 @@ def loaddfits(fitsname, coordtype='azel', loadtype='temperature', starttime=None
             or numpy.datetime64 (numpy.datetime64). Default is None and it means the data will be loaded
             until the last record.
         pixelids (int or list): Under development.
-        scantype (str): Under development.
-        mode (int):
+        scantypes (list(str)): Scan types, such as 'GRAD', 'SCAN', 'OFF', 'R', and so on.
+        mode (int): Loading mode.
             0: Relative coordinates with cosine projection (RECOMMENDED).
             1: Relative coordinates without cosine projection.
             2: Absolute coordinates.
@@ -177,16 +179,15 @@ def loaddfits(fitsname, coordtype='azel', loadtype='temperature', starttime=None
     ### make array
     array = dc.array(response, tcoords=tcoords, chcoords=chcoords, scalarcoords=scalarcoords)
     if scantypes is not None:
-        arrays = []
+        mask = np.full(array.shape[0], False)
         for scantype in scantypes:
-            arrays.append(array.copy()[array.scantype == scantype])
-    else:
-        arrays = array.copy()
+            mask |= (array.scantype == scantype)
+        array = array[mask]
 
     ### close hdu
     hdulist.close()
 
-    return arrays
+    return array
 
 
 def savefits(dataarray, fitsname, **kwargs):

@@ -28,7 +28,6 @@ def cube(data, xcoords=None, ycoords=None, chcoords=None, scalarcoords=None, dat
 
     Returns:
         decode cube (decode.cube): Decode cube.
-
     """
     # initialize coords with default values
     cube = xr.DataArray(data, dims=('x', 'y', 'ch'), attrs=attrs, name=name)
@@ -95,24 +94,20 @@ def tocube(array, **kwargs):
             (1) xarr/yarr and xc/yc
             (2) gx/gy and xmin/xmax/ymin/ymax and xc/yc
             (3) nx/ny and xmin/xmax/ymin/ymax
-
     """
     return xr.DataArray.dcc.tocube(array, **kwargs)
 
 
-def makecontinuum(cube, kidtp, **kwargs):
+def makecontinuum(cube, **kwargs):
     """Make a continuum array.
 
     Args:
         cube (decode.cube): Decode cube which will be averaged over channels.
-        kidtp (int): Kid types which will be used
-            0: wideband
-            1: filter
-            2: blind
         kwargs (optional): Other arguments.
-            exchs (list): Excluded channel kidids
+            inchs (list): Included channel kidids.
+            exchs (list): Excluded channel kidids.
 
     Returns:
         decode cube (decode.cube): Decode cube (2d).
     """
-    return xr.DataArray.dcc.makecontinuum(cube, kidtp, **kwargs)
+    return xr.DataArray.dcc.makecontinuum(cube, **kwargs)

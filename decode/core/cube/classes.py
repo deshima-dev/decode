@@ -55,8 +55,7 @@ class DecodeCubeAccessor(BaseAccessor):
             Users can create an array with Decode accessor using dc.array.
 
         Args:
-            array (xarray.DataArray): An array to which Decode accessor is added.
-
+            array (xarray.DataArray): Array to which Decode accessor is added.
         """
         super().__init__(array)
 
@@ -66,7 +65,6 @@ class DecodeCubeAccessor(BaseAccessor):
         Warning:
             Do not use this method after an array is created.
             This forcibly replaces all vaules of coords with default ones.
-
         """
         self.coords.update(XCOORDS(self))
         self.coords.update(YCOORDS(self))
@@ -151,9 +149,6 @@ class DecodeCubeAccessor(BaseAccessor):
             else:
                 raise KeyError('Arguments are wrong.')
 
-        if array.coordsys == 'RADEC':
-            x_grid = x_grid[::-1]
-
         nx_grid = len(x_grid)
         ny_grid = len(y_grid)
         nz_grid = len(array.ch)
@@ -178,18 +173,23 @@ class DecodeCubeAccessor(BaseAccessor):
         return dc.cube(cubedata, xcoords=xcoords, ycoords=ycoords, chcoords=chcoords, scalarcoords=scalarcoords)
 
     @staticmethod
-    def makecontinuum(cube, kidtp, **kwargs):
+    def makecontinuum(cube, **kwargs):
         logger = getLogger('decode.makecontinuum')
-        logger.info('kidtp')
-        logger.info('{}'.format(kidtp))
 
         ### some weighting procedure
-        mask = (cube.kidtp == kidtp).values
-        if 'exchs' in kwargs:
-            logger.info('exchs')
-            logger.info('{}'.format(kwargs['exchs']))
-            mask[kwargs['exchs']] = False
-        cont = cube[:, :, mask].mean(dim='ch')
+        if 'inchs' in kwargs:
+            inchs = kwargs['inchs']
+            logger.info('inchs')
+            logger.info('{}'.format(inchs))
+            cont = cube[:, :, inchs].mean(dim='ch')
+        else:
+            mask = np.full(len(cube.ch), True)
+            if 'exchs' in kwargs:
+                exchs = kwargs['exchs']
+                logger.info('exchs')
+                logger.info('{}'.format(exchs))
+                mask[exchs] = False
+            cont = cube[:, :, mask].mean(dim='ch')
 
         return cont
 
@@ -201,8 +201,13 @@ class DecodeCubeAccessor(BaseAccessor):
         crval1 = float(cube.x[0])
         cdelt2 = float(cube.y[1] - cube.y[0])
         crval2 = float(cube.y[0])
-        header = fits.Header(OrderedDict([('CTYPE1', 'deg'), ('CDELT1', cdelt1), ('CRVAL1', crval1), ('CRPIX1', 1),
-                                          ('CTYPE2', 'deg'), ('CDELT2', cdelt2), ('CRVAL2', crval2), ('CRPIX2', 1)]))
+        if cube.coordsys == 'RADEC':
+            header = fits.Header(OrderedDict([('CTYPE1', 'RA--SFL'), ('CUNIT1', 'deg'), ('CDELT1', cdelt1), ('CRVAL1', crval1), ('CRPIX1', 1),
+                                              ('CTYPE2', 'DEC--SFL'), ('CUNIT2', 'deg'), ('CDELT2', cdelt2), ('CRVAL2', crval2), ('CRPIX2', 1)]))
+        else:
+            header = fits.Header(OrderedDict([('CTYPE1', 'AZ--SFL'), ('CUNIT1', 'deg'), ('CDELT1', cdelt1), ('CRVAL1', crval1), ('CRPIX1', 1),
+                                              ('CTYPE2', 'DEC--SFL'), ('CUNIT2', 'deg'), ('CDELT2', cdelt2), ('CRVAL2', crval2), ('CRPIX2', 1)]))
+
 
         if cube.dims == ('x', 'y', 'ch'):
             try:
@@ -210,7 +215,7 @@ class DecodeCubeAccessor(BaseAccessor):
             except IndexError:
                 cdelt3 = 0
             crval3 = float(cube.kidid[0])
-            header.update(OrderedDict([('CTYPE3', 'ID'),  ('CDELT3', cdelt3), ('CRVAL3', crval3), ('CRPIX3', 1)]))
+            header.update(OrderedDict([('CUNIT3', 'ID'),  ('CDELT3', cdelt3), ('CRVAL3', crval3), ('CRPIX3', 1)]))
 
         fits.writeto(fitsname, cube.values.T, header, **kwargs)
         logger.info('{} has been created.'.format(fitsname))

@@ -92,5 +92,18 @@ def one_thread_per_process():
         yield
 
 
-def slicewhere(dataarray, condition):
+def slicewhere(condition):
+    """Return slices of regions that fulfill condition.
+
+    Example:
+        >>> cond = [False, True, True, False, False, True, False]
+        >>> fm.utils.slicewhere(cond)
+        [slice(1L, 3L, None), slice(5L, 6L, None)]
+
+    Args:
+        condition (numpy.ndarray): Array of booleans.
+
+    Returns:
+        slices (list of slice): List of slice objects.
+    """
     return [region[0] for region in ndimage.find_objects(ndimage.label(condition)[0])]
