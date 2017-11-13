@@ -121,7 +121,7 @@ def plottimestream(array, ax, xtick='time', **kwargs):
         ax.plot(array.time, array, **kwargs)
         ax.set_xlabel('time', fontsize=20, color='grey')
     elif xtick == 'index':
-        ax.plot(array.time, array, **kwargs)
+        ax.plot(np.ogrid[:len(array.time)], array, **kwargs)
         ax.set_xlabel('time index', fontsize=20, color='grey')
     for label in ax.get_xticklabels():
         label.set_rotation(45)
