@@ -154,6 +154,10 @@ def rsky_calibration(onarray, offarray, rarray, Tamb, mode='mean'):
         mode (str): The way of correcting offsets.
             'mean': Mean.
             'median': Median.
+
+    Returns:
+        onarray_cal (decode.array): Calibrated array of on-point observations.
+        offarray_cal (decode.array): Calibrated array of off-point observations.
     """
     logger = getLogger('decode.models.rsky_calibration')
     logger.info('mode')
