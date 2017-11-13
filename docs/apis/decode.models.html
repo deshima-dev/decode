@@ -169,17 +169,122 @@
 <dl class="function">
 <dt id="decode.models.functions.skewgauss">
 <code class="descclassname">decode.models.functions.</code><code class="descname">skewgauss</code><span class="sig-paren">(</span><em>x</em>, <em>sigma</em>, <em>mu</em>, <em>alpha</em>, <em>a</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/decode/models/functions.html#skewgauss"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#decode.models.functions.skewgauss" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Skewed Gaussian.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>x</strong> (<em>np.ndarray</em>) &#8211; Dataset.</li>
+<li><strong>sigma</strong> (<em>float</em>) &#8211; Standard deviation.</li>
+<li><strong>mu</strong> (<em>float</em>) &#8211; Mean.</li>
+<li><strong>alpha</strong> (<em>float</em>) &#8211; Skewness.</li>
+<li><strong>a</strong> (<em>float</em>) &#8211; Normalization factor.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">Skewed Gaussian.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">skewed gaussian (np.ndarray)</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
 
 <dl class="function">
 <dt id="decode.models.functions.savgol_filter">
 <code class="descclassname">decode.models.functions.</code><code class="descname">savgol_filter</code><span class="sig-paren">(</span><em>array</em>, <em>win=2001</em>, <em>polyn=3</em>, <em>iteration=1</em>, <em>threshold=1</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/decode/models/functions.html#savgol_filter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#decode.models.functions.savgol_filter" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Apply scipy.signal.savgol_filter iteratively.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>array</strong> (<a class="reference internal" href="decode.html#decode.array" title="decode.array"><em>decode.array</em></a>) &#8211; Decode array which will be filtered.</li>
+<li><strong>win</strong> (<em>int</em>) &#8211; Length of window.</li>
+<li><strong>polyn</strong> (<em>int</em>) &#8211; Order of polynominal function.</li>
+<li><strong>iteration</strong> (<em>int</em>) &#8211; The number of iterations.</li>
+<li><strong>threshold</strong> (<em>float</em>) &#8211; Threshold above which the data will be used as signals
+in units of sigma.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">Fitted results.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">fitted (<a class="reference internal" href="decode.html#decode.array" title="decode.array">decode.array</a>)</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
 
 <dl class="function">
 <dt id="decode.models.functions.pca">
-<code class="descclassname">decode.models.functions.</code><code class="descname">pca</code><span class="sig-paren">(</span><em>onarray</em>, <em>offarray</em>, <em>n=10</em>, <em>exchs=None</em>, <em>pc=True</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/decode/models/functions.html#pca"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#decode.models.functions.pca" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<code class="descclassname">decode.models.functions.</code><code class="descname">pca</code><span class="sig-paren">(</span><em>onarray</em>, <em>offarray</em>, <em>n=10</em>, <em>exchs=None</em>, <em>pc=False</em>, <em>mode='mean'</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/decode/models/functions.html#pca"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#decode.models.functions.pca" title="Permalink to this definition">¶</a></dt>
+<dd><p>Apply Principal Component Analysis (PCA) method to estimate baselines at each time.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>onarray</strong> (<a class="reference internal" href="decode.html#decode.array" title="decode.array"><em>decode.array</em></a>) &#8211; Decode array of on-point observations.</li>
+<li><strong>offarray</strong> (<a class="reference internal" href="decode.html#decode.array" title="decode.array"><em>decode.array</em></a>) &#8211; Decode array of off-point observations.</li>
+<li><strong>n</strong> (<em>int</em>) &#8211; The number of pricipal components.</li>
+<li><strong>pc</strong> (<em>bool</em>) &#8211; When True, this function also returns eigen vectors and their coefficients.</li>
+<li><strong>mode</strong> (<em>str</em>) &#8211; The way of correcting offsets.
+&#8216;mean&#8217;: Mean.
+&#8216;median&#8217;: Median.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><p>Baseline-subtracted array.
+When pc is True:</p>
+<blockquote>
+<div><p>Ps (list(np.ndarray)): Eigen vectors.
+Cs (list(np.ndarray)): Coefficients.</p>
+</div></blockquote>
+</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">filtered (<a class="reference internal" href="decode.html#decode.array" title="decode.array">decode.array</a>)</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="decode.models.functions.rsky_calibration">
+<code class="descclassname">decode.models.functions.</code><code class="descname">rsky_calibration</code><span class="sig-paren">(</span><em>onarray</em>, <em>offarray</em>, <em>rarray</em>, <em>Tamb</em>, <em>mode='mean'</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/decode/models/functions.html#rsky_calibration"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#decode.models.functions.rsky_calibration" title="Permalink to this definition">¶</a></dt>
+<dd><p>Apply R-sky calibrations.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>onarray</strong> (<a class="reference internal" href="decode.html#decode.array" title="decode.array"><em>decode.array</em></a>) &#8211; Decode array of on-point observations.</li>
+<li><strong>offarray</strong> (<a class="reference internal" href="decode.html#decode.array" title="decode.array"><em>decode.array</em></a>) &#8211; Decode array of off-point observations.</li>
+<li><strong>rarray</strong> (<a class="reference internal" href="decode.html#decode.array" title="decode.array"><em>decode.array</em></a>) &#8211; Decode array of R observations.</li>
+<li><strong>Tamb</strong> (<em>float</em>) &#8211; Ambient temperature [K].</li>
+<li><strong>mode</strong> (<em>str</em>) &#8211; The way of correcting offsets.
+&#8216;mean&#8217;: Mean.
+&#8216;median&#8217;: Median.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">Calibrated array of on-point observations.
+offarray_cal (decode.array): Calibrated array of off-point observations.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">onarray_cal (<a class="reference internal" href="decode.html#decode.array" title="decode.array">decode.array</a>)</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
 
 </div>
 <div class="section" id="module-decode.models">

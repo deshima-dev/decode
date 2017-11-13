@@ -176,10 +176,12 @@
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
 <li><strong>fitsname</strong> (<em>str</em>) &#8211; Name of DFITS file.</li>
-<li><strong>coordtype</strong> (<em>str</em>) &#8211; Coordinate type included into a decode array, azel or radec.</li>
-<li><strong>loadtype</strong> (<em>str</em>) &#8211; Data format of xarray.
-&#8216;Tsignal&#8217;: Temperature
-&#8216;Psignal&#8217;: Power</li>
+<li><strong>coordtype</strong> (<em>str</em>) &#8211; Coordinate type included into a decode array.
+&#8216;azel&#8217;: Azimuth / elevation.
+&#8216;radec&#8217;: Right ascension / declination.</li>
+<li><strong>loadtype</strong> (<em>str</em>) &#8211; Data unit of xarray.
+&#8216;Tsignal&#8217;: Temperature [K].
+&#8216;Psignal&#8217;: Power [W].</li>
 <li><strong>starttime</strong> (<em>int</em><em>, </em><em>str</em><em> or </em><em>numpy.datetime64</em>) &#8211; Start time of loaded data.
 It can be specified by the start index (int), the time compatible with numpy.datetime64 (str),
 or numpy.datetime64 (numpy.datetime64). Default is None and it means the data will be loaded
@@ -189,8 +191,9 @@ It can be specified by the end index (int), the time compatible with numpy.datet
 or numpy.datetime64 (numpy.datetime64). Default is None and it means the data will be loaded
 until the last record.</li>
 <li><strong>pixelids</strong> (<em>int</em><em> or </em><em>list</em>) &#8211; Under development.</li>
-<li><strong>scantype</strong> (<em>str</em>) &#8211; Under development.</li>
-<li><strong>mode</strong> (<em>int</em>) &#8211; 0: Relative coordinates with cosine projection (RECOMMENDED).
+<li><strong>scantypes</strong> (<em>list</em><em>(</em><em>str</em><em>)</em>) &#8211; Scan types, such as &#8216;GRAD&#8217;, &#8216;SCAN&#8217;, &#8216;OFF&#8217;, &#8216;R&#8217;, and so on.</li>
+<li><strong>mode</strong> (<em>int</em>) &#8211; Loading mode.
+0: Relative coordinates with cosine projection (RECOMMENDED).
 1: Relative coordinates without cosine projection.
 2: Absolute coordinates.</li>
 </ul>

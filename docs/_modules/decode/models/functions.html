@@ -160,6 +160,7 @@
     <span class="s1">&#39;skewgauss&#39;</span><span class="p">,</span>
     <span class="s1">&#39;savgol_filter&#39;</span><span class="p">,</span>
     <span class="s1">&#39;pca&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;rsky_calibration&#39;</span>
 <span class="p">]</span>
 
 <span class="c1"># standard library</span>
@@ -176,13 +177,39 @@
 
 <span class="c1">##### skewed Gaussian</span>
 <div class="viewcode-block" id="skewgauss"><a class="viewcode-back" href="../../../apis/decode.models.html#decode.models.functions.skewgauss">[docs]</a><span class="k">def</span> <span class="nf">skewgauss</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">sigma</span><span class="p">,</span> <span class="n">mu</span><span class="p">,</span> <span class="n">alpha</span><span class="p">,</span> <span class="n">a</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Skewed Gaussian.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        x (np.ndarray): Dataset.</span>
+<span class="sd">        sigma (float): Standard deviation.</span>
+<span class="sd">        mu (float): Mean.</span>
+<span class="sd">        alpha (float): Skewness.</span>
+<span class="sd">        a (float): Normalization factor.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        skewed gaussian (np.ndarray): Skewed Gaussian.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">normpdf</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="p">(</span><span class="n">sigma</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)))</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="p">(</span><span class="n">x</span> <span class="o">-</span> <span class="n">mu</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">sigma</span><span class="o">**</span><span class="mi">2</span><span class="p">))</span>
     <span class="n">normcdf</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">erf</span><span class="p">((</span><span class="n">alpha</span> <span class="o">*</span> <span class="p">((</span><span class="n">x</span> <span class="o">-</span> <span class="n">mu</span><span class="p">)</span> <span class="o">/</span> <span class="n">sigma</span><span class="p">))</span> <span class="o">/</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">2</span><span class="p">))))</span>
 
     <span class="k">return</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">a</span> <span class="o">*</span> <span class="n">normpdf</span> <span class="o">*</span> <span class="n">normcdf</span></div>
 
 
+<span class="nd">@dc</span><span class="o">.</span><span class="n">xarrayfunc</span>
 <div class="viewcode-block" id="savgol_filter"><a class="viewcode-back" href="../../../apis/decode.models.html#decode.models.functions.savgol_filter">[docs]</a><span class="k">def</span> <span class="nf">savgol_filter</span><span class="p">(</span><span class="n">array</span><span class="p">,</span> <span class="n">win</span><span class="o">=</span><span class="mi">2001</span><span class="p">,</span> <span class="n">polyn</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">iteration</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">threshold</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Apply scipy.signal.savgol_filter iteratively.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        array (decode.array): Decode array which will be filtered.</span>
+<span class="sd">        win (int): Length of window.</span>
+<span class="sd">        polyn (int): Order of polynominal function.</span>
+<span class="sd">        iteration (int): The number of iterations.</span>
+<span class="sd">        threshold (float): Threshold above which the data will be used as signals</span>
+<span class="sd">            in units of sigma.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        fitted (decode.array): Fitted results.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">logger</span> <span class="o">=</span> <span class="n">getLogger</span><span class="p">(</span><span class="s1">&#39;decode.models.savgol_filter&#39;</span><span class="p">)</span>
     <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;win polyn iteration threshold&#39;</span><span class="p">)</span>
     <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">{}</span><span class="s1"> </span><span class="si">{}</span><span class="s1"> </span><span class="si">{}</span><span class="s1"> </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">win</span><span class="p">,</span> <span class="n">polyn</span><span class="p">,</span> <span class="n">iteration</span><span class="p">,</span> <span class="n">threshold</span><span class="p">))</span>
@@ -205,12 +232,29 @@
     <span class="k">return</span> <span class="n">fitted</span></div>
 
 
-<div class="viewcode-block" id="pca"><a class="viewcode-back" href="../../../apis/decode.models.html#decode.models.functions.pca">[docs]</a><span class="k">def</span> <span class="nf">pca</span><span class="p">(</span><span class="n">onarray</span><span class="p">,</span> <span class="n">offarray</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">exchs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">pc</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<div class="viewcode-block" id="pca"><a class="viewcode-back" href="../../../apis/decode.models.html#decode.models.functions.pca">[docs]</a><span class="k">def</span> <span class="nf">pca</span><span class="p">(</span><span class="n">onarray</span><span class="p">,</span> <span class="n">offarray</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">exchs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">pc</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;mean&#39;</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Apply Principal Component Analysis (PCA) method to estimate baselines at each time.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        onarray (decode.array): Decode array of on-point observations.</span>
+<span class="sd">        offarray (decode.array): Decode array of off-point observations.</span>
+<span class="sd">        n (int): The number of pricipal components.</span>
+<span class="sd">        pc (bool): When True, this function also returns eigen vectors and their coefficients.</span>
+<span class="sd">        mode (str): The way of correcting offsets.</span>
+<span class="sd">            &#39;mean&#39;: Mean.</span>
+<span class="sd">            &#39;median&#39;: Median.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        filtered (decode.array): Baseline-subtracted array.</span>
+<span class="sd">        When pc is True:</span>
+<span class="sd">            Ps (list(np.ndarray)): Eigen vectors.</span>
+<span class="sd">            Cs (list(np.ndarray)): Coefficients.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">logger</span> <span class="o">=</span> <span class="n">getLogger</span><span class="p">(</span><span class="s1">&#39;decode.models.pca&#39;</span><span class="p">)</span>
-    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;n_components exchs&#39;</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;n_components exchs mode&#39;</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">exchs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">exchs</span> <span class="o">=</span> <span class="p">[</span><span class="mi">16</span><span class="p">,</span> <span class="mi">44</span><span class="p">,</span> <span class="mi">46</span><span class="p">]</span>
-    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">{}</span><span class="s1"> </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">exchs</span><span class="p">))</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">{}</span><span class="s1"> </span><span class="si">{}</span><span class="s1"> </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">exchs</span><span class="p">,</span> <span class="n">mode</span><span class="p">))</span>
 
     <span class="n">onarray</span>  <span class="o">=</span> <span class="n">onarray</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
     <span class="n">onarray</span><span class="p">[:,</span> <span class="n">exchs</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
@@ -219,41 +263,116 @@
 
     <span class="n">offid</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">offarray</span><span class="o">.</span><span class="n">scanid</span><span class="p">)</span>
     <span class="n">onid</span>  <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">onarray</span><span class="o">.</span><span class="n">scanid</span><span class="p">)</span>
-    <span class="n">Xatms</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="n">Ps</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="n">Cs</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">Xatms</span><span class="p">,</span> <span class="n">Ps</span><span class="p">,</span> <span class="n">Cs</span> <span class="o">=</span> <span class="p">[],</span> <span class="p">[],</span> <span class="p">[]</span>
+    <span class="n">model</span> <span class="o">=</span> <span class="n">TruncatedSVD</span><span class="p">(</span><span class="n">n_components</span><span class="o">=</span><span class="n">n</span><span class="p">)</span>
     <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">onid</span><span class="p">:</span>
         <span class="n">leftid</span>  <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">searchsorted</span><span class="p">(</span><span class="n">offid</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
         <span class="n">rightid</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">searchsorted</span><span class="p">(</span><span class="n">offid</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span>
 
-        <span class="n">Xon</span>  <span class="o">=</span> <span class="n">onarray</span><span class="p">[</span><span class="n">onarray</span><span class="o">.</span><span class="n">scanid</span> <span class="o">==</span> <span class="n">i</span><span class="p">]</span>
+        <span class="n">Xon</span>   <span class="o">=</span> <span class="n">onarray</span><span class="p">[</span><span class="n">onarray</span><span class="o">.</span><span class="n">scanid</span> <span class="o">==</span> <span class="n">i</span><span class="p">]</span>
+        <span class="n">Xon_m</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">Xon</span><span class="p">,</span> <span class="n">mode</span><span class="p">)(</span><span class="n">dim</span><span class="o">=</span><span class="s1">&#39;t&#39;</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">leftid</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
-            <span class="n">Xoff</span>  <span class="o">=</span> <span class="n">offarray</span><span class="p">[</span><span class="n">offarray</span><span class="o">.</span><span class="n">scanid</span> <span class="o">==</span> <span class="n">offid</span><span class="p">[</span><span class="n">rightid</span><span class="p">]]</span>
-            <span class="n">Xoff</span> <span class="o">-=</span> <span class="n">Xoff</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="s1">&#39;t&#39;</span><span class="p">)</span>
+            <span class="n">Xoff</span>     <span class="o">=</span> <span class="n">offarray</span><span class="p">[</span><span class="n">offarray</span><span class="o">.</span><span class="n">scanid</span> <span class="o">==</span> <span class="n">offid</span><span class="p">[</span><span class="n">rightid</span><span class="p">]]</span>
+            <span class="n">Xoff_m</span>   <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">Xoff</span><span class="p">,</span> <span class="n">mode</span><span class="p">)(</span><span class="n">dim</span><span class="o">=</span><span class="s1">&#39;t&#39;</span><span class="p">)</span>
+            <span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">Xoff</span> <span class="o">-</span> <span class="n">Xoff_m</span><span class="p">)</span>
         <span class="k">elif</span> <span class="n">rightid</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">offid</span><span class="p">):</span>
-            <span class="n">Xoff</span>  <span class="o">=</span> <span class="n">offarray</span><span class="p">[</span><span class="n">offarray</span><span class="o">.</span><span class="n">scanid</span> <span class="o">==</span> <span class="n">offid</span><span class="p">[</span><span class="n">leftid</span><span class="p">]]</span>
-            <span class="n">Xoff</span> <span class="o">-=</span> <span class="n">Xoff</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="s1">&#39;t&#39;</span><span class="p">)</span>
+            <span class="n">Xoff</span>     <span class="o">=</span> <span class="n">offarray</span><span class="p">[</span><span class="n">offarray</span><span class="o">.</span><span class="n">scanid</span> <span class="o">==</span> <span class="n">offid</span><span class="p">[</span><span class="n">leftid</span><span class="p">]]</span>
+            <span class="n">Xoff_m</span>   <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">Xoff</span><span class="p">,</span> <span class="n">mode</span><span class="p">)(</span><span class="n">dim</span><span class="o">=</span><span class="s1">&#39;t&#39;</span><span class="p">)</span>
+            <span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">Xoff</span> <span class="o">-</span> <span class="n">Xoff_m</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">Xoff_l</span>  <span class="o">=</span> <span class="n">offarray</span><span class="p">[</span><span class="n">offarray</span><span class="o">.</span><span class="n">scanid</span> <span class="o">==</span> <span class="n">offid</span><span class="p">[</span><span class="n">leftid</span><span class="p">]]</span>
-            <span class="n">Xoff_l</span> <span class="o">-=</span> <span class="n">Xoff_l</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="s1">&#39;t&#39;</span><span class="p">)</span>
-            <span class="n">Xoff_r</span>  <span class="o">=</span> <span class="n">offarray</span><span class="p">[</span><span class="n">offarray</span><span class="o">.</span><span class="n">scanid</span> <span class="o">==</span> <span class="n">offid</span><span class="p">[</span><span class="n">rightid</span><span class="p">]]</span>
-            <span class="n">Xoff_r</span> <span class="o">-=</span> <span class="n">Xoff_r</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="s1">&#39;t&#39;</span><span class="p">)</span>
-            <span class="n">Xoff</span>    <span class="o">=</span> <span class="n">dc</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">Xoff_l</span><span class="p">,</span> <span class="n">Xoff_r</span><span class="p">],</span> <span class="n">dim</span><span class="o">=</span><span class="s1">&#39;t&#39;</span><span class="p">)</span>
-        <span class="n">model</span> <span class="o">=</span> <span class="n">TruncatedSVD</span><span class="p">(</span><span class="n">n_components</span><span class="o">=</span><span class="n">n</span><span class="p">)</span>
-        <span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">Xoff</span><span class="p">)</span>
+            <span class="n">Xoff_l</span>   <span class="o">=</span> <span class="n">offarray</span><span class="p">[</span><span class="n">offarray</span><span class="o">.</span><span class="n">scanid</span> <span class="o">==</span> <span class="n">offid</span><span class="p">[</span><span class="n">leftid</span><span class="p">]]</span>
+            <span class="n">Xoff_lm</span>  <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">Xoff_l</span><span class="p">,</span> <span class="n">mode</span><span class="p">)(</span><span class="n">dim</span><span class="o">=</span><span class="s1">&#39;t&#39;</span><span class="p">)</span>
+            <span class="n">Xoff_r</span>   <span class="o">=</span> <span class="n">offarray</span><span class="p">[</span><span class="n">offarray</span><span class="o">.</span><span class="n">scanid</span> <span class="o">==</span> <span class="n">offid</span><span class="p">[</span><span class="n">rightid</span><span class="p">]]</span>
+            <span class="n">Xoff_rm</span>  <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">Xoff_r</span><span class="p">,</span> <span class="n">mode</span><span class="p">)(</span><span class="n">dim</span><span class="o">=</span><span class="s1">&#39;t&#39;</span><span class="p">)</span>
+            <span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">dc</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">Xoff_l</span> <span class="o">-</span> <span class="n">Xoff_lm</span><span class="p">,</span> <span class="n">Xoff_r</span> <span class="o">-</span> <span class="n">Xoff_rm</span><span class="p">],</span> <span class="n">dim</span><span class="o">=</span><span class="s1">&#39;t&#39;</span><span class="p">))</span>
         <span class="n">P</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">components_</span>
-        <span class="n">Ps</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">P</span><span class="p">)</span>
-        <span class="n">C</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">Xon</span> <span class="o">-</span> <span class="n">Xon</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="s1">&#39;t&#39;</span><span class="p">))</span>
-        <span class="n">Cs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">C</span><span class="p">)</span>
+        <span class="n">C</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">Xon</span> <span class="o">-</span> <span class="n">Xon_m</span><span class="p">)</span>
 
-        <span class="n">Xatm</span> <span class="o">=</span> <span class="n">Xon</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
-        <span class="n">Xatm</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">C</span> <span class="o">@</span> <span class="n">P</span> <span class="o">+</span> <span class="n">Xon</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="s1">&#39;t&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">values</span>
-        <span class="n">Xatms</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Xatm</span><span class="p">)</span>
+        <span class="n">Xatms</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">dc</span><span class="o">.</span><span class="n">full_like</span><span class="p">(</span><span class="n">Xon</span><span class="p">,</span> <span class="n">C</span> <span class="o">@</span> <span class="n">P</span> <span class="o">+</span> <span class="n">Xon_m</span><span class="o">.</span><span class="n">values</span><span class="p">))</span>
+        <span class="n">Ps</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">P</span><span class="p">)</span>
+        <span class="n">Cs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">C</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="n">pc</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">dc</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">Xatms</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="s1">&#39;t&#39;</span><span class="p">),</span> <span class="n">Ps</span><span class="p">,</span> <span class="n">Cs</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">dc</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">Xatms</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="s1">&#39;t&#39;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="rsky_calibration"><a class="viewcode-back" href="../../../apis/decode.models.html#decode.models.functions.rsky_calibration">[docs]</a><span class="k">def</span> <span class="nf">rsky_calibration</span><span class="p">(</span><span class="n">onarray</span><span class="p">,</span> <span class="n">offarray</span><span class="p">,</span> <span class="n">rarray</span><span class="p">,</span> <span class="n">Tamb</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;mean&#39;</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Apply R-sky calibrations.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        onarray (decode.array): Decode array of on-point observations.</span>
+<span class="sd">        offarray (decode.array): Decode array of off-point observations.</span>
+<span class="sd">        rarray (decode.array): Decode array of R observations.</span>
+<span class="sd">        Tamb (float): Ambient temperature [K].</span>
+<span class="sd">        mode (str): The way of correcting offsets.</span>
+<span class="sd">            &#39;mean&#39;: Mean.</span>
+<span class="sd">            &#39;median&#39;: Median.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        onarray_cal (decode.array): Calibrated array of on-point observations.</span>
+<span class="sd">        offarray_cal (decode.array): Calibrated array of off-point observations.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">logger</span> <span class="o">=</span> <span class="n">getLogger</span><span class="p">(</span><span class="s1">&#39;decode.models.rsky_calibration&#39;</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;mode&#39;</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">mode</span><span class="p">))</span>
+
+    <span class="n">offid</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">offarray</span><span class="o">.</span><span class="n">scanid</span><span class="p">)</span>
+    <span class="n">onid</span>  <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">onarray</span><span class="o">.</span><span class="n">scanid</span><span class="p">)</span>
+    <span class="n">rid</span>   <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">rarray</span><span class="o">.</span><span class="n">scanid</span><span class="p">)</span>
+
+    <span class="n">Xon_cal</span>  <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">Xoff_cal</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">onid</span><span class="p">:</span>
+        <span class="n">oleftid</span>  <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">searchsorted</span><span class="p">(</span><span class="n">offid</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
+        <span class="n">orightid</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">searchsorted</span><span class="p">(</span><span class="n">offid</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span>
+        <span class="n">rleftid</span>  <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">searchsorted</span><span class="p">(</span><span class="n">rid</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
+        <span class="n">rrightid</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">searchsorted</span><span class="p">(</span><span class="n">rid</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span>
+
+        <span class="n">Xon</span> <span class="o">=</span> <span class="n">onarray</span><span class="p">[</span><span class="n">onarray</span><span class="o">.</span><span class="n">scanid</span> <span class="o">==</span> <span class="n">i</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">oleftid</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+            <span class="n">Xoff</span>   <span class="o">=</span> <span class="n">offarray</span><span class="p">[</span><span class="n">offarray</span><span class="o">.</span><span class="n">scanid</span> <span class="o">==</span> <span class="n">offid</span><span class="p">[</span><span class="n">orightid</span><span class="p">]]</span>
+            <span class="n">Xoff_m</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">Xoff</span><span class="p">,</span> <span class="n">mode</span><span class="p">)(</span><span class="n">dim</span><span class="o">=</span><span class="s1">&#39;t&#39;</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">orightid</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">offid</span><span class="p">):</span>
+            <span class="n">Xoff</span>   <span class="o">=</span> <span class="n">offarray</span><span class="p">[</span><span class="n">offarray</span><span class="o">.</span><span class="n">scanid</span> <span class="o">==</span> <span class="n">offid</span><span class="p">[</span><span class="n">oleftid</span><span class="p">]]</span>
+            <span class="n">Xoff_m</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">Xoff</span><span class="p">,</span> <span class="n">mode</span><span class="p">)(</span><span class="n">dim</span><span class="o">=</span><span class="s1">&#39;t&#39;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">Xoff_l</span>  <span class="o">=</span> <span class="n">offarray</span><span class="p">[</span><span class="n">offarray</span><span class="o">.</span><span class="n">scanid</span> <span class="o">==</span> <span class="n">offid</span><span class="p">[</span><span class="n">oleftid</span><span class="p">]]</span>
+            <span class="n">Xoff_r</span>  <span class="o">=</span> <span class="n">offarray</span><span class="p">[</span><span class="n">offarray</span><span class="o">.</span><span class="n">scanid</span> <span class="o">==</span> <span class="n">offid</span><span class="p">[</span><span class="n">orightid</span><span class="p">]]</span>
+            <span class="n">Xoff_m</span>  <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">dc</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">Xoff_l</span><span class="p">,</span> <span class="n">Xoff_r</span><span class="p">],</span> <span class="n">dim</span><span class="o">=</span><span class="s1">&#39;t&#39;</span><span class="p">),</span> <span class="n">mode</span><span class="p">)(</span><span class="n">dim</span><span class="o">=</span><span class="s1">&#39;t&#39;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">rleftid</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+            <span class="n">Xr</span>   <span class="o">=</span> <span class="n">rarray</span><span class="p">[</span><span class="n">rarray</span><span class="o">.</span><span class="n">scanid</span> <span class="o">==</span> <span class="n">rid</span><span class="p">[</span><span class="n">rrightid</span><span class="p">]]</span>
+            <span class="n">Xr_m</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">Xr</span><span class="p">,</span> <span class="n">mode</span><span class="p">)(</span><span class="n">dim</span><span class="o">=</span><span class="s1">&#39;t&#39;</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">rrightid</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">rid</span><span class="p">):</span>
+            <span class="n">Xr</span>   <span class="o">=</span> <span class="n">rarray</span><span class="p">[</span><span class="n">rarray</span><span class="o">.</span><span class="n">scanid</span> <span class="o">==</span> <span class="n">rid</span><span class="p">[</span><span class="n">rleftid</span><span class="p">]]</span>
+            <span class="n">Xr_m</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">Xr</span><span class="p">,</span> <span class="n">mode</span><span class="p">)(</span><span class="n">dim</span><span class="o">=</span><span class="s1">&#39;t&#39;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">Xr_l</span>  <span class="o">=</span> <span class="n">rarray</span><span class="p">[</span><span class="n">rarray</span><span class="o">.</span><span class="n">scanid</span> <span class="o">==</span> <span class="n">rid</span><span class="p">[</span><span class="n">rleftid</span><span class="p">]]</span>
+            <span class="n">Xr_r</span>  <span class="o">=</span> <span class="n">rarray</span><span class="p">[</span><span class="n">rarray</span><span class="o">.</span><span class="n">scanid</span> <span class="o">==</span> <span class="n">rid</span><span class="p">[</span><span class="n">rrightid</span><span class="p">]]</span>
+            <span class="n">Xr_m</span>  <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">dc</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">Xr_l</span><span class="p">,</span> <span class="n">Xr_r</span><span class="p">],</span> <span class="n">dim</span><span class="o">=</span><span class="s1">&#39;t&#39;</span><span class="p">),</span> <span class="n">mode</span><span class="p">)(</span><span class="n">dim</span><span class="o">=</span><span class="s1">&#39;t&#39;</span><span class="p">)</span>
+        <span class="n">Xon_cal</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Tamb</span> <span class="o">*</span> <span class="p">(</span><span class="n">Xon</span> <span class="o">-</span> <span class="n">Xoff_m</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">Xr_m</span> <span class="o">-</span> <span class="n">Xoff_m</span><span class="p">))</span>
+
+    <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="n">offid</span><span class="p">:</span>
+        <span class="n">rleftid</span>  <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">searchsorted</span><span class="p">(</span><span class="n">rid</span><span class="p">,</span> <span class="n">j</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
+        <span class="n">rrightid</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">searchsorted</span><span class="p">(</span><span class="n">rid</span><span class="p">,</span> <span class="n">j</span><span class="p">)</span>
+
+        <span class="n">Xoff</span>   <span class="o">=</span> <span class="n">offarray</span><span class="p">[</span><span class="n">offarray</span><span class="o">.</span><span class="n">scanid</span> <span class="o">==</span> <span class="n">j</span><span class="p">]</span>
+        <span class="n">Xoff_m</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">Xoff</span><span class="p">,</span> <span class="n">mode</span><span class="p">)(</span><span class="n">dim</span><span class="o">=</span><span class="s1">&#39;t&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">rleftid</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+            <span class="n">Xr</span>   <span class="o">=</span> <span class="n">rarray</span><span class="p">[</span><span class="n">rarray</span><span class="o">.</span><span class="n">scanid</span> <span class="o">==</span> <span class="n">rid</span><span class="p">[</span><span class="n">rrightid</span><span class="p">]]</span>
+            <span class="n">Xr_m</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">Xr</span><span class="p">,</span> <span class="n">mode</span><span class="p">)(</span><span class="n">dim</span><span class="o">=</span><span class="s1">&#39;t&#39;</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">rrightid</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">rid</span><span class="p">):</span>
+            <span class="n">Xr</span>   <span class="o">=</span> <span class="n">rarray</span><span class="p">[</span><span class="n">rarray</span><span class="o">.</span><span class="n">scanid</span> <span class="o">==</span> <span class="n">rid</span><span class="p">[</span><span class="n">rleftid</span><span class="p">]]</span>
+            <span class="n">Xr_m</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">Xr</span><span class="p">,</span> <span class="n">mode</span><span class="p">)(</span><span class="n">dim</span><span class="o">=</span><span class="s1">&#39;t&#39;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">Xr_l</span>  <span class="o">=</span> <span class="n">rarray</span><span class="p">[</span><span class="n">rarray</span><span class="o">.</span><span class="n">scanid</span> <span class="o">==</span> <span class="n">rid</span><span class="p">[</span><span class="n">rleftid</span><span class="p">]]</span>
+            <span class="n">Xr_r</span>  <span class="o">=</span> <span class="n">rarray</span><span class="p">[</span><span class="n">rarray</span><span class="o">.</span><span class="n">scanid</span> <span class="o">==</span> <span class="n">rid</span><span class="p">[</span><span class="n">rrightid</span><span class="p">]]</span>
+            <span class="n">Xr_m</span>  <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">dc</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">Xr_l</span><span class="p">,</span> <span class="n">Xr_r</span><span class="p">],</span> <span class="n">dim</span><span class="o">=</span><span class="s1">&#39;t&#39;</span><span class="p">),</span> <span class="n">mode</span><span class="p">)(</span><span class="n">dim</span><span class="o">=</span><span class="s1">&#39;t&#39;</span><span class="p">)</span>
+        <span class="n">Xoff_cal</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Tamb</span> <span class="o">*</span> <span class="p">(</span><span class="n">Xoff</span> <span class="o">-</span> <span class="n">Xoff_m</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">Xr_m</span> <span class="o">-</span> <span class="n">Xoff_m</span><span class="p">))</span>
+
+    <span class="k">return</span> <span class="n">dc</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">Xon_cal</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="s1">&#39;t&#39;</span><span class="p">),</span> <span class="n">dc</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">Xoff_cal</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="s1">&#39;t&#39;</span><span class="p">)</span></div>
 </pre></div>
 
            </div>
