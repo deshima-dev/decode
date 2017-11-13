@@ -32,6 +32,9 @@ def loaddfits(fitsname, coordtype='azel', loadtype='temperature', starttime=None
         loadtype (str): Data unit of xarray.
             'Tsignal': Temperature [K].
             'Psignal': Power [W].
+            'amplitude': Amplitude.
+            'phase': Phase.
+            'linphase': Linear phase.
         starttime (int, str or numpy.datetime64): Start time of loaded data.
             It can be specified by the start index (int), the time compatible with numpy.datetime64 (str),
             or numpy.datetime64 (numpy.datetime64). Default is None and it means the data will be loaded
@@ -112,6 +115,14 @@ def loaddfits(fitsname, coordtype='azel', loadtype='temperature', starttime=None
         response = readout['Tsignal'][startindex:endindex].astype(np.float64)
     elif loadtype == 'power':
         response = readout['Psignal'][startindex:endindex].astype(np.float64)
+    elif loadtype == 'amplitude':
+        response = readout['amplitude'][startindex:endindex].astype(np.float64)
+    elif loadtype == 'phase':
+        response = readout['phase'][startindex:endindex].astype(np.float64)
+    elif loadtype == 'linphase':
+        response = readout['line_phase'][startindex:endindex].astype(np.float64)
+    else:
+        raise KeyError(loadtype)
 
     ### antenna
     if coordtype == 'azel':
@@ -134,6 +145,8 @@ def loaddfits(fitsname, coordtype='azel', loadtype='temperature', starttime=None
             y -= yref
             if mode == 0:
                 x *= np.cos(np.deg2rad(antlog['dec']))
+    else:
+        raise KeyError(coordtype)
     scantype = antlog['scantype']
 
     ### weatherlog

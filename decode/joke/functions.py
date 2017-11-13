@@ -32,7 +32,7 @@ def youtube(keyword=None):
 
 def superspec(*args, **kwargs):
     def message(*args, **kwargs):
-        print('Never say that again!')
+        print('Incompatible spectrometer!')
 
     for item in dir(dc):
         if item.startswith('__'):

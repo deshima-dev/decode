@@ -202,11 +202,11 @@ class DecodeCubeAccessor(BaseAccessor):
         cdelt2 = float(cube.y[1] - cube.y[0])
         crval2 = float(cube.y[0])
         if cube.coordsys == 'RADEC':
-            header = fits.Header(OrderedDict([('CTYPE1', 'RA--SFL'), ('CUNIT1', 'deg'), ('CDELT1', cdelt1), ('CRVAL1', crval1), ('CRPIX1', 1),
+            header = fits.Header(OrderedDict([('CTYPE1', 'RA--SFL'), ('CUNIT1', 'deg'), ('CDELT1', -cdelt1), ('CRVAL1', crval1), ('CRPIX1', 1),
                                               ('CTYPE2', 'DEC--SFL'), ('CUNIT2', 'deg'), ('CDELT2', cdelt2), ('CRVAL2', crval2), ('CRPIX2', 1)]))
         else:
-            header = fits.Header(OrderedDict([('CTYPE1', 'AZ--SFL'), ('CUNIT1', 'deg'), ('CDELT1', cdelt1), ('CRVAL1', crval1), ('CRPIX1', 1),
-                                              ('CTYPE2', 'DEC--SFL'), ('CUNIT2', 'deg'), ('CDELT2', cdelt2), ('CRVAL2', crval2), ('CRPIX2', 1)]))
+            header = fits.Header(OrderedDict([('CTYPE1', 'AZ'), ('CUNIT1', 'deg'), ('CDELT1', cdelt1), ('CRVAL1', crval1), ('CRPIX1', 1),
+                                              ('CTYPE2', 'EL'), ('CUNIT2', 'deg'), ('CDELT2', cdelt2), ('CRVAL2', crval2), ('CRPIX2', 1)]))
 
 
         if cube.dims == ('x', 'y', 'ch'):
