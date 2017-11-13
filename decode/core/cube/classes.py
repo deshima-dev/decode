@@ -32,7 +32,7 @@ CHCOORDS = lambda array: OrderedDict([
 ])
 
 DATACOORDS = lambda array: OrderedDict([
-    ('weight', (('x', 'y', 'ch'), np.ones(array.shape, dtype=float)))
+    ('noise', (('x', 'y', 'ch'), np.ones(array.shape, dtype=float)))
 ])
 
 SCALARCOORDS = OrderedDict([
@@ -149,6 +149,9 @@ class DecodeCubeAccessor(BaseAccessor):
             else:
                 raise KeyError('Arguments are wrong.')
 
+        if array.coordsys == 'RADEC':
+            x_grid = x_grid[::-1]
+
         nx_grid = len(x_grid)
         ny_grid = len(y_grid)
         nz_grid = len(array.ch)
@@ -165,12 +168,22 @@ class DecodeCubeAccessor(BaseAccessor):
 
         array.coords.update({'index': index})
         griddedarray   = array.groupby('index').mean('t')
-        template       = np.full([nx_grid*ny_grid, nz_grid], np.nan)
-        mask           = griddedarray.index.values
-        template[mask] = griddedarray.values
-        cubedata       = template.reshape((ny_grid, nx_grid, nz_grid)).swapaxes(0, 1)
+        noisearray     = array.groupby('index').std('t')
+        numberarray    = dc.ones_like(array).groupby('index').sum('t')
+        noisearray    /= np.sqrt(numberarray)
 
-        return dc.cube(cubedata, xcoords=xcoords, ycoords=ycoords, chcoords=chcoords, scalarcoords=scalarcoords)
+        template         = np.full([nx_grid*ny_grid, nz_grid], np.nan)
+        mask             = griddedarray.index.values
+        template[mask]   = griddedarray.values
+        template_n       = np.full([nx_grid*ny_grid, nz_grid], np.nan)
+        template_n[mask] = noisearray.values
+        cubedata         = template.reshape((ny_grid, nx_grid, nz_grid)).swapaxes(0, 1)
+        noisedata        = template_n.reshape((ny_grid, nx_grid, nz_grid)).swapaxes(0, 1)
+
+        datacoords = {'noise': noisedata}
+
+        return dc.cube(cubedata, xcoords=xcoords, ycoords=ycoords, chcoords=chcoords,
+                       scalarcoords=scalarcoords, datacoords=datacoords)
 
     @staticmethod
     def makecontinuum(cube, **kwargs):
@@ -202,7 +215,7 @@ class DecodeCubeAccessor(BaseAccessor):
         cdelt2 = float(cube.y[1] - cube.y[0])
         crval2 = float(cube.y[0])
         if cube.coordsys == 'RADEC':
-            header = fits.Header(OrderedDict([('CTYPE1', 'RA--SFL'), ('CUNIT1', 'deg'), ('CDELT1', -cdelt1), ('CRVAL1', crval1), ('CRPIX1', 1),
+            header = fits.Header(OrderedDict([('CTYPE1', 'RA--SFL'), ('CUNIT1', 'deg'), ('CDELT1', cdelt1), ('CRVAL1', crval1), ('CRPIX1', 1),
                                               ('CTYPE2', 'DEC--SFL'), ('CUNIT2', 'deg'), ('CDELT2', cdelt2), ('CRVAL2', crval2), ('CRPIX2', 1)]))
         else:
             header = fits.Header(OrderedDict([('CTYPE1', 'AZ'), ('CUNIT1', 'deg'), ('CDELT1', cdelt1), ('CRVAL1', crval1), ('CRPIX1', 1),

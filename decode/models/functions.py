@@ -56,6 +56,7 @@ def savgol_filter(array, win=2001, polyn=3, iteration=1, threshold=1):
         fitted (decode.array): Fitted results.
     """
     logger = getLogger('decode.models.savgol_filter')
+    logger.warning('Do not use this function. We recommend you to use dc.models.pca instead.')
     logger.info('win polyn iteration threshold')
     logger.info('{} {} {} {}'.format(win, polyn, iteration, threshold))
     ### 1st estimation
