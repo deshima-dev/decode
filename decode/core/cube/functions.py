@@ -23,6 +23,7 @@ def cube(data, xcoords=None, ycoords=None, chcoords=None, scalarcoords=None, dat
         ycoords (dict, optional): Dictionary of arrays that label y axis.
         chcoords (dict, optional): Dictionary of arrays that label channel axis.
         scalarcoords (dict, optional): Dictionary of values that don't label any axes (point-like).
+        datacoords (dict, optional): Dictionary of arrays that label x, y, and channel axes.
         attrs (dict, optional): Dictionary of attributes to add to the instance.
         name (str, optional): String that names the instance.
 
@@ -85,12 +86,16 @@ def tocube(array, **kwargs):
             ymax (float): Maximum value of y.
             xc (float): Center of x.
             yc (float): Center of y.
+            unit (str): Unit of x/y.
+                'deg' or 'degree': Degree (Default).
+                'arcmin': Arcminute.
+                'arcsec': Arcsecond.
 
     Returns:
         decode cube (decode.cube): Decode cube.
 
     Notes:
-        Available combination of kwargs are
+        Available combinations of kwargs are
             (1) xarr/yarr and xc/yc
             (2) gx/gy and xmin/xmax/ymin/ymax and xc/yc
             (3) nx/ny and xmin/xmax/ymin/ymax

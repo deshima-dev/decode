@@ -38,7 +38,7 @@ def plotcoords(dataarray, ax, coords, scantypes=None, **kwargs):
     elif dataarray.type == 'dcs':
         pass
     else:
-        raise KerError(dataarray.type)
+        raise KeyError(dataarray.type)
 
 
 def plotweather(dataarray, axs, **kwargs):
@@ -56,7 +56,7 @@ def plotweather(dataarray, axs, **kwargs):
     elif dataarray.type == 'dcs':
         pass
     else:
-        raise KerError(dataarray.type)
+        raise KeyError(dataarray.type)
 
 
 def plotspectrum(dataarray, ax, xtick, ytick, aperture, **kwargs):
@@ -69,9 +69,9 @@ def plotspectrum(dataarray, ax, xtick, ytick, aperture, **kwargs):
             'freq': Frequency [GHz].
             'id': Kid id.
         ytick (str): Type of y axis.
-            'peak': Peak.
+            'max': Maximum.
             'sum': Summation.
-            'mean': Under construction.
+            'mean': Mean.
         aperture (str): The shape of aperture.
             'box': Box.
             'circle': Circle.
@@ -89,6 +89,7 @@ def plotspectrum(dataarray, ax, xtick, ytick, aperture, **kwargs):
                 xc: Center of x.
                 yc: Center of y.
                 radius: Radius.
+            Remaining kwargs are passed to ax.step().
 
     Notes:
         All kwargs should be specified as pixel coordinates.
@@ -100,7 +101,7 @@ def plotspectrum(dataarray, ax, xtick, ytick, aperture, **kwargs):
     elif dataarray.type == 'dcs':
         pass
     else:
-        raise KerError(dataarray.type)
+        raise KeyError(dataarray.type)
 
 
 def plottimestream(array, ax, xtick='time', **kwargs):
@@ -119,20 +120,19 @@ def plottimestream(array, ax, xtick='time', **kwargs):
     kidtpdict = {0: 'wideband', 1: 'filter', 2: 'blind'}
     if xtick == 'time':
         ax.plot(array.time, array, **kwargs)
-        ax.set_xlabel('time', fontsize=20, color='grey')
     elif xtick == 'index':
         ax.plot(np.ogrid[:len(array.time)], array, **kwargs)
-        ax.set_xlabel('time index', fontsize=20, color='grey')
+    ax.set_xlabel('{}'.format(xtick), fontsize=20, color='grey')
     for label in ax.get_xticklabels():
         label.set_rotation(45)
-    ax.legend()
     ax.set_ylabel(str(array.datatype.values), fontsize=20, color='grey')
+    ax.legend()
 
     kidid = int(array.kidid)
     try:
         kidtp = kidtpdict[int(array.kidtp)]
     except KeyError:
         kidtp = 'filter'
-    ax.set_title('ch #{} ({})'.format(kidid, kidtp), fontsize=20, color='grey', y=1.15)
+    ax.set_title('ch #{} ({})'.format(kidid, kidtp), fontsize=20, color='grey')
 
     logger.info('timestream data (ch={}) has been plotted.'.format(kidid))

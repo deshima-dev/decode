@@ -13,6 +13,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import xarray as xr
 from astropy.io import fits
+import astropy.units as u
 from .. import BaseAccessor
 
 # local constants
@@ -102,23 +103,42 @@ class DecodeCubeAccessor(BaseAccessor):
         logger = getLogger('decode.tocube')
         array  = array.copy()
 
-        xc = kwargs['xc'] if ('xc' in kwargs) else 0
-        yc = kwargs['yc'] if ('yc' in kwargs) else 0
+        ### pick up kwargs
+        unit     = kwargs.pop('unit', 'deg')
+        unit2deg = getattr(u, unit).to('deg')
 
-        if 'xarr' in kwargs and 'yarr' in kwargs:
-            x_grid = xr.DataArray(kwargs['xarr'], dims='grid')
-            y_grid = xr.DataArray(kwargs['yarr'], dims='grid')
+        xc   = kwargs.pop('xc', 0) * unit2deg
+        yc   = kwargs.pop('yc', 0) * unit2deg
+        xarr = kwargs.pop('xarr', None)
+        yarr = kwargs.pop('yarr', None)
+        xmin = kwargs.pop('xmin', None)
+        xmax = kwargs.pop('xmax', None)
+        ymin = kwargs.pop('ymin', None)
+        ymax = kwargs.pop('ymax', None)
+        gx   = kwargs.pop('gx', None)
+        gy   = kwargs.pop('gy', None)
+        nx   = kwargs.pop('nx', None)
+        ny   = kwargs.pop('ny', None)
+        if None not in [xarr, yarr]:
+            x_grid = xr.DataArray(xarr * unit2deg, dims='grid')
+            y_grid = xr.DataArray(yarr * unit2deg, dims='grid')
         else:
-            xmin = kwargs['xmin'] if ('xmin' in kwargs) else array.x.min()
-            xmax = kwargs['xmax'] if ('xmax' in kwargs) else array.x.max()
-            ymin = kwargs['ymin'] if ('ymin' in kwargs) else array.y.min()
-            ymax = kwargs['ymax'] if ('ymax' in kwargs) else array.y.max()
+            if None not in [xmin, xmax, ymin, ymax]:
+                xmin *= unit2deg
+                xmax *= unit2deg
+                ymin *= unit2deg
+                ymax *= unit2deg
+            else:
+                xmin = array.x.min()
+                xmax = array.x.max()
+                ymin = array.y.min()
+                ymax = array.y.max()
             logger.info('xmin xmax ymin ymax')
             logger.info('{} {} {} {}'.format(xmin, xmax, ymin, ymax))
 
-            if 'gx' in kwargs and 'gy' in kwargs:
-                gx = kwargs['gx']
-                gy = kwargs['gy']
+            if None not in [gx, gy]:
+                gx *= unit2deg
+                gy *= unit2deg
                 logger.info('xc yc gx gy')
                 logger.info('{} {} {} {}'.format(xc, yc, gx, gy))
 
@@ -126,20 +146,16 @@ class DecodeCubeAccessor(BaseAccessor):
                 gxmax = np.ceil((xmax - xc) / gx)
                 gymin = np.floor((ymin - yc) / gy)
                 gymax = np.ceil((ymax - yc) / gy)
-
-                xmin = gxmin * gx
-                xmax = gxmax * gx
-                ymin = gymin * gy
-                ymax = gymax * gy
+                xmin  = gxmin * gx
+                xmax  = gxmax * gx
+                ymin  = gymin * gy
+                ymax  = gymax * gy
 
                 x_grid = xr.DataArray(np.arange(xmin, xmax+gx, gx), dims='grid')
                 y_grid = xr.DataArray(np.arange(ymin, ymax+gy, gy), dims='grid')
-            elif 'nx' in kwargs and 'ny' in kwargs:
-                nx = kwargs['nx']
-                ny = kwargs['ny']
+            elif None not in [nx, ny]:
                 logger.info('nx ny')
                 logger.info('{} {}'.format(nx, ny))
-
                 ### nx/ny does not support xc/yc
                 xc = 0
                 yc = 0
@@ -149,6 +165,7 @@ class DecodeCubeAccessor(BaseAccessor):
             else:
                 raise KeyError('Arguments are wrong.')
 
+        ### reverse the direction of x when coordsys == 'RADEC'
         if array.coordsys == 'RADEC':
             x_grid = x_grid[::-1]
 
@@ -189,20 +206,22 @@ class DecodeCubeAccessor(BaseAccessor):
     def makecontinuum(cube, **kwargs):
         logger = getLogger('decode.makecontinuum')
 
-        ### some weighting procedure
-        if 'inchs' in kwargs:
-            inchs = kwargs['inchs']
+        ### pick up kwargs
+        inchs = kwargs.pop('inchs', None)
+        exchs = kwargs.pop('exchs', None)
+
+        if inchs is not None:
             logger.info('inchs')
             logger.info('{}'.format(inchs))
-            cont = cube[:, :, inchs].mean(dim='ch')
+            subcube = cube[:, :, inchs]
         else:
             mask = np.full(len(cube.ch), True)
-            if 'exchs' in kwargs:
-                exchs = kwargs['exchs']
+            if exchs is not None:
                 logger.info('exchs')
                 logger.info('{}'.format(exchs))
                 mask[exchs] = False
-            cont = cube[:, :, mask].mean(dim='ch')
+            subcube = cube[:, :, mask]
+        cont = (subcube * (1 / subcube.noise**2)).sum(dim='ch') / (1 / subcube.noise**2).sum(dim='ch')
 
         return cont
 
@@ -237,64 +256,57 @@ class DecodeCubeAccessor(BaseAccessor):
     def plotspectrum(cube, ax, xtick, ytick, aperture, **kwargs):
         logger = getLogger('decode.plot.plotspectrum')
 
+        ### pick up kwargs
+        xc     = kwargs.pop('xc', None)
+        yc     = kwargs.pop('yc', None)
+        width  = kwargs.pop('width', None)
+        height = kwargs.pop('height', None)
+        xmin   = kwargs.pop('xmin', None)
+        xmax   = kwargs.pop('xmax', None)
+        ymin   = kwargs.pop('ymin', None)
+        ymax   = kwargs.pop('ymax', None)
+        radius = kwargs.pop('radius', None)
+        exchs  = kwargs.pop('exchs', None)
+
+        ### labels
+        xlabeldict = {'freq': 'frequency [GHz]', 'id': 'kidid'}
+
         cube     = cube.copy()
         datatype = cube.datatype
         if aperture == 'box':
-            if 'xc' in kwargs and 'yc' in kwargs and 'width' in kwargs and 'height' in kwargs:
-                xc     = kwargs['xc']
-                yc     = kwargs['yc']
-                width  = kwargs['width']
-                height = kwargs['height']
-
+            if None not in [xc, yc, width, height]:
                 xmin, xmax = int(xc - width / 2), int(xc + width / 2)
                 ymin, ymax = int(yc - width / 2), int(yc + width / 2)
-            elif 'xmin' in kwargs and 'xmax' in kwargs and 'ymin' in kwargs and 'ymax' in kwargs:
-                xmin, xmax = kwargs['xmin'], kwargs['xmax']
-                ymin, ymax = kwargs['ymin'], kwargs['ymax']
+            elif None not in [xmin, xmax, ymin, ymax]:
+                pass
             else:
-                raise KeyError('Arguments are wrong.')
-
-            if ytick == 'sum':
-                value = cube[xmin:xmax, ymin:ymax, :].sum(dim=('x', 'y'))
-            elif ytick == 'peak':
-                value = cube[xmin:xmax, ymin:ymax, :].max(axis=(0, 1))
+                raise KeyError('Invalid arguments.')
+            value = getattr(cube[xmin:xmax, ymin:ymax, :], ytick)(dim=('x', 'y'))
         elif aperture == 'circle':
-            if 'xc' in kwargs and 'yc' in kwargs and 'radius' in kwargs:
-                xc     = kwargs['xc']
-                yc     = kwargs['yc']
-                radius = kwargs['radius']
+            if None not in [xc, yc, radius]:
+                pass
             else:
-                raise KeyError('Arguments are wrong.')
-
+                raise KeyError('Invalid arguments.')
             x, y   = np.ogrid[0:len(cube.x), 0:len(cube.y)]
             mask   = ((x - xc)**2 + (y - yc)**2 < radius**2)
             mask   = np.broadcast_to(mask[:, :, np.newaxis], cube.shape)
             masked = np.ma.array(cube.values, mask=~mask)
-
-            if ytick == 'sum':
-                value = np.nansum(np.nansum(masked, axis=0), axis=0).data
-                if datatype == 'temperature':
-                    ax.set_ylabel(r'$T_\mathrm{sum}$ [K]', fontsize=20, color='grey')
-                elif datatype == 'power':
-                    ax.set_ylabel(r'$P_\mathrm{sum}$ [W]', fontsize=20, color='grey')
-            elif ytick == 'peak':
-                value = np.nanmax(masked, axis=(0, 1))
-                if datatype == 'temperature':
-                    ax.set_ylabel(r'$T_\mathrm{peak}$ [K]', fontsize=20, color='grey')
-                elif datatype == 'power':
-                    ax.set_ylabel(r'$P_\mathrm{peak}$ [W]', fontsize=20, color='grey')
+            value  = getattr(np, 'nan'+ytick)(masked, axis=(0, 1))
+        else:
+            raise KeyError(aperture)
 
         if xtick == 'freq':
-            freqrange = ~np.isnan(cube.kidfq.values)
-            if 'exchs' in kwargs:
-                freqrange[kwargs['exchs']] = False
-            x = cube.kidfq.values[freqrange]
+            kidfq     = cube.kidfq.values
+            freqrange = ~np.isnan(kidfq)
+            if exchs is not None:
+                freqrange[exchs] = False
+            x = kidfq[freqrange]
             y = value[freqrange]
-            ax.step(x[np.argsort(x)], y[np.argsort(x)], where='mid')
-            ax.set_xlabel('Frequency [GHz]', fontsize=20, color='grey')
+            ax.step(x[np.argsort(x)], y[np.argsort(x)], where='mid', **kwargs)
         elif xtick == 'id':
-            x = cube.kidid.values
-            y = value
-            ax.step(x, y, where='mid')
-            ax.set_xlabel('kidid', fontsize=20, color='grey')
+            ax.step(cube.kidid.values, value, where='mid', **kwargs)
+        else:
+            raise KeyError(xtick)
+        ax.set_xlabel('{}'.format(xlabeldict[xtick]), fontsize=20, color='grey')
+        ax.set_ylabel('{} ({})'.format(datatype.values, ytick), fontsize=20, color='grey')
         ax.set_title('spectrum', fontsize=20, color='grey')

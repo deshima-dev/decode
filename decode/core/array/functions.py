@@ -33,6 +33,7 @@ def array(data, tcoords=None, chcoords=None, scalarcoords=None, datacoords=None,
         tcoords (dict, optional): Dictionary of arrays that label time axis.
         chcoords (dict, optional): Dictionary of arrays that label channel axis.
         scalarcoords (dict, optional): Dictionary of values that don't label any axes (point-like).
+        datacoords (dict, optional): Dictionary of arrays that label time and channel axes.
         attrs (dict, optional): Dictionary of attributes to add to the instance.
         name (str, optional): String that names the instance.
 
