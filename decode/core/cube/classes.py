@@ -6,12 +6,20 @@ __all__ = []
 # standard library
 from collections import OrderedDict
 from logging import getLogger
+from pkgutil import get_data
+from pytz import timezone
+from datetime import datetime
 
 # dependent packages
 import decode as dc
 import matplotlib.pyplot as plt
 import numpy as np
 import xarray as xr
+import yaml
+yaml.add_constructor(
+    yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG,
+    lambda loader, node: OrderedDict(loader.construct_pairs(node))
+)
 from astropy.io import fits
 import astropy.units as u
 from .. import BaseAccessor
@@ -107,8 +115,8 @@ class DecodeCubeAccessor(BaseAccessor):
         unit     = kwargs.pop('unit', 'deg')
         unit2deg = getattr(u, unit).to('deg')
 
-        xc   = kwargs.pop('xc', 0) * unit2deg
-        yc   = kwargs.pop('yc', 0) * unit2deg
+        xc   = kwargs.pop('xc', float(array.xref)) * unit2deg
+        yc   = kwargs.pop('yc', float(array.yref)) * unit2deg
         xarr = kwargs.pop('xarr', None)
         yarr = kwargs.pop('yarr', None)
         xmin = kwargs.pop('xmin', None)
@@ -146,10 +154,10 @@ class DecodeCubeAccessor(BaseAccessor):
                 gxmax = np.ceil((xmax - xc) / gx)
                 gymin = np.floor((ymin - yc) / gy)
                 gymax = np.ceil((ymax - yc) / gy)
-                xmin  = gxmin * gx
-                xmax  = gxmax * gx
-                ymin  = gymin * gy
-                ymax  = gymax * gy
+                xmin  = gxmin * gx + xc
+                xmax  = gxmax * gx + xc
+                ymin  = gymin * gy + yc
+                ymax  = gymax * gy + yc
 
                 x_grid = xr.DataArray(np.arange(xmin, xmax+gx, gx), dims='grid')
                 y_grid = xr.DataArray(np.arange(ymin, ymax+gy, gy), dims='grid')
@@ -173,14 +181,16 @@ class DecodeCubeAccessor(BaseAccessor):
         ny_grid = len(y_grid)
         nz_grid = len(array.ch)
 
+        ### define coordinates because groupby() will remove previous coordinates
         xcoords      = {'x': x_grid.values}
         ycoords      = {'y': y_grid.values}
         chcoords     = {'masterid': array.masterid.values, 'kidid': array.kidid.values,
                         'kidfq': array.kidfq.values, 'kidtp': array.kidtp.values}
-        scalarcoords = {'datatype': array.datatype.values}
+        scalarcoords = {'coordsys': array.coordsys.values, 'datatype': array.datatype.values,
+                        'xref': array.xref.values, 'yref': array.yref.values}
 
-        i = np.abs((array.x - xc) - x_grid).argmin('grid')
-        j = np.abs((array.y - yc) - y_grid).argmin('grid')
+        i = np.abs(array.x - x_grid).argmin('grid')
+        j = np.abs(array.y - y_grid).argmin('grid')
         index = i + j * nx_grid
 
         array.coords.update({'index': index})
@@ -222,34 +232,59 @@ class DecodeCubeAccessor(BaseAccessor):
                 mask[exchs] = False
             subcube = cube[:, :, mask]
         cont = (subcube * (1 / subcube.noise**2)).sum(dim='ch') / (1 / subcube.noise**2).sum(dim='ch')
+        cont = cont.expand_dims(dim='ch', axis=2)
 
-        return cont
+        ### define coordinates
+        xcoords      = {'x': cube.x.values}
+        ycoords      = {'y': cube.y.values}
+        # chcoords     = {}
+        scalarcoords = {'coordsys': cube.coordsys.values, 'datatype': cube.datatype.values,
+                        'xref': cube.xref.values, 'yref': cube.yref.values}
+
+        return dc.cube(cont.values, xcoords=xcoords, ycoords=ycoords, scalarcoords=scalarcoords)
 
     @staticmethod
     def savefits(cube, fitsname, **kwargs):
         logger = getLogger('decode.io.savefits')
-        # should be modified in the future
-        cdelt1 = float(cube.x[1] - cube.x[0])
-        crval1 = float(cube.x[0])
-        cdelt2 = float(cube.y[1] - cube.y[0])
-        crval2 = float(cube.y[0])
-        if cube.coordsys == 'RADEC':
-            header = fits.Header(OrderedDict([('CTYPE1', 'RA--SFL'), ('CUNIT1', 'deg'), ('CDELT1', cdelt1), ('CRVAL1', crval1), ('CRPIX1', 1),
-                                              ('CTYPE2', 'DEC--SFL'), ('CUNIT2', 'deg'), ('CDELT2', cdelt2), ('CRVAL2', crval2), ('CRPIX2', 1)]))
+
+        ### pick up kwargs
+        dropdeg = kwargs.pop('dropdeg', False)
+        ndim    = len(cube.dims)
+
+        ### load yaml
+        FITSINFO = get_data('decode', 'data/fitsinfo.yaml')
+        hdrdata = yaml.load(FITSINFO)
+
+        ### default header
+        if ndim == 2:
+            header = fits.Header(hdrdata['dcube_2d'])
+            data   = cube.values.T
+        elif ndim == 3:
+            if dropdeg:
+                header = fits.Header(hdrdata['dcube_2d'])
+                data   = cube.values[:, :, 0].T
+            else:
+                header = fits.Header(hdrdata['dcube_3d'])
+                data   = cube.values.T
         else:
-            header = fits.Header(OrderedDict([('CTYPE1', 'AZ'), ('CUNIT1', 'deg'), ('CDELT1', cdelt1), ('CRVAL1', crval1), ('CRPIX1', 1),
-                                              ('CTYPE2', 'EL'), ('CUNIT2', 'deg'), ('CDELT2', cdelt2), ('CRVAL2', crval2), ('CRPIX2', 1)]))
+            raise TypeError(ndim)
 
+        ### update Header
+        if cube.coordsys == 'AZEL':
+            header.update({'CUNIT1': 'AZ', 'CUNIT2': 'EL'})
+        elif cube.coordsys == 'RADEC':
+            header.update({'OBSRA': float(cube.xref), 'OBSDEC': float(cube.yref)})
+        else:
+            pass
+        header.update({'CRVAL1': float(cube.x[0]),
+                       'CDELT1': float(cube.x[1] - cube.x[0]),
+                       'CRVAL2': float(cube.y[0]),
+                       'CDELT2': float(cube.y[1] - cube.y[0]),
+                       'DATE': datetime.now(timezone('UTC')).isoformat()})
+        if (ndim == 3) and (not dropdeg):
+            header.update({'CRVAL3': float(cube.kidid[0])})
 
-        if cube.dims == ('x', 'y', 'ch'):
-            try:
-                cdelt3 = float(cube.kidid[1] - cube.kidid[0])
-            except IndexError:
-                cdelt3 = 0
-            crval3 = float(cube.kidid[0])
-            header.update(OrderedDict([('CUNIT3', 'ID'),  ('CDELT3', cdelt3), ('CRVAL3', crval3), ('CRPIX3', 1)]))
-
-        fits.writeto(fitsname, cube.values.T, header, **kwargs)
+        fits.writeto(fitsname, data, header, **kwargs)
         logger.info('{} has been created.'.format(fitsname))
 
     @staticmethod
