@@ -1,9 +1,17 @@
 
 ![][deshima-logo-color]
 
-# De:code
+# De:code - DESHIMA Code for data analysis
+
+## Quick link
 
 + [Documentation][documentation]
+
+## About De:code
+
+## Installation
+
+## Requirements
 
 <!-- link URLs -->
 [documentation]: https://deshima-dev.github.io/decode/
