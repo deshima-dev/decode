@@ -1,7 +1,11 @@
 
 ![][deshima-logo-color]
 
+<br>
+
 # De:code - DESHIMA Code for data analysis
+
+De:code is a Python data analysis package.
 
 ## Installation
 
