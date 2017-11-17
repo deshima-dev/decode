@@ -29,7 +29,8 @@ def psd(data, dt, ndivide=1, window=hanning, overlap_half=False):
         overlap_half (bool): Split data to half-overlapped regions.
 
     Returns:
-        frequencies, psd
+        vk (np.ndarray): Frequency.
+        psd (np.ndarray): PSD
     """
     logger = getLogger('decode.utils.ndarray.psd')
 
@@ -68,6 +69,17 @@ def psd(data, dt, ndivide=1, window=hanning, overlap_half=False):
 
 
 def allan_variance(data, dt, tmax=10):
+    """Calculate Allan variance.
+
+    Args:
+        data (np.ndarray): Input data.
+        dt (float): Time between each data.
+        tmax (float): Maximum time.
+
+    Returns:
+        vk (np.ndarray): Frequency.
+        allanvar (np.ndarray): Allan variance.
+    """
     allanvar = []
     nmax = len(data) if len(data) < tmax / dt else int(tmax / dt)
     for i in range(1, nmax+1):

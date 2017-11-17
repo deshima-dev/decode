@@ -18,8 +18,6 @@ import numpy as np
 import xarray as xr
 from astropy.io import fits
 from scipy.interpolate import interp1d
-from scipy.signal import argrelmin, argrelmax
-from scipy.optimize import curve_fit
 
 
 def loaddfits(fitsname, coordtype='azel', loadtype='temperature', starttime=None, endtime=None,
@@ -51,6 +49,14 @@ def loaddfits(fitsname, coordtype='azel', loadtype='temperature', starttime=None
             0: Relative coordinates with cosine projection (RECOMMENDED).
             1: Relative coordinates without cosine projection.
             2: Absolute coordinates.
+        kwargs (optional):
+            findR (bool): Automatically find R positions.
+            ch (int): Representative channel id used for finding R.
+            Rth (float): Threshold of R.
+            skyth (flaot): Threshold of sky.
+            cutnum (int): The number of points of unused data at the edge.
+            still (bool): When it is true, scantypes of on/off are manually assigned.
+            period (float): On/off period in second for still data.
 
     Returns:
         decode array (decode.array): Loaded decode array.
@@ -68,7 +74,6 @@ def loaddfits(fitsname, coordtype='azel', loadtype='temperature', starttime=None
     Rth    = kwargs.pop('Rth', 280)
     skyth  = kwargs.pop('skyth', 150)
     cutnum = kwargs.pop('cutnum', 1)
-    # order  = kwargs.pop('order', 4)
     still  = kwargs.pop('still', False)
     period = kwargs.pop('period', 2)
 
@@ -198,42 +203,17 @@ def loaddfits(fitsname, coordtype='azel', loadtype='temperature', starttime=None
             scantype_i[onmask]  = 'SCAN'
 
     if findR:
-        ### R assignment
-        # timeindex = np.ogrid[0:len(dt_out)]
-        # maxindex  = argrelmax(response[:, ch], order=order)[0]
-        # minindex  = argrelmin(response[:, ch], order=order)[0]
-        # ### max/min interpolation
-        # maxs = np.interp(timeindex, maxindex, response[maxindex, ch])
-        # mins = np.interp(timeindex, minindex, response[minindex, ch])
-        # maxstd = maxs.std()
-        # minstd = mins.std()
-        # ### linear fitting
-        # func = lambda x, a ,b: a * x + b
-        # maxpopt, maxpcov = curve_fit(func, timeindex, maxs)
-        # minpopt, minpcov = curve_fit(func, timeindex, mins)
-        # maxmodel = func(timeindex, *maxpopt)
-        # minmodel = func(timeindex, *minpopt)
-        # ### extract R data
-        # Rindex   = np.where(response[:, ch] > (maxmodel - 0.5 * maxstd))[0]
-        # skyindex = np.where(response[:, ch] < (minmodel + 0.5 * minstd))[0]
-        # ### mask
-        # mask           = np.full(len(dt_out), True)
-        # mask[Rindex]   = False
-        # mask[skyindex] = False
-        ### change scantypes
-        # scantype_i[Rindex] = 'R'
-        # scantype_i[mask]   = 'JUNK'
         Rindex = np.where(response[:, ch] >= Rth)
         scantype_i[Rindex] = 'R'
-        movemask = np.hstack([False, scantype_i[cutnum:] != scantype_i[:-cutnum]]) | \
-                   np.hstack([scantype_i[:-cutnum] != scantype_i[cutnum:], False]) & (scantype_i == 'R')
+        movemask = np.hstack([[False] * cutnum, scantype_i[cutnum:] != scantype_i[:-cutnum]]) | \
+                   np.hstack([scantype_i[:-cutnum] != scantype_i[cutnum:], [False] * cutnum]) & (scantype_i == 'R')
         scantype_i[movemask] = 'JUNK'
         scantype_i[(response[:, ch] > skyth) & (scantype_i != 'R')] = 'JUNK'
         skyindex = np.where(response[:, ch] <= skyth)
         scantype_i_temp = scantype_i.copy()
         scantype_i_temp[skyindex] = 'SKY'
-        movemask = np.hstack([False, scantype_i_temp[cutnum:] != scantype_i_temp[:-cutnum]]) | \
-                   np.hstack([scantype_i_temp[:-cutnum] != scantype_i_temp[cutnum:], False]) & (scantype_i_temp == 'SKY')
+        movemask = np.hstack([[False] * cutnum, scantype_i_temp[cutnum:] != scantype_i_temp[:-cutnum]]) | \
+                   np.hstack([scantype_i_temp[:-cutnum] != scantype_i_temp[cutnum:], [False] * cutnum]) & (scantype_i_temp == 'SKY')
         scantype_i[movemask] = 'JUNK'
 
     ### scanid

@@ -230,6 +230,20 @@ def rsky_calibration(onarray, offarray, rarray, Tamb, mode='mean'):
 
 
 def r_subtraction(onarray, offarray, rarray, mode='mean'):
+    """Apply R subtraction.
+
+    Args:
+        onarray (decode.array): Decode array of on-point observations.
+        offarray (decode.array): Decode array of off-point observations.
+        rarray (decode.array): Decode array of R observations.
+        mode (str): Method for the selection of nominal R value.
+            'mean': Mean.
+            'median': Median.
+
+    Returns:
+        onarray_cal (decode.array): Calibrated array of on-point observations.
+        offarray_cal (decode.array): Calibrated array of off-point observations.
+    """
     logger = getLogger('decode.models.r_subtraction')
     logger.info('mode')
     logger.info('{}'.format(mode))
@@ -300,7 +314,21 @@ def r_subtraction(onarray, offarray, rarray, mode='mean'):
 
 
 def r_division(onarray, offarray, rarray, mode='mean'):
-    logger = getLogger('decode.models.r_subtraction')
+    """Apply R division.
+
+    Args:
+        onarray (decode.array): Decode array of on-point observations.
+        offarray (decode.array): Decode array of off-point observations.
+        rarray (decode.array): Decode array of R observations.
+        mode (str): Method for the selection of nominal R value.
+            'mean': Mean.
+            'median': Median.
+
+    Returns:
+        onarray_cal (decode.array): Calibrated array of on-point observations.
+        offarray_cal (decode.array): Calibrated array of off-point observations.
+    """
+    logger = getLogger('decode.models.r_division')
     logger.info('mode')
     logger.info('{}'.format(mode))
 

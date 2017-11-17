@@ -143,6 +143,16 @@ def plottimestream(array, ax, xtick='time', **kwargs):
 
 
 def plotpsd(data, dt, ndivide=1, window=hanning, overlap_half=False, ax=None, **kwargs):
+    """Plot PSD (Power Spectral Density).
+
+    Args:
+        data (np.ndarray): Input data.
+        dt (float): Time between each data.
+        ndivide (int): Do averaging (split data into ndivide, get psd of each, and average them).
+        overlap_half (bool): Split data to half-overlapped regions.
+        ax (matplotlib.axes): Axis the figure is plotted on.
+        kwargs (optional): Plot options passed to ax.plot().
+    """
     if ax is None:
         ax = plt.gca()
     vk, psddata = psd(data, dt, ndivide, window, overlap_half)
@@ -153,6 +163,15 @@ def plotpsd(data, dt, ndivide=1, window=hanning, overlap_half=False, ax=None, **
 
 
 def plotallanvar(data, dt, tmax=10, ax=None, **kwargs):
+    """Plot Allan variance.
+
+    Args:
+        data (np.ndarray): Input data.
+        dt (float): Time between each data.
+        tmax (float): Maximum time.
+        ax (matplotlib.axes): Axis the figure is plotted on.
+        kwargs (optional): Plot options passed to ax.plot().
+    """
     if ax is None:
         ax = plt.gca()
     tk, allanvar = allan_variance(data, dt, tmax)
