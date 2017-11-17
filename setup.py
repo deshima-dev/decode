@@ -22,6 +22,7 @@ PACKAGES = [
     'decode.joke',
     'decode.utils',
     'decode.utils.misc',
+    'decode.utils.ndarray'
 ]
 
 
@@ -30,7 +31,7 @@ PACKAGES = [
 setup(
     name = 'decode',
     description = __doc__,
-    version = '0.3.7',
+    version = '0.4',
     author = 'DESHIMA software team',
     author_email = 'tishida@ioa.s.u-tokyo.ac.jp',
     url = 'https://github.com/deshima-dev/decode',
