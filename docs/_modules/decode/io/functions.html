@@ -187,6 +187,9 @@
 <span class="sd">        loadtype (str): Data unit of xarray.</span>
 <span class="sd">            &#39;Tsignal&#39;: Temperature [K].</span>
 <span class="sd">            &#39;Psignal&#39;: Power [W].</span>
+<span class="sd">            &#39;amplitude&#39;: Amplitude.</span>
+<span class="sd">            &#39;phase&#39;: Phase.</span>
+<span class="sd">            &#39;linphase&#39;: Linear phase.</span>
 <span class="sd">        starttime (int, str or numpy.datetime64): Start time of loaded data.</span>
 <span class="sd">            It can be specified by the start index (int), the time compatible with numpy.datetime64 (str),</span>
 <span class="sd">            or numpy.datetime64 (numpy.datetime64). Default is None and it means the data will be loaded</span>
@@ -201,6 +204,14 @@
 <span class="sd">            0: Relative coordinates with cosine projection (RECOMMENDED).</span>
 <span class="sd">            1: Relative coordinates without cosine projection.</span>
 <span class="sd">            2: Absolute coordinates.</span>
+<span class="sd">        kwargs (optional):</span>
+<span class="sd">            findR (bool): Automatically find R positions.</span>
+<span class="sd">            ch (int): Representative channel id used for finding R.</span>
+<span class="sd">            Rth (float): Threshold of R.</span>
+<span class="sd">            skyth (flaot): Threshold of sky.</span>
+<span class="sd">            cutnum (int): The number of points of unused data at the edge.</span>
+<span class="sd">            still (bool): When it is true, scantypes of on/off are manually assigned.</span>
+<span class="sd">            period (float): On/off period in second for still data.</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        decode array (decode.array): Loaded decode array.</span>
@@ -212,15 +223,22 @@
     <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;coordtype starttime endtime mode loadtype&#39;</span><span class="p">)</span>
     <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">{}</span><span class="s1"> </span><span class="si">{}</span><span class="s1"> </span><span class="si">{}</span><span class="s1"> </span><span class="si">{}</span><span class="s1"> </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">coordtype</span><span class="p">,</span> <span class="n">starttime</span><span class="p">,</span> <span class="n">endtime</span><span class="p">,</span> <span class="n">mode</span><span class="p">,</span> <span class="n">loadtype</span><span class="p">))</span>
 
-    <span class="c1">### open hdulist</span>
-    <span class="n">hdulist</span> <span class="o">=</span> <span class="n">fits</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">fitsname</span><span class="p">)</span>
+    <span class="c1">### pick up kwargs</span>
+    <span class="n">findR</span>  <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;findR&#39;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+    <span class="n">ch</span>     <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;ch&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="n">Rth</span>    <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;Rth&#39;</span><span class="p">,</span> <span class="mi">280</span><span class="p">)</span>
+    <span class="n">skyth</span>  <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;skyth&#39;</span><span class="p">,</span> <span class="mi">150</span><span class="p">)</span>
+    <span class="n">cutnum</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;cutnum&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">still</span>  <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;still&#39;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+    <span class="n">period</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;period&#39;</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
 
     <span class="c1">### load data</span>
-    <span class="n">obsinfo</span> <span class="o">=</span> <span class="n">hdulist</span><span class="p">[</span><span class="s1">&#39;OBSINFO&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">data</span>
-    <span class="n">obshdr</span>  <span class="o">=</span> <span class="n">hdulist</span><span class="p">[</span><span class="s1">&#39;OBSINFO&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">header</span>
-    <span class="n">antlog</span>  <span class="o">=</span> <span class="n">hdulist</span><span class="p">[</span><span class="s1">&#39;ANTENNA&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">data</span>
-    <span class="n">readout</span> <span class="o">=</span> <span class="n">hdulist</span><span class="p">[</span><span class="s1">&#39;READOUT&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">data</span>
-    <span class="n">wealog</span>  <span class="o">=</span> <span class="n">hdulist</span><span class="p">[</span><span class="s1">&#39;WEATHER&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">data</span>
+    <span class="k">with</span> <span class="n">fits</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">fitsname</span><span class="p">)</span> <span class="k">as</span> <span class="n">hdulist</span><span class="p">:</span>
+        <span class="n">obsinfo</span> <span class="o">=</span> <span class="n">hdulist</span><span class="p">[</span><span class="s1">&#39;OBSINFO&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">data</span>
+        <span class="n">obshdr</span>  <span class="o">=</span> <span class="n">hdulist</span><span class="p">[</span><span class="s1">&#39;OBSINFO&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">header</span>
+        <span class="n">antlog</span>  <span class="o">=</span> <span class="n">hdulist</span><span class="p">[</span><span class="s1">&#39;ANTENNA&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">data</span>
+        <span class="n">readout</span> <span class="o">=</span> <span class="n">hdulist</span><span class="p">[</span><span class="s1">&#39;READOUT&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">data</span>
+        <span class="n">wealog</span>  <span class="o">=</span> <span class="n">hdulist</span><span class="p">[</span><span class="s1">&#39;WEATHER&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">data</span>
 
     <span class="c1">### obsinfo</span>
     <span class="n">masterids</span> <span class="o">=</span> <span class="n">obsinfo</span><span class="p">[</span><span class="s1">&#39;masterids&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">)</span>
@@ -267,6 +285,14 @@
         <span class="n">response</span> <span class="o">=</span> <span class="n">readout</span><span class="p">[</span><span class="s1">&#39;Tsignal&#39;</span><span class="p">][</span><span class="n">startindex</span><span class="p">:</span><span class="n">endindex</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
     <span class="k">elif</span> <span class="n">loadtype</span> <span class="o">==</span> <span class="s1">&#39;power&#39;</span><span class="p">:</span>
         <span class="n">response</span> <span class="o">=</span> <span class="n">readout</span><span class="p">[</span><span class="s1">&#39;Psignal&#39;</span><span class="p">][</span><span class="n">startindex</span><span class="p">:</span><span class="n">endindex</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">loadtype</span> <span class="o">==</span> <span class="s1">&#39;amplitude&#39;</span><span class="p">:</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="n">readout</span><span class="p">[</span><span class="s1">&#39;amplitude&#39;</span><span class="p">][</span><span class="n">startindex</span><span class="p">:</span><span class="n">endindex</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">loadtype</span> <span class="o">==</span> <span class="s1">&#39;phase&#39;</span><span class="p">:</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="n">readout</span><span class="p">[</span><span class="s1">&#39;phase&#39;</span><span class="p">][</span><span class="n">startindex</span><span class="p">:</span><span class="n">endindex</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">loadtype</span> <span class="o">==</span> <span class="s1">&#39;linphase&#39;</span><span class="p">:</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="n">readout</span><span class="p">[</span><span class="s1">&#39;line_phase&#39;</span><span class="p">][</span><span class="n">startindex</span><span class="p">:</span><span class="n">endindex</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="n">loadtype</span><span class="p">)</span>
 
     <span class="c1">### antenna</span>
     <span class="k">if</span> <span class="n">coordtype</span> <span class="o">==</span> <span class="s1">&#39;azel&#39;</span><span class="p">:</span>
@@ -289,6 +315,8 @@
             <span class="n">y</span> <span class="o">-=</span> <span class="n">yref</span>
             <span class="k">if</span> <span class="n">mode</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
                 <span class="n">x</span> <span class="o">*=</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">deg2rad</span><span class="p">(</span><span class="n">antlog</span><span class="p">[</span><span class="s1">&#39;dec&#39;</span><span class="p">]))</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="n">coordtype</span><span class="p">)</span>
     <span class="n">scantype</span> <span class="o">=</span> <span class="n">antlog</span><span class="p">[</span><span class="s1">&#39;scantype&#39;</span><span class="p">]</span>
 
     <span class="c1">### weatherlog</span>
@@ -299,9 +327,9 @@
     <span class="n">winddir</span>   <span class="o">=</span> <span class="n">wealog</span><span class="p">[</span><span class="s1">&#39;winddir&#39;</span><span class="p">]</span>
 
     <span class="c1">### interpolation</span>
-    <span class="n">dt_out</span>  <span class="o">=</span> <span class="p">(</span><span class="n">t_out</span> <span class="o">-</span> <span class="n">t_out</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
-    <span class="n">dt_ant</span>  <span class="o">=</span> <span class="p">(</span><span class="n">t_ant</span> <span class="o">-</span> <span class="n">t_out</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
-    <span class="n">dt_wea</span>  <span class="o">=</span> <span class="p">(</span><span class="n">t_wea</span> <span class="o">-</span> <span class="n">t_out</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+    <span class="n">dt_out</span>  <span class="o">=</span> <span class="p">(</span><span class="n">t_out</span> <span class="o">-</span> <span class="n">t_out</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">timedelta64</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;s&#39;</span><span class="p">)</span>
+    <span class="n">dt_ant</span>  <span class="o">=</span> <span class="p">(</span><span class="n">t_ant</span> <span class="o">-</span> <span class="n">t_out</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">timedelta64</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;s&#39;</span><span class="p">)</span>
+    <span class="n">dt_wea</span>  <span class="o">=</span> <span class="p">(</span><span class="n">t_wea</span> <span class="o">-</span> <span class="n">t_out</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">timedelta64</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;s&#39;</span><span class="p">)</span>
     <span class="n">x_i</span>     <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">interp</span><span class="p">(</span><span class="n">dt_out</span><span class="p">,</span> <span class="n">dt_ant</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
     <span class="n">y_i</span>     <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">interp</span><span class="p">(</span><span class="n">dt_out</span><span class="p">,</span> <span class="n">dt_ant</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
 
@@ -321,6 +349,28 @@
     <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">scandict</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
         <span class="n">scantype_i</span><span class="p">[</span><span class="n">scantype_vi</span> <span class="o">==</span> <span class="n">v</span><span class="p">]</span> <span class="o">=</span> <span class="n">k</span>
 
+    <span class="c1">### for still data</span>
+    <span class="k">if</span> <span class="n">still</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">dt_out</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span> <span class="o">//</span> <span class="n">period</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="n">offmask</span> <span class="o">=</span> <span class="p">(</span><span class="n">period</span><span class="o">*</span><span class="mi">2</span><span class="o">*</span><span class="n">n</span> <span class="o">&lt;=</span> <span class="n">dt_out</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">dt_out</span> <span class="o">&lt;</span> <span class="n">period</span><span class="o">*</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">n</span><span class="o">+</span><span class="mi">1</span><span class="p">))</span>
+            <span class="n">onmask</span>  <span class="o">=</span> <span class="p">(</span><span class="n">period</span><span class="o">*</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">n</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="n">dt_out</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">dt_out</span> <span class="o">&lt;</span> <span class="n">period</span><span class="o">*</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">n</span><span class="o">+</span><span class="mi">2</span><span class="p">))</span>
+            <span class="n">scantype_i</span><span class="p">[</span><span class="n">offmask</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;OFF&#39;</span>
+            <span class="n">scantype_i</span><span class="p">[</span><span class="n">onmask</span><span class="p">]</span>  <span class="o">=</span> <span class="s1">&#39;SCAN&#39;</span>
+
+    <span class="k">if</span> <span class="n">findR</span><span class="p">:</span>
+        <span class="n">Rindex</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">response</span><span class="p">[:,</span> <span class="n">ch</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="n">Rth</span><span class="p">)</span>
+        <span class="n">scantype_i</span><span class="p">[</span><span class="n">Rindex</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;R&#39;</span>
+        <span class="n">movemask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">([[</span><span class="kc">False</span><span class="p">]</span> <span class="o">*</span> <span class="n">cutnum</span><span class="p">,</span> <span class="n">scantype_i</span><span class="p">[</span><span class="n">cutnum</span><span class="p">:]</span> <span class="o">!=</span> <span class="n">scantype_i</span><span class="p">[:</span><span class="o">-</span><span class="n">cutnum</span><span class="p">]])</span> <span class="o">|</span> \
+                   <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">([</span><span class="n">scantype_i</span><span class="p">[:</span><span class="o">-</span><span class="n">cutnum</span><span class="p">]</span> <span class="o">!=</span> <span class="n">scantype_i</span><span class="p">[</span><span class="n">cutnum</span><span class="p">:],</span> <span class="p">[</span><span class="kc">False</span><span class="p">]</span> <span class="o">*</span> <span class="n">cutnum</span><span class="p">])</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">scantype_i</span> <span class="o">==</span> <span class="s1">&#39;R&#39;</span><span class="p">)</span>
+        <span class="n">scantype_i</span><span class="p">[</span><span class="n">movemask</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;JUNK&#39;</span>
+        <span class="n">scantype_i</span><span class="p">[(</span><span class="n">response</span><span class="p">[:,</span> <span class="n">ch</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">skyth</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">scantype_i</span> <span class="o">!=</span> <span class="s1">&#39;R&#39;</span><span class="p">)]</span> <span class="o">=</span> <span class="s1">&#39;JUNK&#39;</span>
+        <span class="n">skyindex</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">response</span><span class="p">[:,</span> <span class="n">ch</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">skyth</span><span class="p">)</span>
+        <span class="n">scantype_i_temp</span> <span class="o">=</span> <span class="n">scantype_i</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">scantype_i_temp</span><span class="p">[</span><span class="n">skyindex</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;SKY&#39;</span>
+        <span class="n">movemask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">([[</span><span class="kc">False</span><span class="p">]</span> <span class="o">*</span> <span class="n">cutnum</span><span class="p">,</span> <span class="n">scantype_i_temp</span><span class="p">[</span><span class="n">cutnum</span><span class="p">:]</span> <span class="o">!=</span> <span class="n">scantype_i_temp</span><span class="p">[:</span><span class="o">-</span><span class="n">cutnum</span><span class="p">]])</span> <span class="o">|</span> \
+                   <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">([</span><span class="n">scantype_i_temp</span><span class="p">[:</span><span class="o">-</span><span class="n">cutnum</span><span class="p">]</span> <span class="o">!=</span> <span class="n">scantype_i_temp</span><span class="p">[</span><span class="n">cutnum</span><span class="p">:],</span> <span class="p">[</span><span class="kc">False</span><span class="p">]</span> <span class="o">*</span> <span class="n">cutnum</span><span class="p">])</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">scantype_i_temp</span> <span class="o">==</span> <span class="s1">&#39;SKY&#39;</span><span class="p">)</span>
+        <span class="n">scantype_i</span><span class="p">[</span><span class="n">movemask</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;JUNK&#39;</span>
+
     <span class="c1">### scanid</span>
     <span class="n">scanid_i</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">cumsum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">([</span><span class="kc">False</span><span class="p">,</span> <span class="n">scantype_i</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span> <span class="o">!=</span> <span class="n">scantype_i</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]]))</span>
 
@@ -338,9 +388,6 @@
         <span class="k">for</span> <span class="n">scantype</span> <span class="ow">in</span> <span class="n">scantypes</span><span class="p">:</span>
             <span class="n">mask</span> <span class="o">|=</span> <span class="p">(</span><span class="n">array</span><span class="o">.</span><span class="n">scantype</span> <span class="o">==</span> <span class="n">scantype</span><span class="p">)</span>
         <span class="n">array</span> <span class="o">=</span> <span class="n">array</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span>
-
-    <span class="c1">### close hdu</span>
-    <span class="n">hdulist</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
 
     <span class="k">return</span> <span class="n">array</span></div>
 

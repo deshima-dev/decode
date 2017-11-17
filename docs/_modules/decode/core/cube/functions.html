@@ -180,6 +180,7 @@
 <span class="sd">        ycoords (dict, optional): Dictionary of arrays that label y axis.</span>
 <span class="sd">        chcoords (dict, optional): Dictionary of arrays that label channel axis.</span>
 <span class="sd">        scalarcoords (dict, optional): Dictionary of values that don&#39;t label any axes (point-like).</span>
+<span class="sd">        datacoords (dict, optional): Dictionary of arrays that label x, y, and channel axes.</span>
 <span class="sd">        attrs (dict, optional): Dictionary of attributes to add to the instance.</span>
 <span class="sd">        name (str, optional): String that names the instance.</span>
 
@@ -242,12 +243,16 @@
 <span class="sd">            ymax (float): Maximum value of y.</span>
 <span class="sd">            xc (float): Center of x.</span>
 <span class="sd">            yc (float): Center of y.</span>
+<span class="sd">            unit (str): Unit of x/y.</span>
+<span class="sd">                &#39;deg&#39; or &#39;degree&#39;: Degree (Default).</span>
+<span class="sd">                &#39;arcmin&#39;: Arcminute.</span>
+<span class="sd">                &#39;arcsec&#39;: Arcsecond.</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        decode cube (decode.cube): Decode cube.</span>
 
 <span class="sd">    Notes:</span>
-<span class="sd">        Available combination of kwargs are</span>
+<span class="sd">        Available combinations of kwargs are</span>
 <span class="sd">            (1) xarr/yarr and xc/yc</span>
 <span class="sd">            (2) gx/gy and xmin/xmax/ymin/ymax and xc/yc</span>
 <span class="sd">            (3) nx/ny and xmin/xmax/ymin/ymax</span>

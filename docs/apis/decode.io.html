@@ -181,7 +181,10 @@
 &#8216;radec&#8217;: Right ascension / declination.</li>
 <li><strong>loadtype</strong> (<em>str</em>) &#8211; Data unit of xarray.
 &#8216;Tsignal&#8217;: Temperature [K].
-&#8216;Psignal&#8217;: Power [W].</li>
+&#8216;Psignal&#8217;: Power [W].
+&#8216;amplitude&#8217;: Amplitude.
+&#8216;phase&#8217;: Phase.
+&#8216;linphase&#8217;: Linear phase.</li>
 <li><strong>starttime</strong> (<em>int</em><em>, </em><em>str</em><em> or </em><em>numpy.datetime64</em>) &#8211; Start time of loaded data.
 It can be specified by the start index (int), the time compatible with numpy.datetime64 (str),
 or numpy.datetime64 (numpy.datetime64). Default is None and it means the data will be loaded
@@ -196,6 +199,13 @@ until the last record.</li>
 0: Relative coordinates with cosine projection (RECOMMENDED).
 1: Relative coordinates without cosine projection.
 2: Absolute coordinates.</li>
+<li><strong>kwargs</strong> (<em>optional</em>) &#8211; findR (bool): Automatically find R positions.
+ch (int): Representative channel id used for finding R.
+Rth (float): Threshold of R.
+skyth (flaot): Threshold of sky.
+cutnum (int): The number of points of unused data at the edge.
+still (bool): When it is true, scantypes of on/off are manually assigned.
+period (float): On/off period in second for still data.</li>
 </ul>
 </td>
 </tr>

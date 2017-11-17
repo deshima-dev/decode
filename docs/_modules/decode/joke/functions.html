@@ -158,12 +158,16 @@
 <span class="c1"># public items</span>
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
     <span class="s1">&#39;youtube&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;superspec&#39;</span><span class="p">,</span>
 <span class="p">]</span>
 
 <span class="c1"># standard library</span>
 <span class="kn">from</span> <span class="nn">logging</span> <span class="k">import</span> <span class="n">getLogger</span>
 <span class="kn">import</span> <span class="nn">webbrowser</span> <span class="k">as</span> <span class="nn">web</span>
 <span class="kn">from</span> <span class="nn">urllib.request</span> <span class="k">import</span> <span class="n">quote</span>
+
+<span class="c1"># dependent packages</span>
+<span class="kn">import</span> <span class="nn">decode</span> <span class="k">as</span> <span class="nn">dc</span>
 
 <span class="c1"># local constants</span>
 <span class="n">RESERVED</span> <span class="o">=</span> <span class="s1">&#39;;/?:@&amp;=+$,&#39;</span>
@@ -179,6 +183,19 @@
         <span class="n">web</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="s1">&#39;https://www.youtube.com/watch?v=L_mBVT2jBFw&#39;</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="n">web</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">quote</span><span class="p">(</span><span class="s1">&#39;https://www.youtube.com/results?search_query=</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">keyword</span><span class="p">),</span> <span class="n">RESERVED</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="superspec"><a class="viewcode-back" href="../../../apis/decode.joke.html#decode.superspec">[docs]</a><span class="k">def</span> <span class="nf">superspec</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">message</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Incompatible spectrometer!&#39;</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="nb">dir</span><span class="p">(</span><span class="n">dc</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">item</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;__&#39;</span><span class="p">):</span>
+            <span class="k">continue</span>
+
+        <span class="nb">setattr</span><span class="p">(</span><span class="n">dc</span><span class="p">,</span> <span class="n">item</span><span class="p">,</span> <span class="n">message</span><span class="p">)</span>
+
+    <span class="n">message</span><span class="p">()</span></div>
 </pre></div>
 
            </div>

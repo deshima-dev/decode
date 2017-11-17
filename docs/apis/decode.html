@@ -230,6 +230,7 @@
 <li><strong>tcoords</strong> (<em>dict</em><em>, </em><em>optional</em>) &#8211; Dictionary of arrays that label time axis.</li>
 <li><strong>chcoords</strong> (<em>dict</em><em>, </em><em>optional</em>) &#8211; Dictionary of arrays that label channel axis.</li>
 <li><strong>scalarcoords</strong> (<em>dict</em><em>, </em><em>optional</em>) &#8211; Dictionary of values that don&#8217;t label any axes (point-like).</li>
+<li><strong>datacoords</strong> (<em>dict</em><em>, </em><em>optional</em>) &#8211; Dictionary of arrays that label time and channel axes.</li>
 <li><strong>attrs</strong> (<em>dict</em><em>, </em><em>optional</em>) &#8211; Dictionary of attributes to add to the instance.</li>
 <li><strong>name</strong> (<em>str</em><em>, </em><em>optional</em>) &#8211; String that names the instance.</li>
 </ul>
@@ -353,6 +354,7 @@ auto_combine</p>
 <li><strong>ycoords</strong> (<em>dict</em><em>, </em><em>optional</em>) &#8211; Dictionary of arrays that label y axis.</li>
 <li><strong>chcoords</strong> (<em>dict</em><em>, </em><em>optional</em>) &#8211; Dictionary of arrays that label channel axis.</li>
 <li><strong>scalarcoords</strong> (<em>dict</em><em>, </em><em>optional</em>) &#8211; Dictionary of values that don&#8217;t label any axes (point-like).</li>
+<li><strong>datacoords</strong> (<em>dict</em><em>, </em><em>optional</em>) &#8211; Dictionary of arrays that label x, y, and channel axes.</li>
 <li><strong>attrs</strong> (<em>dict</em><em>, </em><em>optional</em>) &#8211; Dictionary of attributes to add to the instance.</li>
 <li><strong>name</strong> (<em>str</em><em>, </em><em>optional</em>) &#8211; String that names the instance.</li>
 </ul>
@@ -592,6 +594,11 @@ array are kept in the output one. Default is True.</li>
 </dd></dl>
 
 <dl class="function">
+<dt id="decode.superspec">
+<code class="descclassname">decode.</code><code class="descname">superspec</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/decode/joke/functions.html#superspec"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#decode.superspec" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
 <dt id="decode.tocube">
 <code class="descclassname">decode.</code><code class="descname">tocube</code><span class="sig-paren">(</span><em>array</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/decode/core/cube/functions.html#tocube"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#decode.tocube" title="Permalink to this definition">¶</a></dt>
 <dd><p>Convert a decode array to decode cube.</p>
@@ -601,7 +608,7 @@ array are kept in the output one. Default is True.</li>
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
 <li><strong>array</strong> (<a class="reference internal" href="#decode.array" title="decode.array"><em>decode.array</em></a>) &#8211; Decode array which will be converted.</li>
-<li><strong>kwargs</strong> (<em>optional</em>) &#8211; Other arguments.
+<li><strong>kwargs</strong> (<em>optional</em>) &#8211; <p>Other arguments.
 xarr (list or numpy.ndarray): Grid array of x direction.
 yarr (list or numpy.ndarray): Grid array of y direction.
 gx (float): The size of grid of x.
@@ -613,7 +620,13 @@ xmax (float): Maximum value of x.
 ymin (float): Minimum value of y.
 ymax (float): Maximum value of y.
 xc (float): Center of x.
-yc (float): Center of y.</li>
+yc (float): Center of y.
+unit (str): Unit of x/y.</p>
+<blockquote>
+<div>&#8216;deg&#8217; or &#8216;degree&#8217;: Degree (Default).
+&#8216;arcmin&#8217;: Arcminute.
+&#8216;arcsec&#8217;: Arcsecond.</div></blockquote>
+</li>
 </ul>
 </td>
 </tr>
@@ -627,7 +640,7 @@ yc (float): Center of y.</li>
 </table>
 <p class="rubric">Notes</p>
 <dl class="docutils">
-<dt>Available combination of kwargs are</dt>
+<dt>Available combinations of kwargs are</dt>
 <dd><ol class="first last arabic simple">
 <li>xarr/yarr and xc/yc</li>
 <li>gx/gy and xmin/xmax/ymin/ymax and xc/yc</li>
