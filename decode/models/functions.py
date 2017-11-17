@@ -257,9 +257,9 @@ def r_subtraction(onarray, offarray, rarray, mode='mean'):
 
     Xon_rsub  = []
     Xoff_rsub = []
-    print(len(onid))
+    # print(len(onid))
     for n, i in enumerate(onid):
-        print('{}'.format(n), end=', ')
+        # print('{}'.format(n), end=', ')
         rleftid  = np.searchsorted(rid, i) - 1
         rrightid = np.searchsorted(rid, i)
 
@@ -277,9 +277,9 @@ def r_subtraction(onarray, offarray, rarray, mode='mean'):
         Xon_rsub.append(Xon - Xr_m)
         # Xon -= Xr_m
 
-    print(len(offid))
+    # print(len(offid))
     for n, j in enumerate(offid):
-        print('{}'.format(n), end=', ')
+        # print('{}'.format(n), end=', ')
         rleftid  = np.searchsorted(rid, j) - 1
         rrightid = np.searchsorted(rid, j)
 
@@ -341,9 +341,9 @@ def r_division(onarray, offarray, rarray, mode='mean'):
 
     Xon_rdiv  = []
     Xoff_rdiv = []
-    print(len(onid))
+    # print(len(onid))
     for n, i in enumerate(onid):
-        print('{}'.format(n), end=', ')
+        # print('{}'.format(n), end=', ')
         rleftid  = np.searchsorted(rid, i) - 1
         rrightid = np.searchsorted(rid, i)
 
@@ -361,9 +361,9 @@ def r_division(onarray, offarray, rarray, mode='mean'):
         Xon_rdiv.append(Xon / Xr_m)
         # Xon -= Xr_m
 
-    print(len(offid))
+    # print(len(offid))
     for n, j in enumerate(offid):
-        print('{}'.format(n), end=', ')
+        # print('{}'.format(n), end=', ')
         rleftid  = np.searchsorted(rid, j) - 1
         rrightid = np.searchsorted(rid, j)
 
