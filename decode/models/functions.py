@@ -5,7 +5,9 @@ __all__ = [
     'skewgauss',
     'savgol_filter',
     'pca',
-    'rsky_calibration'
+    'rsky_calibration',
+    'r_subtraction',
+    'r_division',
 ]
 
 # standard library
@@ -86,9 +88,10 @@ def pca(onarray, offarray, n=10, exchs=None, pc=False, mode='mean'):
         offarray (decode.array): Decode array of off-point observations.
         n (int): The number of pricipal components.
         pc (bool): When True, this function also returns eigen vectors and their coefficients.
-        mode (str): The way of correcting offsets.
+        mode (None or str): The way of correcting offsets.
             'mean': Mean.
             'median': Median.
+            None: No correction.
 
     Returns:
         filtered (decode.array): Baseline-subtracted array.
@@ -116,25 +119,30 @@ def pca(onarray, offarray, n=10, exchs=None, pc=False, mode='mean'):
         rightid = np.searchsorted(offid, i)
 
         Xon   = onarray[onarray.scanid == i]
-        Xon_m = getattr(Xon, mode)(dim='t')
         if leftid == -1:
-            Xoff     = offarray[offarray.scanid == offid[rightid]]
-            Xoff_m   = getattr(Xoff, mode)(dim='t')
+            Xoff   = offarray[offarray.scanid == offid[rightid]]
+            Xoff_m = getattr(Xoff, mode)(dim='t') if mode is not None else 0
+            Xon_m  = Xoff_m
             model.fit(Xoff - Xoff_m)
         elif rightid == len(offid):
-            Xoff     = offarray[offarray.scanid == offid[leftid]]
-            Xoff_m   = getattr(Xoff, mode)(dim='t')
+            Xoff   = offarray[offarray.scanid == offid[leftid]]
+            Xoff_m = getattr(Xoff, mode)(dim='t') if mode is not None else 0
+            Xon_m  = Xoff_m
             model.fit(Xoff - Xoff_m)
         else:
-            Xoff_l   = offarray[offarray.scanid == offid[leftid]]
-            Xoff_lm  = getattr(Xoff_l, mode)(dim='t')
-            Xoff_r   = offarray[offarray.scanid == offid[rightid]]
-            Xoff_rm  = getattr(Xoff_r, mode)(dim='t')
+            Xoff_l  = offarray[offarray.scanid == offid[leftid]]
+            Xoff_lm = getattr(Xoff_l, mode)(dim='t') if mode is not None else 0
+            Xoff_r  = offarray[offarray.scanid == offid[rightid]]
+            Xoff_rm = getattr(Xoff_r, mode)(dim='t') if mode is not None else 0
+            Xon_m   = getattr(dc.concat([Xoff_l, Xoff_r], dim='t'), mode)(dim='t') if mode is not None else 0
             model.fit(dc.concat([Xoff_l - Xoff_lm, Xoff_r - Xoff_rm], dim='t'))
         P = model.components_
         C = model.transform(Xon - Xon_m)
 
-        Xatms.append(dc.full_like(Xon, C @ P + Xon_m.values))
+        try:
+            Xatms.append(dc.full_like(Xon, C @ P + Xon_m.values))
+        except:
+            Xatms.append(dc.full_like(Xon, C @ P))
         Ps.append(P)
         Cs.append(C)
 
@@ -219,3 +227,143 @@ def rsky_calibration(onarray, offarray, rarray, Tamb, mode='mean'):
         Xoff_cal.append(Tamb * (Xoff - Xoff_m) / (Xr_m - Xoff_m))
 
     return dc.concat(Xon_cal, dim='t'), dc.concat(Xoff_cal, dim='t')
+
+
+def r_subtraction(onarray, offarray, rarray, mode='mean'):
+    logger = getLogger('decode.models.r_subtraction')
+    logger.info('mode')
+    logger.info('{}'.format(mode))
+
+    offid = np.unique(offarray.scanid)
+    onid  = np.unique(onarray.scanid)
+    rid   = np.unique(rarray.scanid)
+
+    onarray  = onarray.copy()
+    offarray = offarray.copy()
+
+    Xon_rsub  = []
+    Xoff_rsub = []
+    print(len(onid))
+    for n, i in enumerate(onid):
+        print('{}'.format(n), end=', ')
+        rleftid  = np.searchsorted(rid, i) - 1
+        rrightid = np.searchsorted(rid, i)
+
+        Xon = onarray[onarray.scanid == i]
+        if rleftid == -1:
+            Xr   = rarray[rarray.scanid == rid[rrightid]]
+            Xr_m = getattr(Xr, mode)(dim='t')
+        elif rrightid == len(rid):
+            Xr   = rarray[rarray.scanid == rid[rleftid]]
+            Xr_m = getattr(Xr, mode)(dim='t')
+        else:
+            Xr_l  = rarray[rarray.scanid == rid[rleftid]]
+            Xr_r  = rarray[rarray.scanid == rid[rrightid]]
+            Xr_m  = getattr(dc.concat([Xr_l, Xr_r], dim='t'), mode)(dim='t')
+        Xon_rsub.append(Xon - Xr_m)
+        # Xon -= Xr_m
+
+    print(len(offid))
+    for n, j in enumerate(offid):
+        print('{}'.format(n), end=', ')
+        rleftid  = np.searchsorted(rid, j) - 1
+        rrightid = np.searchsorted(rid, j)
+
+        Xoff   = offarray[offarray.scanid == j]
+        Xoff_m = getattr(Xoff, mode)(dim='t')
+        if rleftid == -1:
+            Xr   = rarray[rarray.scanid == rid[rrightid]]
+            Xr_m = getattr(Xr, mode)(dim='t')
+        elif rrightid == len(rid):
+            Xr   = rarray[rarray.scanid == rid[rleftid]]
+            Xr_m = getattr(Xr, mode)(dim='t')
+        else:
+            Xr_l  = rarray[rarray.scanid == rid[rleftid]]
+            Xr_r  = rarray[rarray.scanid == rid[rrightid]]
+            Xr_m  = getattr(dc.concat([Xr_l, Xr_r], dim='t'), mode)(dim='t')
+        Xoff_rsub.append(Xoff - Xr_m)
+        # Xoff -= Xr_m
+    Xonoff_rsub = dc.concat(Xon_rsub + Xoff_rsub, dim='t')
+    # Xonoff_rsub = dc.concat([onarray, offarray], dim='t')
+    Xonoff_rsub_sorted = Xonoff_rsub[np.argsort(Xonoff_rsub.time.values)]
+
+    scantype    = Xonoff_rsub_sorted.scantype.values
+    newscanid   = np.cumsum(np.hstack([False, scantype[1:] != scantype[:-1]]))
+    onmask      = np.in1d(Xonoff_rsub_sorted.scanid, onid)
+    offmask     = np.in1d(Xonoff_rsub_sorted.scanid, offid)
+    Xon_rsub    = Xonoff_rsub_sorted[onmask]
+    Xoff_rsub   = Xonoff_rsub_sorted[offmask]
+    Xon_rsub.coords.update({'scanid': ('t', newscanid[onmask])})
+    Xoff_rsub.coords.update({'scanid': ('t', newscanid[offmask])})
+
+    return Xon_rsub, Xoff_rsub
+
+
+def r_division(onarray, offarray, rarray, mode='mean'):
+    logger = getLogger('decode.models.r_subtraction')
+    logger.info('mode')
+    logger.info('{}'.format(mode))
+
+    offid = np.unique(offarray.scanid)
+    onid  = np.unique(onarray.scanid)
+    rid   = np.unique(rarray.scanid)
+
+    onarray  = onarray.copy()
+    offarray = offarray.copy()
+
+    Xon_rdiv  = []
+    Xoff_rdiv = []
+    print(len(onid))
+    for n, i in enumerate(onid):
+        print('{}'.format(n), end=', ')
+        rleftid  = np.searchsorted(rid, i) - 1
+        rrightid = np.searchsorted(rid, i)
+
+        Xon = onarray[onarray.scanid == i]
+        if rleftid == -1:
+            Xr   = rarray[rarray.scanid == rid[rrightid]]
+            Xr_m = getattr(Xr, mode)(dim='t')
+        elif rrightid == len(rid):
+            Xr   = rarray[rarray.scanid == rid[rleftid]]
+            Xr_m = getattr(Xr, mode)(dim='t')
+        else:
+            Xr_l  = rarray[rarray.scanid == rid[rleftid]]
+            Xr_r  = rarray[rarray.scanid == rid[rrightid]]
+            Xr_m  = getattr(dc.concat([Xr_l, Xr_r], dim='t'), mode)(dim='t')
+        Xon_rdiv.append(Xon / Xr_m)
+        # Xon -= Xr_m
+
+    print(len(offid))
+    for n, j in enumerate(offid):
+        print('{}'.format(n), end=', ')
+        rleftid  = np.searchsorted(rid, j) - 1
+        rrightid = np.searchsorted(rid, j)
+
+        Xoff   = offarray[offarray.scanid == j]
+        Xoff_m = getattr(Xoff, mode)(dim='t')
+        if rleftid == -1:
+            Xr   = rarray[rarray.scanid == rid[rrightid]]
+            Xr_m = getattr(Xr, mode)(dim='t')
+        elif rrightid == len(rid):
+            Xr   = rarray[rarray.scanid == rid[rleftid]]
+            Xr_m = getattr(Xr, mode)(dim='t')
+        else:
+            Xr_l  = rarray[rarray.scanid == rid[rleftid]]
+            Xr_r  = rarray[rarray.scanid == rid[rrightid]]
+            Xr_m  = getattr(dc.concat([Xr_l, Xr_r], dim='t'), mode)(dim='t')
+        Xoff_rdiv.append(Xoff / Xr_m)
+        # Xoff -= Xr_m
+    Xonoff_rdiv = dc.concat(Xon_rdiv + Xoff_rdiv, dim='t')
+    # Xonoff_rsub = dc.concat([onarray, offarray], dim='t')
+    Xonoff_rdiv_sorted = Xonoff_rdiv[np.argsort(Xonoff_rdiv.time.values)]
+
+    scantype    = Xonoff_rdiv_sorted.scantype.values
+    newscanid   = np.cumsum(np.hstack([False, scantype[1:] != scantype[:-1]]))
+    onmask      = np.in1d(Xonoff_rdiv_sorted.scanid, onid)
+    offmask     = np.in1d(Xonoff_rdiv_sorted.scanid, offid)
+    Xon_rdiv    = Xonoff_rdiv_sorted[onmask]
+    Xoff_rdiv   = Xonoff_rdiv_sorted[offmask]
+    Xon_rdiv.coords.update({'scanid': ('t', newscanid[onmask])})
+    Xoff_rdiv.coords.update({'scanid': ('t', newscanid[offmask])})
+
+    return Xon_rdiv, Xoff_rdiv

@@ -5,7 +5,9 @@ __all__ = [
     'plotcoords',
     'plotweather',
     'plotspectrum',
-    'plottimestream'
+    'plottimestream',
+    'plotpsd',
+    'plotallanvar'
 ]
 
 # standard library
@@ -18,6 +20,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import xarray as xr
 from astropy.io import fits
+from scipy.signal import hanning
+from ..utils.ndarray.functions import psd, allan_variance
 
 
 # functions
@@ -123,8 +127,8 @@ def plottimestream(array, ax, xtick='time', **kwargs):
     elif xtick == 'index':
         ax.plot(np.ogrid[:len(array.time)], array, **kwargs)
     ax.set_xlabel('{}'.format(xtick), fontsize=20, color='grey')
-    for label in ax.get_xticklabels():
-        label.set_rotation(45)
+    # for label in ax.get_xticklabels():
+    #     label.set_rotation(45)
     ax.set_ylabel(str(array.datatype.values), fontsize=20, color='grey')
     ax.legend()
 
@@ -136,3 +140,23 @@ def plottimestream(array, ax, xtick='time', **kwargs):
     ax.set_title('ch #{} ({})'.format(kidid, kidtp), fontsize=20, color='grey')
 
     logger.info('timestream data (ch={}) has been plotted.'.format(kidid))
+
+
+def plotpsd(data, dt, ndivide=1, window=hanning, overlap_half=False, ax=None, **kwargs):
+    if ax is None:
+        ax = plt.gca()
+    vk, psddata = psd(data, dt, ndivide, window, overlap_half)
+    ax.loglog(vk, psddata, **kwargs)
+    ax.set_xlabel('Frquency [Hz]', fontsize=20, color='grey')
+    ax.set_ylabel('PSD', fontsize=20, color='grey')
+    ax.legend()
+
+
+def plotallanvar(data, dt, tmax=10, ax=None, **kwargs):
+    if ax is None:
+        ax = plt.gca()
+    tk, allanvar = allan_variance(data, dt, tmax)
+    ax.loglog(tk, allanvar, **kwargs)
+    ax.set_xlabel('Time [s]', fontsize=20, color='grey')
+    ax.set_ylabel('Allan Variance', fontsize=20, color='grey')
+    ax.legend()

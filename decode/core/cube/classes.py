@@ -237,11 +237,15 @@ class DecodeCubeAccessor(BaseAccessor):
         ### define coordinates
         xcoords      = {'x': cube.x.values}
         ycoords      = {'y': cube.y.values}
-        # chcoords     = {}
+        chcoords     = {'masterid': np.array([int(subcube.masterid.mean(dim='ch'))]),
+                        'kidid': np.array([int(subcube.kidid.mean(dim='ch'))]),
+                        'kidfq': np.array([float(subcube.kidfq.mean(dim='ch'))]),
+                        'kidtp': np.array([1])}
         scalarcoords = {'coordsys': cube.coordsys.values, 'datatype': cube.datatype.values,
                         'xref': cube.xref.values, 'yref': cube.yref.values}
 
-        return dc.cube(cont.values, xcoords=xcoords, ycoords=ycoords, scalarcoords=scalarcoords)
+        return dc.cube(cont.values, xcoords=xcoords, ycoords=ycoords, chcoords=chcoords,
+                       scalarcoords=scalarcoords)
 
     @staticmethod
     def savefits(cube, fitsname, **kwargs):
@@ -271,7 +275,7 @@ class DecodeCubeAccessor(BaseAccessor):
 
         ### update Header
         if cube.coordsys == 'AZEL':
-            header.update({'CUNIT1': 'AZ', 'CUNIT2': 'EL'})
+            header.update({'CTYPE1': 'dAZ', 'CTYPE2': 'dEL'})
         elif cube.coordsys == 'RADEC':
             header.update({'OBSRA': float(cube.xref), 'OBSDEC': float(cube.yref)})
         else:

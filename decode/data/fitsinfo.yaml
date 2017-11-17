@@ -1,0 +1,75 @@
+dcube_2d:
+    BSCALE: 1.0
+    BZERO:  0.0
+    BMAJ:   0.005
+    BMIN:   0.005
+    BPA:    0.0
+    BTYPE:  Temperature
+    OBJECT: Another Universe
+    BUNIT: K
+    RADESYS: ICRS
+    PC01_01: 1.0
+    PC01_02: 0.0
+    PC02_01: 0.0
+    PC02_02: 1.0
+    CTYPE1: RA--SFL
+    CRVAL1: 0.0
+    CDELT1: 0.002
+    CRPIX1: 1
+    CUNIT1: deg
+    CTYPE2: DEC--SFL
+    CRVAL2: 0.0
+    CDELT2: 0.002
+    CRPIX2: 1
+    CUNIT2: deg
+    TELESCOP: ASTE
+    INSTRUM: DESHIMA
+    OBSERVER: Edwin Hubble
+    DATE-OBS: '2017-01-01T00:00:00.0'
+    TIMESYS: UTC
+    OBSRA: 180.0
+    OBSDEC: 0.0
+    DATE: '2017-01-01T00:00:00.0'
+
+dcube_3d:
+    BSCALE: 1.0
+    BZERO:  0.0
+    BMAJ:   0.005
+    BMIN:   0.005
+    BPA:    0.0
+    BTYPE:  Temperature
+    OBJECT: Another Universe
+    BUNIT: K
+    RADESYS: ICRS
+    PC01_01: 1.0
+    PC01_02: 0.0
+    PC01_03: 0.0
+    PC02_01: 0.0
+    PC02_02: 1.0
+    PC02_03: 0.0
+    PC03_01: 0.0
+    PC03_02: 0.0
+    PC03_03: 1.0
+    CTYPE1: RA--SFL
+    CRVAL1: 0.0
+    CDELT1: 0.002
+    CRPIX1: 1
+    CUNIT1: deg
+    CTYPE2: DEC--SFL
+    CRVAL2: 0.0
+    CDELT2: 0.002
+    CRPIX2: 1
+    CUNIT2: deg
+    CTYPE3: KIDID
+    CRVAL3: 0.0
+    CDELT3: 1
+    CRPIX3: 1
+    CUNIT3: 1
+    TELESCOP: ASTE
+    INSTRUM: DESHIMA
+    OBSERVER: Edwin Hubble
+    DATE-OBS: '2017-01-01T00:00:00.0'
+    TIMESYS: UTC
+    OBSRA: 180.0
+    OBSDEC: 0.0
+    DATE: '2017-01-01T00:00:00.0'
