@@ -3,8 +3,6 @@
 
 # De:code - DESHIMA Code for data analysis
 
-## About De:code
-
 ## Installation
 
 ## Requirements
