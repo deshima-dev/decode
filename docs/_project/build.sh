@@ -18,7 +18,7 @@ EOS
 
 if prompt "continue to build?"; then
     if type sphinx-build >/dev/null 2>&1; then
-        sphinx-apidoc -f -o ./apis ../../decode
+        sphinx-apidoc -f -o ./apis ../../decode ../../decode/joke*
         sphinx-build -a -d ../_doctree ./ ../
         sphinx-build -a -d ../_doctree ./ ../
     else

@@ -13,3 +13,5 @@ del joke
 
 # for sphinx build
 __all__ = dir()
+__all__.remove('superspec')
+__all__.remove('youtube')

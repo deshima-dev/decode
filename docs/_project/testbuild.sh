@@ -7,7 +7,7 @@ INFO: this will build decode/testdocs
 EOS
 
 if type sphinx-build >/dev/null 2>&1; then
-    sphinx-apidoc -f -o ./apis ../../decode
+    sphinx-apidoc -f -o ./apis ../../decode ../../decode/joke*
     sphinx-build -a -d ../../testdocs/_doctree ./ ../../testdocs
     sphinx-build -a -d ../../testdocs/_doctree ./ ../../testdocs
 else

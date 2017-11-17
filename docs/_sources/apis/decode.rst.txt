@@ -8,7 +8,6 @@ Subpackages
 
     decode.core
     decode.io
-    decode.joke
     decode.logging
     decode.models
     decode.plot
