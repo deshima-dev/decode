@@ -15,3 +15,6 @@ del joke
 __all__ = dir()
 __all__.remove('superspec')
 __all__.remove('youtube')
+
+# version
+__version__ = '0.4.1'

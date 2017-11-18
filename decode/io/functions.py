@@ -51,12 +51,17 @@ def loaddfits(fitsname, coordtype='azel', loadtype='temperature', starttime=None
             2: Absolute coordinates.
         kwargs (optional):
             findR (bool): Automatically find R positions.
-            ch (int): Representative channel id used for finding R.
-            Rth (float): Threshold of R.
-            skyth (flaot): Threshold of sky.
-            cutnum (int): The number of points of unused data at the edge.
+                ch (int): Representative channel id used for finding R.
+                Rth (float): Threshold of R.
+                skyth (flaot): Threshold of sky.
+                cutnum (int): The number of points of unused data at the edge.
             still (bool): When it is true, scantypes of on/off are manually assigned.
-            period (float): On/off period in second for still data.
+                period (float): On/off period in second for still data.
+            shuttle (bool): For shuttle observations.
+            xmin_off (float): Minimum x of off-point data.
+            xmax_off (float): Maximum x of off-point data.
+            xmin_on (float): Minimum x of on-point data.
+            xmax_on (float): Maximum x of on-point data.
 
     Returns:
         decode array (decode.array): Loaded decode array.
@@ -69,13 +74,21 @@ def loaddfits(fitsname, coordtype='azel', loadtype='temperature', starttime=None
     logger.info('{} {} {} {} {}'.format(coordtype, starttime, endtime, mode, loadtype))
 
     ### pick up kwargs
-    findR  = kwargs.pop('findR', False)
-    ch     = kwargs.pop('ch', 0)
-    Rth    = kwargs.pop('Rth', 280)
-    skyth  = kwargs.pop('skyth', 150)
-    cutnum = kwargs.pop('cutnum', 1)
-    still  = kwargs.pop('still', False)
-    period = kwargs.pop('period', 2)
+    # for findR
+    findR    = kwargs.pop('findR', False)
+    ch       = kwargs.pop('ch', 0)
+    Rth      = kwargs.pop('Rth', 280)
+    skyth    = kwargs.pop('skyth', 150)
+    cutnum   = kwargs.pop('cutnum', 1)
+    # for still
+    still    = kwargs.pop('still', False)
+    period   = kwargs.pop('period', 2)
+    # for shuttle
+    shuttle  = kwargs.pop('shuttle', False)
+    xmin_off = kwargs.pop('xmin_off', 0)
+    xmax_off = kwargs.pop('xmax_off', 0)
+    xmin_on  = kwargs.pop('xmin_on', 0)
+    xmax_on  = kwargs.pop('xmax_on', 0)
 
     ### load data
     with fits.open(fitsname) as hdulist:
@@ -202,13 +215,21 @@ def loaddfits(fitsname, coordtype='azel', loadtype='temperature', starttime=None
             scantype_i[offmask] = 'OFF'
             scantype_i[onmask]  = 'SCAN'
 
+    if shuttle:
+        offmask = (xmin_off < x_i) & (x_i < xmax_off)
+        onmask  = (xmin_on < x_i) & (x_i < xmax_on)
+        scantype_i[offmask] = 'OFF'
+        scantype_i[onmask]  = 'SCAN'
+        scantype_i[(~offmask) & (~onmask)] = 'JUNK'
+
     if findR:
         Rindex = np.where(response[:, ch] >= Rth)
         scantype_i[Rindex] = 'R'
         movemask = np.hstack([[False] * cutnum, scantype_i[cutnum:] != scantype_i[:-cutnum]]) | \
                    np.hstack([scantype_i[:-cutnum] != scantype_i[cutnum:], [False] * cutnum]) & (scantype_i == 'R')
         scantype_i[movemask] = 'JUNK'
-        scantype_i[(response[:, ch] > skyth) & (scantype_i != 'R')] = 'JUNK'
+        scantype_i[(response[:, ch] > skyth) & (scantype_i != 'R')]  = 'JUNK'
+        scantype_i[(response[:, ch] <= skyth) & (scantype_i == 'R')] = 'JUNK'
         skyindex = np.where(response[:, ch] <= skyth)
         scantype_i_temp = scantype_i.copy()
         scantype_i_temp[skyindex] = 'SKY'

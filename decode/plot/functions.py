@@ -157,7 +157,7 @@ def plotpsd(data, dt, ndivide=1, window=hanning, overlap_half=False, ax=None, **
         ax = plt.gca()
     vk, psddata = psd(data, dt, ndivide, window, overlap_half)
     ax.loglog(vk, psddata, **kwargs)
-    ax.set_xlabel('Frquency [Hz]', fontsize=20, color='grey')
+    ax.set_xlabel('Frequency [Hz]', fontsize=20, color='grey')
     ax.set_ylabel('PSD', fontsize=20, color='grey')
     ax.legend()
 

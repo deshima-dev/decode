@@ -11,6 +11,7 @@ __all__ = [
     'zeros_like',
     'full_like',
     'empty_like',
+    'concat'
 ]
 
 # standard library
@@ -202,3 +203,11 @@ def empty_like(array, dtype=None, keepmeta=True):
         )
     else:
         return dc.empty(array.shape, dtype)
+
+
+def concat(objs, dim=None, **kwargs):
+    xref = objs[0].xref.values
+    yref = objs[0].yref.values
+    for obj in objs:
+        obj.coords.update({'xref': xref, 'yref': yref})
+    return xr.concat(objs, dim=dim, **kwargs)

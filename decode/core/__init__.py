@@ -30,6 +30,3 @@ from .array.decorators import *
 from .array.functions import *
 from .cube.classes import *
 from .cube.functions import *
-
-from xarray import concat
-concat.__doc__ = 'Equivalent to `xr.concat`\n' + concat.__doc__
