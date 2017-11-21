@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>decode package &mdash; De:code 0.4 documentation</title>
+  <title>decode package &mdash; De:code 0.4.1 documentation</title>
   
 
   
@@ -35,7 +35,7 @@
         <link rel="index" title="Index"
               href="../genindex.html"/>
         <link rel="search" title="Search" href="../search.html"/>
-    <link rel="top" title="De:code 0.4 documentation" href="../index.html"/> 
+    <link rel="top" title="De:code 0.4.1 documentation" href="../index.html"/> 
 
   
   <script src="../_static/js/modernizr.min.js"></script>
@@ -64,7 +64,7 @@
             
             
               <div class="version">
-                0.4
+                0.4.1
               </div>
             
           
@@ -262,77 +262,8 @@
 
 <dl class="function">
 <dt id="decode.concat">
-<code class="descclassname">decode.</code><code class="descname">concat</code><span class="sig-paren">(</span><em>objs</em>, <em>dim=None</em>, <em>data_vars='all'</em>, <em>coords='different'</em>, <em>compat='equals'</em>, <em>positions=None</em>, <em>indexers=None</em>, <em>mode=None</em>, <em>concat_over=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/xarray/core/combine.html#concat"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#decode.concat" title="Permalink to this definition">¶</a></dt>
-<dd><p>Equivalent to <cite>xr.concat</cite>
-Concatenate xarray objects along a new or existing dimension.</p>
-<blockquote>
-<div><dl class="docutils">
-<dt>objs <span class="classifier-delimiter">:</span> <span class="classifier">sequence of Dataset and DataArray objects</span></dt>
-<dd>xarray objects to concatenate together. Each object is expected to
-consist of variables and coordinates with matching shapes except for
-along the concatenated dimension.</dd>
-<dt>dim <span class="classifier-delimiter">:</span> <span class="classifier">str or DataArray or pandas.Index</span></dt>
-<dd>Name of the dimension to concatenate along. This can either be a new
-dimension name, in which case it is added along axis=0, or an existing
-dimension name, in which case the location of the dimension is
-unchanged. If dimension is provided as a DataArray or Index, its name
-is used as the dimension to concatenate along and the values are added
-as a coordinate.</dd>
-<dt>data_vars <span class="classifier-delimiter">:</span> <span class="classifier">{&#8216;minimal&#8217;, &#8216;different&#8217;, &#8216;all&#8217; or list of str}, optional</span></dt>
-<dd><dl class="first docutils">
-<dt>These data variables will be concatenated together:</dt>
-<dd><ul class="first last simple">
-<li>&#8216;minimal&#8217;: Only data variables in which the dimension already
-appears are included.</li>
-<li>&#8216;different&#8217;: Data variables which are not equal (ignoring
-attributes) across all datasets are also concatenated (as well as
-all for which dimension already appears). Beware: this option may
-load the data payload of data variables into memory if they are not
-already loaded.</li>
-<li>&#8216;all&#8217;: All data variables will be concatenated.</li>
-<li>list of str: The listed data variables will be concatenated, in
-addition to the &#8216;minimal&#8217; data variables.</li>
-</ul>
-</dd>
-</dl>
-<p class="last">If objects are DataArrays, data_vars must be &#8216;all&#8217;.</p>
-</dd>
-<dt>coords <span class="classifier-delimiter">:</span> <span class="classifier">{&#8216;minimal&#8217;, &#8216;different&#8217;, &#8216;all&#8217; o list of str}, optional</span></dt>
-<dd><dl class="first last docutils">
-<dt>These coordinate variables will be concatenated together:</dt>
-<dd><ul class="first last simple">
-<li>&#8216;minimal&#8217;: Only coordinates in which the dimension already appears
-are included.</li>
-<li>&#8216;different&#8217;: Coordinates which are not equal (ignoring attributes)
-across all datasets are also concatenated (as well as all for which
-dimension already appears). Beware: this option may load the data
-payload of coordinate variables into memory if they are not already
-loaded.</li>
-<li>&#8216;all&#8217;: All coordinate variables will be concatenated, except
-those corresponding to other dimensions.</li>
-<li>list of str: The listed coordinate variables will be concatenated,
-in addition the &#8216;minimal&#8217; coordinates.</li>
-</ul>
-</dd>
-</dl>
-</dd>
-<dt>compat <span class="classifier-delimiter">:</span> <span class="classifier">{&#8216;equals&#8217;, &#8216;identical&#8217;}, optional</span></dt>
-<dd>String indicating how to compare non-concatenated variables and
-dataset global attributes for potential conflicts. &#8216;equals&#8217; means
-that all variable values and dimensions must be the same;
-&#8216;identical&#8217; means that variable attributes and global attributes
-must also be equal.</dd>
-<dt>positions <span class="classifier-delimiter">:</span> <span class="classifier">None or list of integer arrays, optional</span></dt>
-<dd>List of integer arrays which specifies the integer positions to which
-to assign each dataset along the concatenated dimension. If not
-supplied, objects are concatenated in the provided order.</dd>
-</dl>
-<p>indexers, mode, concat_over : deprecated</p>
-<p>concatenated : type of objs</p>
-<p>merge
-auto_combine</p>
-</div></blockquote>
-</dd></dl>
+<code class="descclassname">decode.</code><code class="descname">concat</code><span class="sig-paren">(</span><em>objs</em>, <em>dim=None</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/decode/core/array/functions.html#concat"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#decode.concat" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 
 <dl class="function">
 <dt id="decode.cube">
@@ -758,7 +689,7 @@ array are kept in the output one. Default is True.</li>
     <script type="text/javascript">
         var DOCUMENTATION_OPTIONS = {
             URL_ROOT:'../',
-            VERSION:'0.4',
+            VERSION:'0.4.1',
             COLLAPSE_INDEX:false,
             FILE_SUFFIX:'.html',
             HAS_SOURCE:  true,

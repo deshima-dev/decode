@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>decode.models package &mdash; De:code 0.4 documentation</title>
+  <title>decode.models package &mdash; De:code 0.4.1 documentation</title>
   
 
   
@@ -35,7 +35,7 @@
         <link rel="index" title="Index"
               href="../genindex.html"/>
         <link rel="search" title="Search" href="../search.html"/>
-    <link rel="top" title="De:code 0.4 documentation" href="../index.html"/> 
+    <link rel="top" title="De:code 0.4.1 documentation" href="../index.html"/> 
 
   
   <script src="../_static/js/modernizr.min.js"></script>
@@ -64,7 +64,7 @@
             
             
               <div class="version">
-                0.4
+                0.4.1
               </div>
             
           
@@ -288,6 +288,11 @@ offarray_cal (decode.array): Calibrated array of off-point observations.</p>
 </dd></dl>
 
 <dl class="function">
+<dt id="decode.models.functions.chopper_calibration">
+<code class="descclassname">decode.models.functions.</code><code class="descname">chopper_calibration</code><span class="sig-paren">(</span><em>onarray</em>, <em>offarray</em>, <em>rarray</em>, <em>Tamb</em>, <em>mode='mean'</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/decode/models/functions.html#chopper_calibration"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#decode.models.functions.chopper_calibration" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
 <dt id="decode.models.functions.r_subtraction">
 <code class="descclassname">decode.models.functions.</code><code class="descname">r_subtraction</code><span class="sig-paren">(</span><em>onarray</em>, <em>offarray</em>, <em>rarray</em>, <em>mode='mean'</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/decode/models/functions.html#r_subtraction"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#decode.models.functions.r_subtraction" title="Permalink to this definition">¶</a></dt>
 <dd><p>Apply R subtraction.</p>
@@ -314,6 +319,10 @@ offarray_cal (decode.array): Calibrated array of off-point observations.</p>
 </tr>
 </tbody>
 </table>
+<div class="admonition warning">
+<p class="first admonition-title">Warning</p>
+<p class="last">Current implementation is too slow!</p>
+</div>
 </dd></dl>
 
 <dl class="function">
@@ -386,7 +395,7 @@ offarray_cal (decode.array): Calibrated array of off-point observations.</p>
     <script type="text/javascript">
         var DOCUMENTATION_OPTIONS = {
             URL_ROOT:'../',
-            VERSION:'0.4',
+            VERSION:'0.4.1',
             COLLAPSE_INDEX:false,
             FILE_SUFFIX:'.html',
             HAS_SOURCE:  true,

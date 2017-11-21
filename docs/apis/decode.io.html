@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>decode.io package &mdash; De:code 0.4 documentation</title>
+  <title>decode.io package &mdash; De:code 0.4.1 documentation</title>
   
 
   
@@ -35,7 +35,7 @@
         <link rel="index" title="Index"
               href="../genindex.html"/>
         <link rel="search" title="Search" href="../search.html"/>
-    <link rel="top" title="De:code 0.4 documentation" href="../index.html"/> 
+    <link rel="top" title="De:code 0.4.1 documentation" href="../index.html"/> 
 
   
   <script src="../_static/js/modernizr.min.js"></script>
@@ -64,7 +64,7 @@
             
             
               <div class="version">
-                0.4
+                0.4.1
               </div>
             
           
@@ -199,13 +199,21 @@ until the last record.</li>
 0: Relative coordinates with cosine projection (RECOMMENDED).
 1: Relative coordinates without cosine projection.
 2: Absolute coordinates.</li>
-<li><strong>kwargs</strong> (<em>optional</em>) &#8211; findR (bool): Automatically find R positions.
-ch (int): Representative channel id used for finding R.
+<li><strong>kwargs</strong> (<em>optional</em>) &#8211; <dl class="docutils">
+<dt>findR (bool): Automatically find R positions.</dt>
+<dd>ch (int): Representative channel id used for finding R.
 Rth (float): Threshold of R.
 skyth (flaot): Threshold of sky.
-cutnum (int): The number of points of unused data at the edge.
-still (bool): When it is true, scantypes of on/off are manually assigned.
-period (float): On/off period in second for still data.</li>
+cutnum (int): The number of points of unused data at the edge.</dd>
+<dt>still (bool): When it is true, scantypes of on/off are manually assigned.</dt>
+<dd>period (float): On/off period in second for still data.</dd>
+</dl>
+<p>shuttle (bool): For shuttle observations.
+xmin_off (float): Minimum x of off-point data.
+xmax_off (float): Maximum x of off-point data.
+xmin_on (float): Minimum x of on-point data.
+xmax_on (float): Maximum x of on-point data.</p>
+</li>
 </ul>
 </td>
 </tr>
@@ -322,7 +330,7 @@ If not spacified, random 8-character name will be used.</li>
     <script type="text/javascript">
         var DOCUMENTATION_OPTIONS = {
             URL_ROOT:'../',
-            VERSION:'0.4',
+            VERSION:'0.4.1',
             COLLAPSE_INDEX:false,
             FILE_SUFFIX:'.html',
             HAS_SOURCE:  true,
