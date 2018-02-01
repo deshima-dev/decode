@@ -207,7 +207,7 @@ def rsky_calibration(onarray, offarray, rarray, Tamb, mode='mean'):
         else:
             Xoff_l  = offvalues[offscanid == offid[oleftid]]
             Xoff_r  = offvalues[offscanid == offid[orightid]]
-            Xoff_m  = getattr(np, 'nan'+mode)(np.vtack([Xoff_l, Xoff_r]), axis=0)
+            Xoff_m  = getattr(np, 'nan'+mode)(np.vstack([Xoff_l, Xoff_r]), axis=0)
 
         if rleftid == -1:
             Xr   = rvalues[rscanid == rid[rrightid]]
