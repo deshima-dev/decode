@@ -2,17 +2,41 @@
 
 # public items
 __all__ = [
+    'OrderedLoader',
     'copy_function',
     'one_thread_per_process',
     'slicewhere',
 ]
 
 # standard library
+from collections import OrderedDict
 from contextlib import contextmanager
 from types import CodeType, FunctionType
 
 # dependent packages
+import yaml
 from scipy import ndimage
+
+
+# classes
+class OrderedLoader(yaml.Loader):
+    """YAML loader for keeping order of items.
+
+    This class is intended to be used like::
+
+        >>> with open(filename) as f:
+        >>> ... yaml.load(f, Loader=OrderedLoader)
+
+    """
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        tag = yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG
+
+        def constructor(loader, node):
+            return OrderedDict(loader.construct_pairs(node))
+
+        self.add_constructor(tag, constructor)
 
 
 # function

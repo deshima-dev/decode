@@ -11,17 +11,13 @@ from pytz import timezone
 from datetime import datetime
 
 # dependent packages
+import astropy.units as u
 import decode as dc
 import matplotlib.pyplot as plt
 import numpy as np
 import xarray as xr
 import yaml
-yaml.add_constructor(
-    yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG,
-    lambda loader, node: OrderedDict(loader.construct_pairs(node))
-)
 from astropy.io import fits
-import astropy.units as u
 from .. import BaseAccessor
 
 # local constants
@@ -257,7 +253,7 @@ class DecodeCubeAccessor(BaseAccessor):
 
         ### load yaml
         FITSINFO = get_data('decode', 'data/fitsinfo.yaml')
-        hdrdata = yaml.load(FITSINFO)
+        hdrdata = yaml.load(FITSINFO, dc.utils.OrderedLoader)
 
         ### default header
         if ndim == 2:
