@@ -209,34 +209,42 @@ class DecodeCubeAccessor(BaseAccessor):
                        scalarcoords=scalarcoords, datacoords=datacoords)
 
     @staticmethod
-    def makecontinuum(cube, **kwargs):
+    def makecontinuum(cube, weight=None, **kwargs):
         logger = getLogger('decode.makecontinuum')
 
         ### pick up kwargs
         inchs = kwargs.pop('inchs', None)
         exchs = kwargs.pop('exchs', None)
 
-        if inchs is not None:
-            logger.info('inchs')
-            logger.info('{}'.format(inchs))
-            subcube = cube[:, :, inchs]
-        else:
-            mask = np.full(len(cube.ch), True)
-            if exchs is not None:
-                logger.info('exchs')
-                logger.info('{}'.format(exchs))
-                mask[exchs] = False
-            subcube = cube[:, :, mask]
-        cont = (subcube * (1 / subcube.noise**2)).sum(dim='ch') / (1 / subcube.noise**2).sum(dim='ch')
-        cont = cont.expand_dims(dim='ch', axis=2)
+        if (inchs is not None) or (exchs is not None):
+            raise KeyError('Inchs and exchs are no longer supported. Use weight instead.')
+
+        # if inchs is not None:
+        #     logger.info('inchs')
+        #     logger.info('{}'.format(inchs))
+        #     subcube = cube[:, :, inchs]
+        # else:
+        #     mask = np.full(len(cube.ch), True)
+        #     if exchs is not None:
+        #         logger.info('exchs')
+        #         logger.info('{}'.format(exchs))
+        #         mask[exchs] = False
+        #     subcube = cube[:, :, mask]
+
+        if weight is None:
+             weight = 1.
+        # else:
+            # cont = (subcube * (1 / subcube.noise**2)).sum(dim='ch') / (1 / subcube.noise**2).sum(dim='ch')
+            # cont = cont.expand_dims(dim='ch', axis=2)
+        cont = (cube * (1 / weight**2)).sum(dim='ch') / (1 / weight**2).sum(dim='ch')
 
         ### define coordinates
         xcoords      = {'x': cube.x.values}
         ycoords      = {'y': cube.y.values}
-        chcoords     = {'masterid': np.array([int(subcube.masterid.mean(dim='ch'))]),
-                        'kidid': np.array([int(subcube.kidid.mean(dim='ch'))]),
-                        'kidfq': np.array([float(subcube.kidfq.mean(dim='ch'))]),
-                        'kidtp': np.array([1])}
+        chcoords     = {'masterid': np.array([0]), # np.array([int(subcube.masterid.mean(dim='ch'))]),
+                        'kidid': np.array([0]), # np.array([int(subcube.kidid.mean(dim='ch'))]),
+                        'kidfq': np.array([0]), # np.array([float(subcube.kidfq.mean(dim='ch'))]),
+                        'kidtp': np.array([1])} # np.array([1])}
         scalarcoords = {'coordsys': cube.coordsys.values, 'datatype': cube.datatype.values,
                         'xref': cube.xref.values, 'yref': cube.yref.values}
 
