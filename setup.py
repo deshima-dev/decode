@@ -31,7 +31,7 @@ PACKAGES = [
 setup(
     name = 'decode',
     description = __doc__,
-    version = '0.4.2',
+    version = '0.4.3',
     author = 'DESHIMA software team',
     author_email = 'tishida@ioa.s.u-tokyo.ac.jp',
     url = 'https://github.com/deshima-dev/decode',
