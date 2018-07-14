@@ -1,11 +1,11 @@
-decode\.io package
-==================
+decode.io package
+=================
 
 Submodules
 ----------
 
-decode\.io\.functions module
-----------------------------
+decode.io.functions module
+--------------------------
 
 .. automodule:: decode.io.functions
     :members:

@@ -1,11 +1,11 @@
-decode\.plot package
-====================
+decode.plot package
+===================
 
 Submodules
 ----------
 
-decode\.plot\.functions module
-------------------------------
+decode.plot.functions module
+----------------------------
 
 .. automodule:: decode.plot.functions
     :members:

@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>decode.io package &mdash; De:code 0.4.2 documentation</title>
+  <title>decode.io package &mdash; De:code 0.4.3 documentation</title>
   
 
   
@@ -24,25 +24,17 @@
 
   
 
-  
-  
-    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
-  
-
-  
-
-  
-        <link rel="index" title="Index"
-              href="../genindex.html"/>
-        <link rel="search" title="Search" href="../search.html"/>
-    <link rel="top" title="De:code 0.4.2 documentation" href="../index.html"/> 
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
 
   
   <script src="../_static/js/modernizr.min.js"></script>
 
 </head>
 
-<body class="wy-body-for-nav" role="document">
+<body class="wy-body-for-nav">
 
    
   <div class="wy-grid-for-nav">
@@ -64,7 +56,7 @@
             
             
               <div class="version">
-                0.4.2
+                0.4.3
               </div>
             
           
@@ -107,7 +99,7 @@
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
 
       
-      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+      <nav class="wy-nav-top" aria-label="top navigation">
         
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
           <a href="../index.html">De:code</a>
@@ -115,9 +107,10 @@
       </nav>
 
 
-      
       <div class="wy-nav-content">
+        
         <div class="rst-content">
+        
           
 
 
@@ -175,31 +168,31 @@
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>fitsname</strong> (<em>str</em>) &#8211; Name of DFITS file.</li>
-<li><strong>coordtype</strong> (<em>str</em>) &#8211; Coordinate type included into a decode array.
-&#8216;azel&#8217;: Azimuth / elevation.
-&#8216;radec&#8217;: Right ascension / declination.</li>
-<li><strong>loadtype</strong> (<em>str</em>) &#8211; Data unit of xarray.
-&#8216;Tsignal&#8217;: Temperature [K].
-&#8216;Psignal&#8217;: Power [W].
-&#8216;amplitude&#8217;: Amplitude.
-&#8216;phase&#8217;: Phase.
-&#8216;linphase&#8217;: Linear phase.</li>
-<li><strong>starttime</strong> (<em>int</em><em>, </em><em>str</em><em> or </em><em>numpy.datetime64</em>) &#8211; Start time of loaded data.
+<li><strong>fitsname</strong> (<em>str</em>) – Name of DFITS file.</li>
+<li><strong>coordtype</strong> (<em>str</em>) – Coordinate type included into a decode array.
+‘azel’: Azimuth / elevation.
+‘radec’: Right ascension / declination.</li>
+<li><strong>loadtype</strong> (<em>str</em>) – Data unit of xarray.
+‘Tsignal’: Temperature [K].
+‘Psignal’: Power [W].
+‘amplitude’: Amplitude.
+‘phase’: Phase.
+‘linphase’: Linear phase.</li>
+<li><strong>starttime</strong> (<em>int</em><em>, </em><em>str</em><em> or </em><em>numpy.datetime64</em>) – Start time of loaded data.
 It can be specified by the start index (int), the time compatible with numpy.datetime64 (str),
 or numpy.datetime64 (numpy.datetime64). Default is None and it means the data will be loaded
 from the first record.</li>
-<li><strong>endtime</strong> (<em>int</em><em>, </em><em>str</em><em> or </em><em>numpy.datetime64</em>) &#8211; End time of loaded data.
+<li><strong>endtime</strong> (<em>int</em><em>, </em><em>str</em><em> or </em><em>numpy.datetime64</em>) – End time of loaded data.
 It can be specified by the end index (int), the time compatible with numpy.datetime64 (str),
 or numpy.datetime64 (numpy.datetime64). Default is None and it means the data will be loaded
 until the last record.</li>
-<li><strong>pixelids</strong> (<em>int</em><em> or </em><em>list</em>) &#8211; Under development.</li>
-<li><strong>scantypes</strong> (<em>list</em><em>(</em><em>str</em><em>)</em>) &#8211; Scan types, such as &#8216;GRAD&#8217;, &#8216;SCAN&#8217;, &#8216;OFF&#8217;, &#8216;R&#8217;, and so on.</li>
-<li><strong>mode</strong> (<em>int</em>) &#8211; Loading mode.
+<li><strong>pixelids</strong> (<em>int</em><em> or </em><em>list</em>) – Under development.</li>
+<li><strong>scantypes</strong> (<em>list</em><em>(</em><em>str</em><em>)</em>) – Scan types, such as ‘GRAD’, ‘SCAN’, ‘OFF’, ‘R’, and so on.</li>
+<li><strong>mode</strong> (<em>int</em>) – Loading mode.
 0: Relative coordinates with cosine projection (RECOMMENDED).
 1: Relative coordinates without cosine projection.
 2: Absolute coordinates.</li>
-<li><strong>kwargs</strong> (<em>optional</em>) &#8211; <dl class="docutils">
+<li><strong>kwargs</strong> (<em>optional</em>) – <dl class="docutils">
 <dt>findR (bool): Automatically find R positions.</dt>
 <dd>ch (int): Representative channel id used for finding R.
 Rth (float): Threshold of R.
@@ -220,7 +213,7 @@ xmax_on (float): Maximum x of on-point data.</p>
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">Loaded decode array.</p>
 </td>
 </tr>
-<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">decode array (<a class="reference internal" href="decode.html#decode.array" title="decode.array">decode.array</a>)</p>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">decode array (decode.array)</p>
 </td>
 </tr>
 </tbody>
@@ -236,9 +229,9 @@ xmax_on (float): Maximum x of on-point data.</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>dataarray</strong> (<em>xarray.DataArray</em>) &#8211; Dataarray to be saved.</li>
-<li><strong>fitsname</strong> (<em>str</em>) &#8211; Name of output FITS file.</li>
-<li><strong>kwargs</strong> (<em>optional</em>) &#8211; Other arguments common with astropy.io.fits.writeto().</li>
+<li><strong>dataarray</strong> (<em>xarray.DataArray</em>) – Dataarray to be saved.</li>
+<li><strong>fitsname</strong> (<em>str</em>) – Name of output FITS file.</li>
+<li><strong>kwargs</strong> (<em>optional</em>) – Other arguments common with astropy.io.fits.writeto().</li>
 </ul>
 </td>
 </tr>
@@ -255,8 +248,8 @@ xmax_on (float): Maximum x of on-point data.</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>filename</strong> (<em>str</em>) &#8211; Filename (<a href="#id1"><span class="problematic" id="id2">*</span></a>.nc).</li>
-<li><strong>copy</strong> (<em>bool</em>) &#8211; If True, dataarray is copied in memory. Default is True.</li>
+<li><strong>filename</strong> (<em>str</em>) – Filename (<a href="#id1"><span class="problematic" id="id2">*</span></a>.nc).</li>
+<li><strong>copy</strong> (<em>bool</em>) – If True, dataarray is copied in memory. Default is True.</li>
 </ul>
 </td>
 </tr>
@@ -279,8 +272,8 @@ xmax_on (float): Maximum x of on-point data.</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>dataarray</strong> (<em>xarray.DataArray</em>) &#8211; Dataarray to be saved.</li>
-<li><strong>filename</strong> (<em>str</em>) &#8211; Filename (used as &lt;filename&gt;.nc).
+<li><strong>dataarray</strong> (<em>xarray.DataArray</em>) – Dataarray to be saved.</li>
+<li><strong>filename</strong> (<em>str</em>) – Filename (used as &lt;filename&gt;.nc).
 If not spacified, random 8-character name will be used.</li>
 </ul>
 </td>
@@ -297,9 +290,7 @@ If not spacified, random 8-character name will be used.</li>
 
 
            </div>
-           <div class="articleComments">
-            
-           </div>
+           
           </div>
           <footer>
   
@@ -308,11 +299,11 @@ If not spacified, random 8-character name will be used.</li>
 
   <div role="contentinfo">
     <p>
-        &copy; Copyright 2017, DESHIMA Software Team.
+        &copy; Copyright 2018, DESHIMA Software Team.
 
     </p>
   </div>
-  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
 
 </footer>
 
@@ -330,7 +321,8 @@ If not spacified, random 8-character name will be used.</li>
     <script type="text/javascript">
         var DOCUMENTATION_OPTIONS = {
             URL_ROOT:'../',
-            VERSION:'0.4.2',
+            VERSION:'0.4.3',
+            LANGUAGE:'None',
             COLLAPSE_INDEX:false,
             FILE_SUFFIX:'.html',
             HAS_SOURCE:  true,
@@ -343,19 +335,13 @@ If not spacified, random 8-character name will be used.</li>
 
   
 
-  
-  
-    <script type="text/javascript" src="../_static/js/theme.js"></script>
-  
+  <script type="text/javascript" src="../_static/js/theme.js"></script>
 
-  
-  
   <script type="text/javascript">
       jQuery(function () {
-          SphinxRtdTheme.StickyNav.enable();
+          SphinxRtdTheme.Navigation.enable(true);
       });
-  </script>
-   
+  </script> 
 
 </body>
 </html>

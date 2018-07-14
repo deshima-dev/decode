@@ -1,5 +1,5 @@
-decode\.logging package
-=======================
+decode.logging package
+======================
 
 Module contents
 ---------------

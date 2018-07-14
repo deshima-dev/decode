@@ -1,5 +1,5 @@
-decode\.utils package
-=====================
+decode.utils package
+====================
 
 Module contents
 ---------------

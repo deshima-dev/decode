@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>decode.models package &mdash; De:code 0.4.2 documentation</title>
+  <title>decode.models package &mdash; De:code 0.4.3 documentation</title>
   
 
   
@@ -24,25 +24,17 @@
 
   
 
-  
-  
-    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
-  
-
-  
-
-  
-        <link rel="index" title="Index"
-              href="../genindex.html"/>
-        <link rel="search" title="Search" href="../search.html"/>
-    <link rel="top" title="De:code 0.4.2 documentation" href="../index.html"/> 
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
 
   
   <script src="../_static/js/modernizr.min.js"></script>
 
 </head>
 
-<body class="wy-body-for-nav" role="document">
+<body class="wy-body-for-nav">
 
    
   <div class="wy-grid-for-nav">
@@ -64,7 +56,7 @@
             
             
               <div class="version">
-                0.4.2
+                0.4.3
               </div>
             
           
@@ -107,7 +99,7 @@
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
 
       
-      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+      <nav class="wy-nav-top" aria-label="top navigation">
         
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
           <a href="../index.html">De:code</a>
@@ -115,9 +107,10 @@
       </nav>
 
 
-      
       <div class="wy-nav-content">
+        
         <div class="rst-content">
+        
           
 
 
@@ -175,11 +168,11 @@
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>x</strong> (<em>np.ndarray</em>) &#8211; Dataset.</li>
-<li><strong>sigma</strong> (<em>float</em>) &#8211; Standard deviation.</li>
-<li><strong>mu</strong> (<em>float</em>) &#8211; Mean.</li>
-<li><strong>alpha</strong> (<em>float</em>) &#8211; Skewness.</li>
-<li><strong>a</strong> (<em>float</em>) &#8211; Normalization factor.</li>
+<li><strong>x</strong> (<em>np.ndarray</em>) – Dataset.</li>
+<li><strong>sigma</strong> (<em>float</em>) – Standard deviation.</li>
+<li><strong>mu</strong> (<em>float</em>) – Mean.</li>
+<li><strong>alpha</strong> (<em>float</em>) – Skewness.</li>
+<li><strong>a</strong> (<em>float</em>) – Normalization factor.</li>
 </ul>
 </td>
 </tr>
@@ -202,11 +195,11 @@
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>array</strong> (<a class="reference internal" href="decode.html#decode.array" title="decode.array"><em>decode.array</em></a>) &#8211; Decode array which will be filtered.</li>
-<li><strong>win</strong> (<em>int</em>) &#8211; Length of window.</li>
-<li><strong>polyn</strong> (<em>int</em>) &#8211; Order of polynominal function.</li>
-<li><strong>iteration</strong> (<em>int</em>) &#8211; The number of iterations.</li>
-<li><strong>threshold</strong> (<em>float</em>) &#8211; Threshold above which the data will be used as signals
+<li><strong>array</strong> (<em>decode.array</em>) – Decode array which will be filtered.</li>
+<li><strong>win</strong> (<em>int</em>) – Length of window.</li>
+<li><strong>polyn</strong> (<em>int</em>) – Order of polynominal function.</li>
+<li><strong>iteration</strong> (<em>int</em>) – The number of iterations.</li>
+<li><strong>threshold</strong> (<em>float</em>) – Threshold above which the data will be used as signals
 in units of sigma.</li>
 </ul>
 </td>
@@ -214,7 +207,7 @@ in units of sigma.</li>
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">Fitted results.</p>
 </td>
 </tr>
-<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">fitted (<a class="reference internal" href="decode.html#decode.array" title="decode.array">decode.array</a>)</p>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">fitted (decode.array)</p>
 </td>
 </tr>
 </tbody>
@@ -230,13 +223,13 @@ in units of sigma.</li>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>onarray</strong> (<a class="reference internal" href="decode.html#decode.array" title="decode.array"><em>decode.array</em></a>) &#8211; Decode array of on-point observations.</li>
-<li><strong>offarray</strong> (<a class="reference internal" href="decode.html#decode.array" title="decode.array"><em>decode.array</em></a>) &#8211; Decode array of off-point observations.</li>
-<li><strong>n</strong> (<em>int</em>) &#8211; The number of pricipal components.</li>
-<li><strong>pc</strong> (<em>bool</em>) &#8211; When True, this function also returns eigen vectors and their coefficients.</li>
-<li><strong>mode</strong> (<em>None</em><em> or </em><em>str</em>) &#8211; The way of correcting offsets.
-&#8216;mean&#8217;: Mean.
-&#8216;median&#8217;: Median.
+<li><strong>onarray</strong> (<em>decode.array</em>) – Decode array of on-point observations.</li>
+<li><strong>offarray</strong> (<em>decode.array</em>) – Decode array of off-point observations.</li>
+<li><strong>n</strong> (<em>int</em>) – The number of pricipal components.</li>
+<li><strong>pc</strong> (<em>bool</em>) – When True, this function also returns eigen vectors and their coefficients.</li>
+<li><strong>mode</strong> (<em>None</em><em> or </em><em>str</em>) – The way of correcting offsets.
+‘mean’: Mean.
+‘median’: Median.
 None: No correction.</li>
 </ul>
 </td>
@@ -250,7 +243,7 @@ Cs (list(np.ndarray)): Coefficients.</p>
 </p>
 </td>
 </tr>
-<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">filtered (<a class="reference internal" href="decode.html#decode.array" title="decode.array">decode.array</a>)</p>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">filtered (decode.array)</p>
 </td>
 </tr>
 </tbody>
@@ -266,13 +259,13 @@ Cs (list(np.ndarray)): Coefficients.</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>onarray</strong> (<a class="reference internal" href="decode.html#decode.array" title="decode.array"><em>decode.array</em></a>) &#8211; Decode array of on-point observations.</li>
-<li><strong>offarray</strong> (<a class="reference internal" href="decode.html#decode.array" title="decode.array"><em>decode.array</em></a>) &#8211; Decode array of off-point observations.</li>
-<li><strong>rarray</strong> (<a class="reference internal" href="decode.html#decode.array" title="decode.array"><em>decode.array</em></a>) &#8211; Decode array of R observations.</li>
-<li><strong>Tamb</strong> (<em>float</em>) &#8211; Ambient temperature [K].</li>
-<li><strong>mode</strong> (<em>str</em>) &#8211; The way of correcting offsets.
-&#8216;mean&#8217;: Mean.
-&#8216;median&#8217;: Median.</li>
+<li><strong>onarray</strong> (<em>decode.array</em>) – Decode array of on-point observations.</li>
+<li><strong>offarray</strong> (<em>decode.array</em>) – Decode array of off-point observations.</li>
+<li><strong>rarray</strong> (<em>decode.array</em>) – Decode array of R observations.</li>
+<li><strong>Tamb</strong> (<em>float</em>) – Ambient temperature [K].</li>
+<li><strong>mode</strong> (<em>str</em>) – The way of correcting offsets.
+‘mean’: Mean.
+‘median’: Median.</li>
 </ul>
 </td>
 </tr>
@@ -280,7 +273,7 @@ Cs (list(np.ndarray)): Coefficients.</p>
 offarray_cal (decode.array): Calibrated array of off-point observations.</p>
 </td>
 </tr>
-<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">onarray_cal (<a class="reference internal" href="decode.html#decode.array" title="decode.array">decode.array</a>)</p>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">onarray_cal (decode.array)</p>
 </td>
 </tr>
 </tbody>
@@ -301,12 +294,12 @@ offarray_cal (decode.array): Calibrated array of off-point observations.</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>onarray</strong> (<a class="reference internal" href="decode.html#decode.array" title="decode.array"><em>decode.array</em></a>) &#8211; Decode array of on-point observations.</li>
-<li><strong>offarray</strong> (<a class="reference internal" href="decode.html#decode.array" title="decode.array"><em>decode.array</em></a>) &#8211; Decode array of off-point observations.</li>
-<li><strong>rarray</strong> (<a class="reference internal" href="decode.html#decode.array" title="decode.array"><em>decode.array</em></a>) &#8211; Decode array of R observations.</li>
-<li><strong>mode</strong> (<em>str</em>) &#8211; Method for the selection of nominal R value.
-&#8216;mean&#8217;: Mean.
-&#8216;median&#8217;: Median.</li>
+<li><strong>onarray</strong> (<em>decode.array</em>) – Decode array of on-point observations.</li>
+<li><strong>offarray</strong> (<em>decode.array</em>) – Decode array of off-point observations.</li>
+<li><strong>rarray</strong> (<em>decode.array</em>) – Decode array of R observations.</li>
+<li><strong>mode</strong> (<em>str</em>) – Method for the selection of nominal R value.
+‘mean’: Mean.
+‘median’: Median.</li>
 </ul>
 </td>
 </tr>
@@ -314,7 +307,7 @@ offarray_cal (decode.array): Calibrated array of off-point observations.</p>
 offarray_cal (decode.array): Calibrated array of off-point observations.</p>
 </td>
 </tr>
-<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">onarray_cal (<a class="reference internal" href="decode.html#decode.array" title="decode.array">decode.array</a>)</p>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">onarray_cal (decode.array)</p>
 </td>
 </tr>
 </tbody>
@@ -334,12 +327,12 @@ offarray_cal (decode.array): Calibrated array of off-point observations.</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>onarray</strong> (<a class="reference internal" href="decode.html#decode.array" title="decode.array"><em>decode.array</em></a>) &#8211; Decode array of on-point observations.</li>
-<li><strong>offarray</strong> (<a class="reference internal" href="decode.html#decode.array" title="decode.array"><em>decode.array</em></a>) &#8211; Decode array of off-point observations.</li>
-<li><strong>rarray</strong> (<a class="reference internal" href="decode.html#decode.array" title="decode.array"><em>decode.array</em></a>) &#8211; Decode array of R observations.</li>
-<li><strong>mode</strong> (<em>str</em>) &#8211; Method for the selection of nominal R value.
-&#8216;mean&#8217;: Mean.
-&#8216;median&#8217;: Median.</li>
+<li><strong>onarray</strong> (<em>decode.array</em>) – Decode array of on-point observations.</li>
+<li><strong>offarray</strong> (<em>decode.array</em>) – Decode array of off-point observations.</li>
+<li><strong>rarray</strong> (<em>decode.array</em>) – Decode array of R observations.</li>
+<li><strong>mode</strong> (<em>str</em>) – Method for the selection of nominal R value.
+‘mean’: Mean.
+‘median’: Median.</li>
 </ul>
 </td>
 </tr>
@@ -347,7 +340,7 @@ offarray_cal (decode.array): Calibrated array of off-point observations.</p>
 offarray_cal (decode.array): Calibrated array of off-point observations.</p>
 </td>
 </tr>
-<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">onarray_cal (<a class="reference internal" href="decode.html#decode.array" title="decode.array">decode.array</a>)</p>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">onarray_cal (decode.array)</p>
 </td>
 </tr>
 </tbody>
@@ -362,9 +355,7 @@ offarray_cal (decode.array): Calibrated array of off-point observations.</p>
 
 
            </div>
-           <div class="articleComments">
-            
-           </div>
+           
           </div>
           <footer>
   
@@ -373,11 +364,11 @@ offarray_cal (decode.array): Calibrated array of off-point observations.</p>
 
   <div role="contentinfo">
     <p>
-        &copy; Copyright 2017, DESHIMA Software Team.
+        &copy; Copyright 2018, DESHIMA Software Team.
 
     </p>
   </div>
-  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
 
 </footer>
 
@@ -395,7 +386,8 @@ offarray_cal (decode.array): Calibrated array of off-point observations.</p>
     <script type="text/javascript">
         var DOCUMENTATION_OPTIONS = {
             URL_ROOT:'../',
-            VERSION:'0.4.2',
+            VERSION:'0.4.3',
+            LANGUAGE:'None',
             COLLAPSE_INDEX:false,
             FILE_SUFFIX:'.html',
             HAS_SOURCE:  true,
@@ -408,19 +400,13 @@ offarray_cal (decode.array): Calibrated array of off-point observations.</p>
 
   
 
-  
-  
-    <script type="text/javascript" src="../_static/js/theme.js"></script>
-  
+  <script type="text/javascript" src="../_static/js/theme.js"></script>
 
-  
-  
   <script type="text/javascript">
       jQuery(function () {
-          SphinxRtdTheme.StickyNav.enable();
+          SphinxRtdTheme.Navigation.enable(true);
       });
-  </script>
-   
+  </script> 
 
 </body>
 </html>

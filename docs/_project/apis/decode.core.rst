@@ -1,5 +1,5 @@
-decode\.core package
-====================
+decode.core package
+===================
 
 Module contents
 ---------------

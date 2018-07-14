@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>decode.plot package &mdash; De:code 0.4.2 documentation</title>
+  <title>decode.plot package &mdash; De:code 0.4.3 documentation</title>
   
 
   
@@ -24,25 +24,17 @@
 
   
 
-  
-  
-    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
-  
-
-  
-
-  
-        <link rel="index" title="Index"
-              href="../genindex.html"/>
-        <link rel="search" title="Search" href="../search.html"/>
-    <link rel="top" title="De:code 0.4.2 documentation" href="../index.html"/> 
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
 
   
   <script src="../_static/js/modernizr.min.js"></script>
 
 </head>
 
-<body class="wy-body-for-nav" role="document">
+<body class="wy-body-for-nav">
 
    
   <div class="wy-grid-for-nav">
@@ -64,7 +56,7 @@
             
             
               <div class="version">
-                0.4.2
+                0.4.3
               </div>
             
           
@@ -107,7 +99,7 @@
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
 
       
-      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+      <nav class="wy-nav-top" aria-label="top navigation">
         
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
           <a href="../index.html">De:code</a>
@@ -115,9 +107,10 @@
       </nav>
 
 
-      
       <div class="wy-nav-content">
+        
         <div class="rst-content">
+        
           
 
 
@@ -175,11 +168,11 @@
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>dataarray</strong> (<em>xarray.DataArray</em>) &#8211; Dataarray which the coodinate information is included.</li>
-<li><strong>ax</strong> (<em>matplotlib.axes</em>) &#8211; Axis you want to plot on.</li>
-<li><strong>coords</strong> (<em>list</em>) &#8211; Name of x axis and y axis.</li>
-<li><strong>scantypes</strong> (<em>list</em>) &#8211; Scantypes. If None, all scantypes are used.</li>
-<li><strong>kwargs</strong> (<em>optional</em>) &#8211; Plot options passed to ax.plot().</li>
+<li><strong>dataarray</strong> (<em>xarray.DataArray</em>) – Dataarray which the coodinate information is included.</li>
+<li><strong>ax</strong> (<em>matplotlib.axes</em>) – Axis you want to plot on.</li>
+<li><strong>coords</strong> (<em>list</em>) – Name of x axis and y axis.</li>
+<li><strong>scantypes</strong> (<em>list</em>) – Scantypes. If None, all scantypes are used.</li>
+<li><strong>kwargs</strong> (<em>optional</em>) – Plot options passed to ax.plot().</li>
 </ul>
 </td>
 </tr>
@@ -196,9 +189,9 @@
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>dataarray</strong> (<em>xarray.DataArray</em>) &#8211; Dataarray which the weather information is included.</li>
-<li><strong>axs</strong> (<em>list</em><em>(</em><em>matplotlib.axes</em><em>)</em>) &#8211; Axes you want to plot on.</li>
-<li><strong>kwargs</strong> (<em>optional</em>) &#8211; Plot options passed to ax.plot().</li>
+<li><strong>dataarray</strong> (<em>xarray.DataArray</em>) – Dataarray which the weather information is included.</li>
+<li><strong>axs</strong> (<em>list</em><em>(</em><em>matplotlib.axes</em><em>)</em>) – Axes you want to plot on.</li>
+<li><strong>kwargs</strong> (<em>optional</em>) – Plot options passed to ax.plot().</li>
 </ul>
 </td>
 </tr>
@@ -215,20 +208,20 @@
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>dataarray</strong> (<em>xarray.DataArray</em>) &#8211; Dataarray which the spectrum information is included.</li>
-<li><strong>ax</strong> (<em>matplotlib.axes</em>) &#8211; Axis you want to plot on.</li>
-<li><strong>xtick</strong> (<em>str</em>) &#8211; Type of x axis.
-&#8216;freq&#8217;: Frequency [GHz].
-&#8216;id&#8217;: Kid id.</li>
-<li><strong>ytick</strong> (<em>str</em>) &#8211; Type of y axis.
-&#8216;max&#8217;: Maximum.
-&#8216;sum&#8217;: Summation.
-&#8216;mean&#8217;: Mean.</li>
-<li><strong>aperture</strong> (<em>str</em>) &#8211; The shape of aperture.
-&#8216;box&#8217;: Box.
-&#8216;circle&#8217;: Circle.</li>
-<li><strong>kwargs</strong> (<em>optional</em>) &#8211; <dl class="docutils">
-<dt>When &#8216;box&#8217; is specified as shape,</dt>
+<li><strong>dataarray</strong> (<em>xarray.DataArray</em>) – Dataarray which the spectrum information is included.</li>
+<li><strong>ax</strong> (<em>matplotlib.axes</em>) – Axis you want to plot on.</li>
+<li><strong>xtick</strong> (<em>str</em>) – Type of x axis.
+‘freq’: Frequency [GHz].
+‘id’: Kid id.</li>
+<li><strong>ytick</strong> (<em>str</em>) – Type of y axis.
+‘max’: Maximum.
+‘sum’: Summation.
+‘mean’: Mean.</li>
+<li><strong>aperture</strong> (<em>str</em>) – The shape of aperture.
+‘box’: Box.
+‘circle’: Circle.</li>
+<li><strong>kwargs</strong> (<em>optional</em>) – <dl class="docutils">
+<dt>When ‘box’ is specified as shape,</dt>
 <dd>xc: Center of x.
 yc: Center of y.
 width: Width.
@@ -237,7 +230,7 @@ xmin: Minimum of x.
 xmax: Maximum of x.
 ymin: Minimum of y.
 ymax: Maximum of y.</dd>
-<dt>When &#8216;circle&#8217; is specified as shape,</dt>
+<dt>When ‘circle’ is specified as shape,</dt>
 <dd>xc: Center of x.
 yc: Center of y.
 radius: Radius.</dd>
@@ -255,19 +248,19 @@ radius: Radius.</dd>
 
 <dl class="function">
 <dt id="decode.plot.functions.plottimestream">
-<code class="descclassname">decode.plot.functions.</code><code class="descname">plottimestream</code><span class="sig-paren">(</span><em>array</em>, <em>ax</em>, <em>xtick='time'</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/decode/plot/functions.html#plottimestream"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#decode.plot.functions.plottimestream" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">decode.plot.functions.</code><code class="descname">plottimestream</code><span class="sig-paren">(</span><em>array</em>, <em>ax=None</em>, <em>xtick='time'</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/decode/plot/functions.html#plottimestream"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#decode.plot.functions.plottimestream" title="Permalink to this definition">¶</a></dt>
 <dd><p>Plot timestream data.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>array</strong> (<em>xarray.DataArray</em>) &#8211; Array which the timestream data are included.</li>
-<li><strong>ax</strong> (<em>matplotlib.axes</em>) &#8211; Axis you want to plot on.</li>
-<li><strong>xtick</strong> (<em>str</em>) &#8211; Type of x axis.
-&#8216;time&#8217;: Time.
-&#8216;index&#8217;: Time index.</li>
-<li><strong>kwargs</strong> (<em>optional</em>) &#8211; Plot options passed to ax.plot().</li>
+<li><strong>array</strong> (<em>xarray.DataArray</em>) – Array which the timestream data are included.</li>
+<li><strong>ax</strong> (<em>matplotlib.axes</em>) – Axis you want to plot on.</li>
+<li><strong>xtick</strong> (<em>str</em>) – Type of x axis.
+‘time’: Time.
+‘index’: Time index.</li>
+<li><strong>kwargs</strong> (<em>optional</em>) – Plot options passed to ax.plot().</li>
 </ul>
 </td>
 </tr>
@@ -277,19 +270,19 @@ radius: Radius.</dd>
 
 <dl class="function">
 <dt id="decode.plot.functions.plotpsd">
-<code class="descclassname">decode.plot.functions.</code><code class="descname">plotpsd</code><span class="sig-paren">(</span><em>data</em>, <em>dt</em>, <em>ndivide=1</em>, <em>window=&lt;function hann&gt;</em>, <em>overlap_half=False</em>, <em>ax=None</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/decode/plot/functions.html#plotpsd"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#decode.plot.functions.plotpsd" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">decode.plot.functions.</code><code class="descname">plotpsd</code><span class="sig-paren">(</span><em>data</em>, <em>dt</em>, <em>ndivide=1</em>, <em>window=&lt;function _Deprecate.__call__.&lt;locals&gt;.newfunc&gt;</em>, <em>overlap_half=False</em>, <em>ax=None</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/decode/plot/functions.html#plotpsd"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#decode.plot.functions.plotpsd" title="Permalink to this definition">¶</a></dt>
 <dd><p>Plot PSD (Power Spectral Density).</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>data</strong> (<em>np.ndarray</em>) &#8211; Input data.</li>
-<li><strong>dt</strong> (<em>float</em>) &#8211; Time between each data.</li>
-<li><strong>ndivide</strong> (<em>int</em>) &#8211; Do averaging (split data into ndivide, get psd of each, and average them).</li>
-<li><strong>overlap_half</strong> (<em>bool</em>) &#8211; Split data to half-overlapped regions.</li>
-<li><strong>ax</strong> (<em>matplotlib.axes</em>) &#8211; Axis the figure is plotted on.</li>
-<li><strong>kwargs</strong> (<em>optional</em>) &#8211; Plot options passed to ax.plot().</li>
+<li><strong>data</strong> (<em>np.ndarray</em>) – Input data.</li>
+<li><strong>dt</strong> (<em>float</em>) – Time between each data.</li>
+<li><strong>ndivide</strong> (<em>int</em>) – Do averaging (split data into ndivide, get psd of each, and average them).</li>
+<li><strong>overlap_half</strong> (<em>bool</em>) – Split data to half-overlapped regions.</li>
+<li><strong>ax</strong> (<em>matplotlib.axes</em>) – Axis the figure is plotted on.</li>
+<li><strong>kwargs</strong> (<em>optional</em>) – Plot options passed to ax.plot().</li>
 </ul>
 </td>
 </tr>
@@ -306,11 +299,11 @@ radius: Radius.</dd>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>data</strong> (<em>np.ndarray</em>) &#8211; Input data.</li>
-<li><strong>dt</strong> (<em>float</em>) &#8211; Time between each data.</li>
-<li><strong>tmax</strong> (<em>float</em>) &#8211; Maximum time.</li>
-<li><strong>ax</strong> (<em>matplotlib.axes</em>) &#8211; Axis the figure is plotted on.</li>
-<li><strong>kwargs</strong> (<em>optional</em>) &#8211; Plot options passed to ax.plot().</li>
+<li><strong>data</strong> (<em>np.ndarray</em>) – Input data.</li>
+<li><strong>dt</strong> (<em>float</em>) – Time between each data.</li>
+<li><strong>tmax</strong> (<em>float</em>) – Maximum time.</li>
+<li><strong>ax</strong> (<em>matplotlib.axes</em>) – Axis the figure is plotted on.</li>
+<li><strong>kwargs</strong> (<em>optional</em>) – Plot options passed to ax.plot().</li>
 </ul>
 </td>
 </tr>
@@ -326,9 +319,7 @@ radius: Radius.</dd>
 
 
            </div>
-           <div class="articleComments">
-            
-           </div>
+           
           </div>
           <footer>
   
@@ -337,11 +328,11 @@ radius: Radius.</dd>
 
   <div role="contentinfo">
     <p>
-        &copy; Copyright 2017, DESHIMA Software Team.
+        &copy; Copyright 2018, DESHIMA Software Team.
 
     </p>
   </div>
-  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
 
 </footer>
 
@@ -359,7 +350,8 @@ radius: Radius.</dd>
     <script type="text/javascript">
         var DOCUMENTATION_OPTIONS = {
             URL_ROOT:'../',
-            VERSION:'0.4.2',
+            VERSION:'0.4.3',
+            LANGUAGE:'None',
             COLLAPSE_INDEX:false,
             FILE_SUFFIX:'.html',
             HAS_SOURCE:  true,
@@ -372,19 +364,13 @@ radius: Radius.</dd>
 
   
 
-  
-  
-    <script type="text/javascript" src="../_static/js/theme.js"></script>
-  
+  <script type="text/javascript" src="../_static/js/theme.js"></script>
 
-  
-  
   <script type="text/javascript">
       jQuery(function () {
-          SphinxRtdTheme.StickyNav.enable();
+          SphinxRtdTheme.Navigation.enable(true);
       });
-  </script>
-   
+  </script> 
 
 </body>
 </html>

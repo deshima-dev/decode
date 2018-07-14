@@ -1,11 +1,11 @@
-decode\.models package
-======================
+decode.models package
+=====================
 
 Submodules
 ----------
 
-decode\.models\.functions module
---------------------------------
+decode.models.functions module
+------------------------------
 
 .. automodule:: decode.models.functions
     :members:
