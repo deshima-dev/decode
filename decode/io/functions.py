@@ -11,6 +11,7 @@ __all__ = [
 # standard library
 from logging import getLogger
 from uuid import uuid4
+from pathlib import Path
 
 # dependent packages
 import decode as dc
@@ -91,6 +92,8 @@ def loaddfits(fitsname, coordtype='azel', loadtype='temperature', starttime=None
     xmax_on  = kwargs.pop('xmax_on', 0)
 
     ### load data
+    fitsname = str(Path(fitsname).expanduser())
+
     with fits.open(fitsname) as hdulist:
         obsinfo = hdulist['OBSINFO'].data
         obshdr  = hdulist['OBSINFO'].header
@@ -266,6 +269,8 @@ def savefits(dataarray, fitsname, **kwargs):
         fitsname (str): Name of output FITS file.
         kwargs (optional): Other arguments common with astropy.io.fits.writeto().
     """
+    fitsname = str(Path(fitsname).expanduser())
+
     if dataarray.type == 'dca':
         pass
     elif dataarray.type == 'dcc':
@@ -287,6 +292,9 @@ def loadnetcdf(filename, copy=True):
         dataarray (xarray.DataArray): Loaded dataarray.
     """
     logger = getLogger('decode.io.loadnetcdf')
+
+    filename = str(Path(filename).expanduser())
+
     if copy:
         dataarray = xr.open_dataarray(filename).copy()
     else:
@@ -313,11 +321,14 @@ def savenetcdf(dataarray, filename=None):
             If not spacified, random 8-character name will be used.
     """
     logger = getLogger('decode.io.savenetcdf')
+
     if filename is None:
         if dataarray.name is not None:
             filename = dataarray.name
         else:
             filename = uuid4().hex[:8]
+    else:
+        filename = str(Path(filename).expanduser())
 
     if not filename.endswith('.nc'):
         filename += '.nc'
