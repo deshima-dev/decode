@@ -108,7 +108,7 @@ def plotspectrum(dataarray, ax, xtick, ytick, aperture, **kwargs):
         raise KeyError(dataarray.type)
 
 
-def plottimestream(array, ax, xtick='time', **kwargs):
+def plottimestream(array, ax=None, xtick='time', **kwargs):
     """Plot timestream data.
 
     Args:
@@ -120,6 +120,9 @@ def plottimestream(array, ax, xtick='time', **kwargs):
         kwargs (optional): Plot options passed to ax.plot().
     """
     logger = getLogger('decode.plot.plottimestream')
+
+    if ax is None:
+        ax = plt.gca()
 
     kidtpdict = {0: 'wideband', 1: 'filter', 2: 'blind'}
     if xtick == 'time':
