@@ -298,7 +298,7 @@ def loadnetcdf(filename, copy=True):
     if copy:
         dataarray = xr.open_dataarray(filename).copy()
     else:
-        dataarray = xr.open_dataarray(filename)
+        dataarray = xr.open_dataarray(filename, chunks={})
 
     if dataarray.name is None:
         dataarray.name = filename.rstrip('.nc')

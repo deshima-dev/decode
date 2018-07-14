@@ -105,9 +105,8 @@ class DecodeCubeAccessor(BaseAccessor):
     @staticmethod
     def tocube(array, **kwargs):
         logger = getLogger('decode.tocube')
-        array  = array.copy()
 
-        ### pick up kwargs
+        # pick up kwargs
         unit     = kwargs.pop('unit', 'deg')
         unit2deg = getattr(u, unit).to('deg')
 
@@ -128,10 +127,10 @@ class DecodeCubeAccessor(BaseAccessor):
             y_grid = xr.DataArray(yarr * unit2deg, dims='grid')
         else:
             if None not in [xmin, xmax, ymin, ymax]:
-                xmin *= unit2deg
-                xmax *= unit2deg
-                ymin *= unit2deg
-                ymax *= unit2deg
+                xmin = xmin * unit2deg
+                xmax = xmax * unit2deg
+                ymin = ymin * unit2deg
+                ymax = ymax * unit2deg
             else:
                 xmin = array.x.min()
                 xmax = array.x.max()
@@ -141,8 +140,8 @@ class DecodeCubeAccessor(BaseAccessor):
             logger.info('{} {} {} {}'.format(xmin, xmax, ymin, ymax))
 
             if None not in [gx, gy]:
-                gx *= unit2deg
-                gy *= unit2deg
+                gx = gx * unit2deg
+                gy = gy * unit2deg
                 logger.info('xc yc gx gy')
                 logger.info('{} {} {} {}'.format(xc, yc, gx, gy))
 
@@ -169,43 +168,53 @@ class DecodeCubeAccessor(BaseAccessor):
             else:
                 raise KeyError('Arguments are wrong.')
 
-        ### reverse the direction of x when coordsys == 'RADEC'
+        # reverse the direction of x when coordsys == 'RADEC'
         if array.coordsys == 'RADEC':
             x_grid = x_grid[::-1]
 
-        nx_grid = len(x_grid)
-        ny_grid = len(y_grid)
-        nz_grid = len(array.ch)
-
-        ### define coordinates because groupby() will remove previous coordinates
-        xcoords      = {'x': x_grid.values}
-        ycoords      = {'y': y_grid.values}
-        chcoords     = {'masterid': array.masterid.values, 'kidid': array.kidid.values,
-                        'kidfq': array.kidfq.values, 'kidtp': array.kidtp.values}
-        scalarcoords = {'coordsys': array.coordsys.values, 'datatype': array.datatype.values,
-                        'xref': array.xref.values, 'yref': array.yref.values}
-
-        i = np.abs(array.x - x_grid).argmin('grid')
-        j = np.abs(array.y - y_grid).argmin('grid')
-        index = i + j * nx_grid
+        # compute gridding
+        nx, ny, nch = len(x_grid), len(y_grid), len(array.ch)
+        i = np.abs(array.x - x_grid).argmin('grid').compute()
+        j = np.abs(array.y - y_grid).argmin('grid').compute()
+        index = i + nx*j
 
         array.coords.update({'index': index})
-        griddedarray   = array.groupby('index').mean('t')
-        noisearray     = array.groupby('index').std('t')
-        numberarray    = dc.ones_like(array).groupby('index').sum('t')
-        noisearray    /= np.sqrt(numberarray)
+        groupedarray = array.groupby('index')
+        groupedones  = dc.ones_like(array).groupby('index')
 
-        template         = np.full([nx_grid*ny_grid, nz_grid], np.nan)
-        mask             = griddedarray.index.values
-        template[mask]   = griddedarray.values
-        template_n       = np.full([nx_grid*ny_grid, nz_grid], np.nan)
-        template_n[mask] = noisearray.values
-        cubedata         = template.reshape((ny_grid, nx_grid, nz_grid)).swapaxes(0, 1)
-        noisedata        = template_n.reshape((ny_grid, nx_grid, nz_grid)).swapaxes(0, 1)
+        gridarray = groupedarray.mean('t')
+        stdarray  = groupedarray.std('t')
+        numarray  = groupedones.sum('t')
 
-        datacoords = {'noise': noisedata}
+        logger.info('Gridding started.')
+        gridarray = gridarray.compute()
+        noisearray = (stdarray / numarray**0.5).compute()
+        logger.info('Gridding finished.')
 
-        return dc.cube(cubedata, xcoords=xcoords, ycoords=ycoords, chcoords=chcoords,
+        # create cube
+        mask = gridarray.index.values
+
+        temp = np.full([ny*nx, nch], np.nan)
+        temp[mask] = gridarray.values
+        data = temp.reshape((ny, nx, nch)).swapaxes(0, 1)
+        
+        temp = np.full([ny*nx, nch], np.nan)
+        temp[mask] = noisearray.values
+        noise = temp.reshape((ny, nx, nch)).swapaxes(0, 1)
+
+        xcoords      = {'x': x_grid.values}
+        ycoords      = {'y': y_grid.values}
+        chcoords     = {'masterid': array.masterid.values,
+                        'kidid': array.kidid.values,
+                        'kidfq': array.kidfq.values,
+                        'kidtp': array.kidtp.values}
+        scalarcoords = {'coordsys': array.coordsys.values,
+                        'datatype': array.datatype.values,
+                        'xref': array.xref.values,
+                        'yref': array.yref.values}
+        datacoords   = {'noise': noise}
+
+        return dc.cube(data, xcoords=xcoords, ycoords=ycoords, chcoords=chcoords,
                        scalarcoords=scalarcoords, datacoords=datacoords)
 
     @staticmethod
