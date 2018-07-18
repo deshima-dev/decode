@@ -2,13 +2,12 @@
 
 # public items
 __all__ = [
-    'skewgauss',
     'savgol_filter',
     'pca',
     'rsky_calibration',
     'chopper_calibration',
-    'r_subtraction',
     'r_division',
+    'gauss_fit'
 ]
 
 # standard library
@@ -21,26 +20,6 @@ from scipy.special import erf
 from scipy import signal
 from sklearn.decomposition import TruncatedSVD
 import xarray as xr
-
-
-##### skewed Gaussian
-def skewgauss(x, sigma, mu, alpha, a):
-    """Skewed Gaussian.
-
-    Args:
-        x (np.ndarray): Dataset.
-        sigma (float): Standard deviation.
-        mu (float): Mean.
-        alpha (float): Skewness.
-        a (float): Normalization factor.
-
-    Returns:
-        skewed gaussian (np.ndarray): Skewed Gaussian.
-    """
-    normpdf = (1 / (sigma * np.sqrt(2 * np.pi))) * np.exp(-(x - mu)**2 / (2 * sigma**2))
-    normcdf = 0.5 * (1 + erf((alpha * ((x - mu) / sigma)) / (np.sqrt(2))))
-
-    return 2 * a * normpdf * normcdf
 
 
 @dc.xarrayfunc
@@ -283,93 +262,6 @@ def chopper_calibration(onarray, offarray, rarray, Tamb, mode='mean'):
     return onarray, offarray
 
 
-def r_subtraction(onarray, offarray, rarray, mode='mean'):
-    """Apply R subtraction.
-
-    Args:
-        onarray (decode.array): Decode array of on-point observations.
-        offarray (decode.array): Decode array of off-point observations.
-        rarray (decode.array): Decode array of R observations.
-        mode (str): Method for the selection of nominal R value.
-            'mean': Mean.
-            'median': Median.
-
-    Returns:
-        onarray_cal (decode.array): Calibrated array of on-point observations.
-        offarray_cal (decode.array): Calibrated array of off-point observations.
-
-    Warnings:
-         Current implementation is too slow!
-    """
-    logger = getLogger('decode.models.r_subtraction')
-    logger.info('mode')
-    logger.info('{}'.format(mode))
-
-    offid = np.unique(offarray.scanid)
-    onid  = np.unique(onarray.scanid)
-    rid   = np.unique(rarray.scanid)
-
-    onarray  = onarray.copy()
-    offarray = offarray.copy()
-
-    Xon_rsub  = []
-    Xoff_rsub = []
-    # print(len(onid))
-    for n, i in enumerate(onid):
-        # print('{}'.format(n), end=', ')
-        rleftid  = np.searchsorted(rid, i) - 1
-        rrightid = np.searchsorted(rid, i)
-
-        Xon = onarray[onarray.scanid == i]
-        if rleftid == -1:
-            Xr   = rarray[rarray.scanid == rid[rrightid]]
-            Xr_m = getattr(Xr, mode)(dim='t')
-        elif rrightid == len(rid):
-            Xr   = rarray[rarray.scanid == rid[rleftid]]
-            Xr_m = getattr(Xr, mode)(dim='t')
-        else:
-            Xr_l  = rarray[rarray.scanid == rid[rleftid]]
-            Xr_r  = rarray[rarray.scanid == rid[rrightid]]
-            Xr_m  = getattr(dc.concat([Xr_l, Xr_r], dim='t'), mode)(dim='t')
-        Xon_rsub.append(Xon - Xr_m)
-        # Xon -= Xr_m
-
-    # print(len(offid))
-    for n, j in enumerate(offid):
-        # print('{}'.format(n), end=', ')
-        rleftid  = np.searchsorted(rid, j) - 1
-        rrightid = np.searchsorted(rid, j)
-
-        Xoff   = offarray[offarray.scanid == j]
-        Xoff_m = getattr(Xoff, mode)(dim='t')
-        if rleftid == -1:
-            Xr   = rarray[rarray.scanid == rid[rrightid]]
-            Xr_m = getattr(Xr, mode)(dim='t')
-        elif rrightid == len(rid):
-            Xr   = rarray[rarray.scanid == rid[rleftid]]
-            Xr_m = getattr(Xr, mode)(dim='t')
-        else:
-            Xr_l  = rarray[rarray.scanid == rid[rleftid]]
-            Xr_r  = rarray[rarray.scanid == rid[rrightid]]
-            Xr_m  = getattr(dc.concat([Xr_l, Xr_r], dim='t'), mode)(dim='t')
-        Xoff_rsub.append(Xoff - Xr_m)
-        # Xoff -= Xr_m
-    Xonoff_rsub = dc.concat(Xon_rsub + Xoff_rsub, dim='t')
-    # Xonoff_rsub = dc.concat([onarray, offarray], dim='t')
-    Xonoff_rsub_sorted = Xonoff_rsub[np.argsort(Xonoff_rsub.time.values)]
-
-    scantype    = Xonoff_rsub_sorted.scantype.values
-    newscanid   = np.cumsum(np.hstack([False, scantype[1:] != scantype[:-1]]))
-    onmask      = np.in1d(Xonoff_rsub_sorted.scanid, onid)
-    offmask     = np.in1d(Xonoff_rsub_sorted.scanid, offid)
-    Xon_rsub    = Xonoff_rsub_sorted[onmask]
-    Xoff_rsub   = Xonoff_rsub_sorted[offmask]
-    Xon_rsub.coords.update({'scanid': ('t', newscanid[onmask])})
-    Xoff_rsub.coords.update({'scanid': ('t', newscanid[offmask])})
-
-    return Xon_rsub, Xoff_rsub
-
-
 def r_division(onarray, offarray, rarray, mode='mean'):
     """Apply R division.
 
@@ -450,3 +342,120 @@ def r_division(onarray, offarray, rarray, mode='mean'):
     Xoff_rdiv.coords.update({'scanid': ('t', newscanid[offmask])})
 
     return Xon_rdiv, Xoff_rdiv
+
+
+def gauss_fit(map_data, chs=None, mode='deg', amplitude=1, x_mean=0, y_mean=0, x_stddev=None, y_stddev=None, theta=None, cov_matrix=None, noise=0, **kwargs):
+    """make a 2D Gaussian model and fit the observed data with the model.
+
+    Args:
+        map_data (xarray.Dataarray): Dataarray of cube or single chs.
+        chs (list of int): in prep.
+        mode (str): Coordinates for the fitting
+            'pix'
+            'deg'
+        amplitude (float or None): Initial amplitude value of Gaussian fitting.
+        x_mean (float): Initial value of mean of the fitting Gaussian in x.
+        y_mean (float): Initial value of mean of the fitting Gaussian in y.
+        x_stddev (float or None): Standard deviation of the Gaussian in x before rotating by theta.
+        y_stddev  (float or None): Standard deviation of the Gaussian in y before rotating by theta.
+        theta (float, optional or None): Rotation angle in radians.
+        cov_matrix (ndarray, optional): A 2x2 covariance matrix. If specified, overrides the ``x_stddev``, ``y_stddev``, and ``theta`` defaults.
+
+    Returns:
+        decode cube (xarray cube) with fitting results in array and attrs.
+    """
+
+    if chs is None:
+        chs = np.ogrid[0:63] # the number of channels would be changed
+
+    if len(chs) > 1:
+        for n,ch in enumerate(chs):
+            subdata = np.transpose(np.full_like(map_data[:, :, ch], map_data.values[:, :, ch]))
+            subdata[np.isnan(subdata)] = 0
+
+            if mode == 'deg':
+                mX, mY = np.meshgrid(map_data.x, map_data.y)
+
+            elif mode == 'pix':
+                mX, mY = np.mgrid[0:len(map_data.y), 0:len(map_data.x)]
+
+            g_init = models.Gaussian2D(amplitude=np.nanmax(subdata), x_mean=x_mean, y_mean=y_mean, x_stddev=x_stddev, y_stddev=y_stddev,
+                                        theta=theta, cov_matrix=cov_matrix, **kwargs) + models.Const2D(noise)
+            fit_g  = fitting.LevMarLSQFitter()
+            g      = fit_g(g_init, mX, mY, subdata)
+
+            g_init2 = models.Gaussian2D(amplitude=np.nanmax(subdata-g.amplitude_1), x_mean=x_mean, y_mean=y_mean, x_stddev=x_stddev, y_stddev=y_stddev,
+                                        theta=theta, cov_matrix=cov_matrix, **kwargs)
+            fit_g2  = fitting.LevMarLSQFitter()
+            g2      = fit_g2(g_init2, mX, mY, subdata)
+
+            if n == 0:
+                results   = np.array([g2(mX,mY)])
+                peaks     = np.array([g2.amplitude.value])
+                x_means   = np.array([g2.x_mean.value])
+                y_means   = np.array([g2.y_mean.value])
+                x_stddevs = np.array([g2.x_stddev.value])
+                y_stddevs = np.array([g2.y_stddev.value])
+                thetas    = np.array([g2.theta.value])
+                if fit_g2.fit_info['param_cov'] is None:
+                    unserts = nop.array([0])
+                else:
+                    error   = np.diag(fit_g2.fit_info['param_cov'])**0.5
+                    uncerts = np.array([error[0]])
+
+            else:
+                results   = np.append(results, [g2(mX,mY)], axis=0)
+                peaks     = np.append(peaks, [g2.amplitude.value], axis=0)
+                x_means   = np.append(x_means, [g2.x_mean.value], axis=0)
+                y_means   = np.append(y_means, [g2.y_mean.value], axis=0)
+                x_stddevs = np.append(x_stddevs, [g2.x_stddev.value], axis=0)
+                y_stddevs = np.append(y_stddevs, [g2.y_stddev.value], axis=0)
+                thetas    = np.append(thetas, [g2.theta.value], axis=0)
+
+                if fit_g2.fit_info['param_cov'] is None:
+                    uncerts = np.append(uncerts, [0], axis=0)
+                else:
+                    error   = np.diag(fit_g2.fit_info['param_cov'])**0.5
+                    uncerts = np.append(uncerts, [error[0]], axis=0)
+
+        result = map_data.copy()
+        result.values = np.transpose(results)
+        result.attrs.update({'peak': peaks, 'x_mean': x_means, 'y_mean': y_means, 'x_stddev': x_stddevs,
+                             'y_stddev': y_stddevs, 'theta': thetas, 'uncert': uncerts})
+
+    else:
+        subdata = np.transpose(np.full_like(map_data[:, :, 0], map_data.values[:, :, 0]))
+        subdata[np.isnan(subdata)] = 0
+
+        if mode == 'deg':
+            mX, mY = np.meshgrid(map_data.x, map_data.y)
+
+        elif mode == 'pix':
+            mX, mY = np.mgrid[0:len(map_data.y), 0:len(map_data.x)]
+
+        g_init = models.Gaussian2D(amplitude=np.nanmax(subdata), x_mean=x_mean, y_mean=y_mean, x_stddev=x_stddev, y_stddev=y_stddev,
+                                    theta=theta, cov_matrix=cov_matrix, **kwargs) + models.Const2D(noise)
+        fit_g  = fitting.LevMarLSQFitter()
+        g      = fit_g(g_init, mX, mY, subdata)
+
+        g_init2 = models.Gaussian2D(amplitude=np.nanmax(subdata-g.amplitude_1), x_mean=x_mean, y_mean=y_mean, x_stddev=x_stddev, y_stddev=y_stddev,
+                                    theta=theta, cov_matrix=cov_matrix, **kwargs)
+        fit_g2  = fitting.LevMarLSQFitter()
+        g2      = fit_g2(g_init2, mX, mY, subdata)
+
+        results   = np.array([g2(mX, mY)])
+        peaks     = np.array([g2.amplitude.value])
+        x_means   = np.array([g2.x_mean.value])
+        y_means   = np.array([g2.y_mean.value])
+        x_stddevs = np.array([g2.x_stddev.value])
+        y_stddevs = np.array([g2.y_stddev.value])
+        thetas    = np.array([g2.theta.value])
+        error     = np.diag(fit_g2.fit_info['param_cov'])**0.5
+        uncerts   = np.array(error[0])
+
+        result = map_data.copy()
+        result.values = np.transpose(results)
+        result.attrs.update({'peak': peaks, 'x_mean': x_means, 'y_mean': y_means, 'x_stddev': x_stddevs,
+                             'y_stddev': y_stddevs, 'theta': thetas, 'uncert': uncerts})
+
+    return result
