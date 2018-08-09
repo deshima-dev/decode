@@ -16,6 +16,9 @@ logger = getLogger(__name__)
 import numpy as np
 import decode as dc
 import xarray as xr
+from astropy import units as u
+from scipy.interpolate import interp1d
+from scipy.ndimage.interpolation import map_coordinates
 
 
 # functions
@@ -58,11 +61,12 @@ def cube(data, xcoords=None, ycoords=None, chcoords=None, scalarcoords=None, dat
     return cube
 
 
-def fromcube(cube):
+def fromcube(cube, template):
     """Covert a decode cube to a decode array.
 
     Args:
-        cube (decode.cube): Decode cube which will be converted.
+        cube (decode.cube): Decode cube to be cast.
+        template (decode.array): Decode array whose shape the cube is cast on.
 
     Returns:
         decode array (decode.array): Decode array.
@@ -70,7 +74,17 @@ def fromcube(cube):
     Notes:
         This functions is under development.
     """
-    return xr.DataArray.dcc.fromcube(cube)
+    array = dc.zeros_like(template)
+
+    y, x = array.y.values, array.x.values
+    gy, gx = cube.y.values, cube.x.values
+    iy = interp1d(gy, np.arange(len(gy)))(y)
+    ix = interp1d(gx, np.arange(len(gx)))(x)
+    
+    for ch in range(len(cube.ch)):
+        array[:,ch] = map_coordinates(cube.values[:,:,ch], (ix, iy))
+    
+    return array
 
 
 def tocube(array, **kwargs):
