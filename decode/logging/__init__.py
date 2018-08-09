@@ -1,7 +1,6 @@
 # coding: utf-8
 
 __all__ = [
-    'logger',
     'setlogger',
 ]
 
@@ -9,33 +8,32 @@ __all__ = [
 import logging
 from copy import copy
 from pathlib import Path
+logger = logging.getLogger(__name__)
 
 # dependent packages
 import decode as dc
 
 # module constants
 DATEFORMAT = '%Y-%m-%d %H:%M:%S'
-LOGFORMAT  = '{asctime} | {levelname:8} | {name}: {message}'
+LOGFORMAT  = '{asctime} | {levelname:8} | {funcName}: {message}'
 DEFAULTLEVEL = 'INFO'
-
-# default logger
-logger = logging.getLogger('decode')
-logger.addHandler(logging.NullHandler())
-logger.propagate = False
 
 
 # classes
 class setlogger(object):
     def __init__(self, level=None, filename=None, overwrite=False, encoding='utf-8'):
-        self.oldhandlers = copy(dc.logger.handlers)
-        self.oldlevel = copy(dc.logger.level)
+        self.logger = logging.getLogger('decode')
+        self.logger.addHandler(logging.NullHandler())
+        # save current state
+        self.oldhandlers = copy(self.logger.handlers)
+        self.oldlevel = copy(self.logger.level)
+        # set new state
         self.sethandlers(filename, overwrite, encoding)
         self.setlevel(level)
 
-    @staticmethod
-    def sethandlers(filename, overwrite, encoding):
-        for handler in dc.logger.handlers:
-            dc.logger.removeHandler(handler)
+    def sethandlers(self, filename, overwrite, encoding):
+        for handler in self.logger.handlers:
+            self.logger.removeHandler(handler)
 
         if filename is None:
             handler = logging.StreamHandler()
@@ -46,18 +44,17 @@ class setlogger(object):
 
         formatter = logging.Formatter(LOGFORMAT, DATEFORMAT, style='{')
         handler.setFormatter(formatter)
-        dc.logger.addHandler(handler)
+        self.logger.addHandler(handler)
 
-    @staticmethod
-    def setlevel(level):
+    def setlevel(self, level):
         level = DEFAULTLEVEL if level is None else level.upper()
-        dc.logger.setLevel(level)
-        for handler in dc.logger.handlers:
+        self.logger.setLevel(level)
+        for handler in self.logger.handlers:
             handler.setLevel(level)
 
     def __enter__(self):
         pass
 
     def __exit__(self, exc_type, exc_value, traceback):
-        dc.logger.handlers = self.oldhandlers
-        dc.logger.level = self.oldlevel
+        self.logger.handlers = self.oldhandlers
+        self.logger.level = self.oldlevel
