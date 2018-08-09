@@ -6,18 +6,12 @@ __all__ = []
 # standard library
 from collections import OrderedDict
 from logging import getLogger
-from pkgutil import get_data
-from pytz import timezone
-from datetime import datetime
+logger = getLogger(__name__)
 
 # dependent packages
-import astropy.units as u
 import decode as dc
-import matplotlib.pyplot as plt
 import numpy as np
 import xarray as xr
-import yaml
-from astropy.io import fits
 from .. import BaseAccessor
 
 # local constants
@@ -96,47 +90,3 @@ class DecodeCubeAccessor(BaseAccessor):
     def datacoords(self):
         """Dictionary of arrays that label x, y, and channel axis."""
         return {k: v.values for k, v in self.coords.items() if v.dims==('x', 'y', 'ch')}
-
-    @staticmethod
-    def savefits(cube, fitsname, **kwargs):
-        logger = getLogger('decode.io.savefits')
-
-        ### pick up kwargs
-        dropdeg = kwargs.pop('dropdeg', False)
-        ndim    = len(cube.dims)
-
-        ### load yaml
-        FITSINFO = get_data('decode', 'data/fitsinfo.yaml')
-        hdrdata = yaml.load(FITSINFO, dc.utils.OrderedLoader)
-
-        ### default header
-        if ndim == 2:
-            header = fits.Header(hdrdata['dcube_2d'])
-            data   = cube.values.T
-        elif ndim == 3:
-            if dropdeg:
-                header = fits.Header(hdrdata['dcube_2d'])
-                data   = cube.values[:, :, 0].T
-            else:
-                header = fits.Header(hdrdata['dcube_3d'])
-                data   = cube.values.T
-        else:
-            raise TypeError(ndim)
-
-        ### update Header
-        if cube.coordsys == 'AZEL':
-            header.update({'CTYPE1': 'dAZ', 'CTYPE2': 'dEL'})
-        elif cube.coordsys == 'RADEC':
-            header.update({'OBSRA': float(cube.xref), 'OBSDEC': float(cube.yref)})
-        else:
-            pass
-        header.update({'CRVAL1': float(cube.x[0]),
-                       'CDELT1': float(cube.x[1] - cube.x[0]),
-                       'CRVAL2': float(cube.y[0]),
-                       'CDELT2': float(cube.y[1] - cube.y[0]),
-                       'DATE': datetime.now(timezone('UTC')).isoformat()})
-        if (ndim == 3) and (not dropdeg):
-            header.update({'CRVAL3': float(cube.kidid[0])})
-
-        fits.writeto(fitsname, data, header, **kwargs)
-        logger.info('{} has been created.'.format(fitsname))

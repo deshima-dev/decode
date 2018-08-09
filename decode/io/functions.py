@@ -9,11 +9,15 @@ __all__ = [
 ]
 
 # standard library
+from datetime import datetime
 from logging import getLogger
 from uuid import uuid4
 from pathlib import Path
+from pkgutil import get_data
+logger = getLogger(__name__)
 
 # dependent packages
+import yaml
 import decode as dc
 import numpy as np
 import xarray as xr
@@ -67,10 +71,9 @@ def loaddfits(fitsname, coordtype='azel', loadtype='temperature', starttime=None
     Returns:
         decode array (decode.array): Loaded decode array.
     """
-    if mode in [0, 1, 2]:
-        logger = getLogger('decode.io.loaddfits')
-    else:
+    if mode not in [0, 1, 2]:
         raise KeyError(mode)
+
     logger.info('coordtype starttime endtime mode loadtype')
     logger.info('{} {} {} {} {}'.format(coordtype, starttime, endtime, mode, loadtype))
 
@@ -269,16 +272,46 @@ def savefits(dataarray, fitsname, **kwargs):
         fitsname (str): Name of output FITS file.
         kwargs (optional): Other arguments common with astropy.io.fits.writeto().
     """
-    fitsname = str(Path(fitsname).expanduser())
+    ### pick up kwargs
+    dropdeg = kwargs.pop('dropdeg', False)
+    ndim    = len(cube.dims)
 
-    if dataarray.type == 'dca':
-        pass
-    elif dataarray.type == 'dcc':
-        xr.DataArray.dcc.savefits(dataarray, fitsname, **kwargs)
-    elif dataarray.type == 'dcs':
-        pass
+    ### load yaml
+    FITSINFO = get_data('decode', 'data/fitsinfo.yaml')
+    hdrdata = yaml.load(FITSINFO, dc.utils.OrderedLoader)
+
+    ### default header
+    if ndim == 2:
+        header = fits.Header(hdrdata['dcube_2d'])
+        data   = cube.values.T
+    elif ndim == 3:
+        if dropdeg:
+            header = fits.Header(hdrdata['dcube_2d'])
+            data   = cube.values[:, :, 0].T
+        else:
+            header = fits.Header(hdrdata['dcube_3d'])
+            data   = cube.values.T
+    else:
+        raise TypeError(ndim)
+
+    ### update Header
+    if cube.coordsys == 'AZEL':
+        header.update({'CTYPE1': 'dAZ', 'CTYPE2': 'dEL'})
+    elif cube.coordsys == 'RADEC':
+        header.update({'OBSRA': float(cube.xref), 'OBSDEC': float(cube.yref)})
     else:
         pass
+    header.update({'CRVAL1': float(cube.x[0]),
+                   'CDELT1': float(cube.x[1] - cube.x[0]),
+                   'CRVAL2': float(cube.y[0]),
+                   'CDELT2': float(cube.y[1] - cube.y[0]),
+                   'DATE': datetime.now(timezone('UTC')).isoformat()})
+    if (ndim == 3) and (not dropdeg):
+        header.update({'CRVAL3': float(cube.kidid[0])})
+
+    fitsname = str(Path(fitsname).expanduser())
+    fits.writeto(fitsname, data, header, **kwargs)
+    logger.info('{} has been created.'.format(fitsname))
 
 
 def loadnetcdf(filename, copy=True):
@@ -291,8 +324,6 @@ def loadnetcdf(filename, copy=True):
     Returns:
         dataarray (xarray.DataArray): Loaded dataarray.
     """
-    logger = getLogger('decode.io.loadnetcdf')
-
     filename = str(Path(filename).expanduser())
 
     if copy:
@@ -320,8 +351,6 @@ def savenetcdf(dataarray, filename=None):
         filename (str): Filename (used as <filename>.nc).
             If not spacified, random 8-character name will be used.
     """
-    logger = getLogger('decode.io.savenetcdf')
-
     if filename is None:
         if dataarray.name is not None:
             filename = dataarray.name
