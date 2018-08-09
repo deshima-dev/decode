@@ -2,9 +2,7 @@
 
 # public items
 __all__ = [
-    'savgol_filter',
     'pca',
-    'rsky_calibration',
     'chopper_calibration',
     'r_division',
     'gauss_fit'
@@ -16,48 +14,8 @@ from logging import getLogger
 # dependent packages
 import decode as dc
 import numpy as np
-from scipy.special import erf
-from scipy import signal
 from sklearn.decomposition import TruncatedSVD
 import xarray as xr
-
-
-@dc.xarrayfunc
-def savgol_filter(array, win=2001, polyn=3, iteration=1, threshold=1):
-    """Apply scipy.signal.savgol_filter iteratively.
-
-    Args:
-        array (decode.array): Decode array which will be filtered.
-        win (int): Length of window.
-        polyn (int): Order of polynominal function.
-        iteration (int): The number of iterations.
-        threshold (float): Threshold above which the data will be used as signals
-            in units of sigma.
-
-    Returns:
-        fitted (decode.array): Fitted results.
-    """
-    logger = getLogger('decode.models.savgol_filter')
-    logger.warning('Do not use this function. We recommend you to use dc.models.pca instead.')
-    logger.info('win polyn iteration threshold')
-    logger.info('{} {} {} {}'.format(win, polyn, iteration, threshold))
-    ### 1st estimation
-    array    = array.copy()
-    fitted   = signal.savgol_filter(array, win, polyn, axis=0)
-    filtered = array - fitted
-    ### nth iteration
-    for i in range(iteration):
-        sigma  = filtered.std(axis=0)
-        mask   = (filtered >= threshold * sigma)
-        masked = np.ma.array(filtered, mask=mask)
-        ### maskされた点についてはthreshold * sigmaのデータで埋める
-        filled = masked.filled(threshold * sigma)
-        ### fitted dataを足し、このデータに対して再度savgol_filterをかける
-        clipped  = filled + fitted
-        fitted   = signal.savgol_filter(clipped, win, polyn, axis=0)
-        filtered = array - fitted
-
-    return fitted
 
 
 def pca(onarray, offarray, n=10, exchs=None, pc=False, mode='mean'):
@@ -135,90 +93,6 @@ def pca(onarray, offarray, n=10, exchs=None, pc=False, mode='mean'):
         return Xatm, Ps, Cs
     else:
         return Xatm
-
-
-def rsky_calibration(onarray, offarray, rarray, Tamb, mode='mean'):
-    """Apply R-sky calibrations.
-
-    Args:
-        onarray (decode.array): Decode array of on-point observations.
-        offarray (decode.array): Decode array of off-point observations.
-        rarray (decode.array): Decode array of R observations.
-        Tamb (float): Ambient temperature [K].
-        mode (str): The way of correcting offsets.
-            'mean': Mean.
-            'median': Median.
-
-    Returns:
-        onarray_cal (decode.array): Calibrated array of on-point observations.
-        offarray_cal (decode.array): Calibrated array of off-point observations.
-    """
-    logger = getLogger('decode.models.rsky_calibration')
-    logger.info('mode')
-    logger.info('{}'.format(mode))
-
-    offid = np.unique(offarray.scanid)
-    onid  = np.unique(onarray.scanid)
-    rid   = np.unique(rarray.scanid)
-
-    onarray   = onarray.copy() # Xarray
-    onvalues  = onarray.values
-    onscanid  = onarray.scanid.values
-    offarray  = offarray.copy() # Xarray
-    offvalues = offarray.values
-    offscanid = offarray.scanid.values
-    rarray    = rarray.copy() # Xarray
-    rvalues   = rarray.values
-    rscanid   = rarray.scanid.values
-    for i in onid:
-        oleftid  = np.searchsorted(offid, i) - 1
-        orightid = np.searchsorted(offid, i)
-        rleftid  = np.searchsorted(rid, i) - 1
-        rrightid = np.searchsorted(rid, i)
-
-        Xon = onvalues[onscanid == i]
-        if oleftid == -1:
-            Xoff   = offvalues[offscanid == offid[orightid]]
-            Xoff_m = getattr(np, 'nan'+mode)(Xoff, axis=0)
-        elif orightid == len(offid):
-            Xoff   = offvalues[offscanid == offid[oleftid]]
-            Xoff_m = getattr(np, 'nan'+mode)(Xoff, axis=0)
-        else:
-            Xoff_l  = offvalues[offscanid == offid[oleftid]]
-            Xoff_r  = offvalues[offscanid == offid[orightid]]
-            Xoff_m  = getattr(np, 'nan'+mode)(np.vstack([Xoff_l, Xoff_r]), axis=0)
-
-        if rleftid == -1:
-            Xr   = rvalues[rscanid == rid[rrightid]]
-            Xr_m = getattr(np, 'nan'+mode)(Xr, axis=0)
-        elif rrightid == len(rid):
-            Xr   = rvalues[rscanid == rid[rleftid]]
-            Xr_m = getattr(np, 'nan'+mode)(Xr, axis=0)
-        else:
-            Xr_l  = rvalues[rscanid == rid[rleftid]]
-            Xr_r  = rvalues[rscanid == rid[rrightid]]
-            Xr_m  = getattr(np, 'nan'+mode)(np.vstack([Xr_l, Xr_r]), axis=0)
-        onvalues[onscanid == i] = Tamb * (Xon - Xoff_m) / (Xr_m - Xoff_m)
-
-    for j in offid:
-        rleftid  = np.searchsorted(rid, j) - 1
-        rrightid = np.searchsorted(rid, j)
-
-        Xoff   = offvalues[offscanid == j]
-        Xoff_m = getattr(np, 'nan'+mode)(Xoff, axis=0)
-        if rleftid == -1:
-            Xr   = rvalues[rscanid == rid[rrightid]]
-            Xr_m = getattr(np, 'nan'+mode)(Xr, axis=0)
-        elif rrightid == len(rid):
-            Xr   = rvalues[rscanid == rid[rleftid]]
-            Xr_m = getattr(np, 'nan'+mode)(Xr, axis=0)
-        else:
-            Xr_l  = rvalues[rscanid == rid[rleftid]]
-            Xr_r  = rvalues[rscanid == rid[rrightid]]
-            Xr_m  = getattr(np, 'nan'+mode)(np.vstack([Xr_l, Xr_r]), axis=0)
-        offvalues[offscanid == j] = Tamb * (Xoff - Xoff_m) / (Xr_m - Xoff_m)
-
-    return onarray, offarray
 
 
 def chopper_calibration(onarray, offarray, rarray, Tamb, mode='mean'):
@@ -379,13 +253,17 @@ def gauss_fit(map_data, chs=None, mode='deg', amplitude=1, x_mean=0, y_mean=0, x
             elif mode == 'pix':
                 mX, mY = np.mgrid[0:len(map_data.y), 0:len(map_data.x)]
 
-            g_init = models.Gaussian2D(amplitude=np.nanmax(subdata), x_mean=x_mean, y_mean=y_mean, x_stddev=x_stddev, y_stddev=y_stddev,
-                                        theta=theta, cov_matrix=cov_matrix, **kwargs) + models.Const2D(noise)
+            g_init = models.Gaussian2D(amplitude=np.nanmax(subdata),
+                                       x_mean=x_mean, y_mean=y_mean,
+                                       x_stddev=x_stddev, y_stddev=y_stddev, theta=theta,
+                                       cov_matrix=cov_matrix, **kwargs) + models.Const2D(noise)
             fit_g  = fitting.LevMarLSQFitter()
             g      = fit_g(g_init, mX, mY, subdata)
 
-            g_init2 = models.Gaussian2D(amplitude=np.nanmax(subdata-g.amplitude_1), x_mean=x_mean, y_mean=y_mean, x_stddev=x_stddev, y_stddev=y_stddev,
-                                        theta=theta, cov_matrix=cov_matrix, **kwargs)
+            g_init2 = models.Gaussian2D(amplitude=np.nanmax(subdata-g.amplitude_1),
+                                        x_mean=x_mean, y_mean=y_mean,
+                                        x_stddev=x_stddev, y_stddev=y_stddev, theta=theta,
+                                        cov_matrix=cov_matrix, **kwargs)
             fit_g2  = fitting.LevMarLSQFitter()
             g2      = fit_g2(g_init2, mX, mY, subdata)
 
@@ -420,8 +298,9 @@ def gauss_fit(map_data, chs=None, mode='deg', amplitude=1, x_mean=0, y_mean=0, x
 
         result = map_data.copy()
         result.values = np.transpose(results)
-        result.attrs.update({'peak': peaks, 'x_mean': x_means, 'y_mean': y_means, 'x_stddev': x_stddevs,
-                             'y_stddev': y_stddevs, 'theta': thetas, 'uncert': uncerts})
+        result.attrs.update({'peak': peaks, 'x_mean': x_means, 'y_mean': y_means,
+                             'x_stddev': x_stddevs, 'y_stddev': y_stddevs,
+                             'theta': thetas, 'uncert': uncerts})
 
     else:
         subdata = np.transpose(np.full_like(map_data[:, :, 0], map_data.values[:, :, 0]))
@@ -433,13 +312,17 @@ def gauss_fit(map_data, chs=None, mode='deg', amplitude=1, x_mean=0, y_mean=0, x
         elif mode == 'pix':
             mX, mY = np.mgrid[0:len(map_data.y), 0:len(map_data.x)]
 
-        g_init = models.Gaussian2D(amplitude=np.nanmax(subdata), x_mean=x_mean, y_mean=y_mean, x_stddev=x_stddev, y_stddev=y_stddev,
-                                    theta=theta, cov_matrix=cov_matrix, **kwargs) + models.Const2D(noise)
+        g_init = models.Gaussian2D(amplitude=np.nanmax(subdata),
+                                   x_mean=x_mean, y_mean=y_mean,
+                                   x_stddev=x_stddev, y_stddev=y_stddev, theta=theta,
+                                   cov_matrix=cov_matrix, **kwargs) + models.Const2D(noise)
         fit_g  = fitting.LevMarLSQFitter()
         g      = fit_g(g_init, mX, mY, subdata)
 
-        g_init2 = models.Gaussian2D(amplitude=np.nanmax(subdata-g.amplitude_1), x_mean=x_mean, y_mean=y_mean, x_stddev=x_stddev, y_stddev=y_stddev,
-                                    theta=theta, cov_matrix=cov_matrix, **kwargs)
+        g_init2 = models.Gaussian2D(amplitude=np.nanmax(subdata-g.amplitude_1),
+                                    x_mean=x_mean, y_mean=y_mean,
+                                    x_stddev=x_stddev, y_stddev=y_stddev, theta=theta,
+                                    cov_matrix=cov_matrix, **kwargs)
         fit_g2  = fitting.LevMarLSQFitter()
         g2      = fit_g2(g_init2, mX, mY, subdata)
 
@@ -455,7 +338,8 @@ def gauss_fit(map_data, chs=None, mode='deg', amplitude=1, x_mean=0, y_mean=0, x
 
         result = map_data.copy()
         result.values = np.transpose(results)
-        result.attrs.update({'peak': peaks, 'x_mean': x_means, 'y_mean': y_means, 'x_stddev': x_stddevs,
-                             'y_stddev': y_stddevs, 'theta': thetas, 'uncert': uncerts})
+        result.attrs.update({'peak': peaks, 'x_mean': x_means, 'y_mean': y_means,
+                             'x_stddev': x_stddevs, 'y_stddev': y_stddevs,
+                             'theta': thetas, 'uncert': uncerts})
 
     return result

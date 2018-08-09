@@ -197,7 +197,7 @@ class DecodeCubeAccessor(BaseAccessor):
         temp = np.full([ny*nx, nch], np.nan)
         temp[mask] = gridarray.values
         data = temp.reshape((ny, nx, nch)).swapaxes(0, 1)
-        
+
         temp = np.full([ny*nx, nch], np.nan)
         temp[mask] = noisearray.values
         noise = temp.reshape((ny, nx, nch)).swapaxes(0, 1)
@@ -303,62 +303,3 @@ class DecodeCubeAccessor(BaseAccessor):
 
         fits.writeto(fitsname, data, header, **kwargs)
         logger.info('{} has been created.'.format(fitsname))
-
-    @staticmethod
-    def plotspectrum(cube, ax, xtick, ytick, aperture, **kwargs):
-        logger = getLogger('decode.plot.plotspectrum')
-
-        ### pick up kwargs
-        xc     = kwargs.pop('xc', None)
-        yc     = kwargs.pop('yc', None)
-        width  = kwargs.pop('width', None)
-        height = kwargs.pop('height', None)
-        xmin   = kwargs.pop('xmin', None)
-        xmax   = kwargs.pop('xmax', None)
-        ymin   = kwargs.pop('ymin', None)
-        ymax   = kwargs.pop('ymax', None)
-        radius = kwargs.pop('radius', None)
-        exchs  = kwargs.pop('exchs', None)
-
-        ### labels
-        xlabeldict = {'freq': 'frequency [GHz]', 'id': 'kidid'}
-
-        cube     = cube.copy()
-        datatype = cube.datatype
-        if aperture == 'box':
-            if None not in [xc, yc, width, height]:
-                xmin, xmax = int(xc - width / 2), int(xc + width / 2)
-                ymin, ymax = int(yc - width / 2), int(yc + width / 2)
-            elif None not in [xmin, xmax, ymin, ymax]:
-                pass
-            else:
-                raise KeyError('Invalid arguments.')
-            value = getattr(cube[xmin:xmax, ymin:ymax, :], ytick)(dim=('x', 'y'))
-        elif aperture == 'circle':
-            if None not in [xc, yc, radius]:
-                pass
-            else:
-                raise KeyError('Invalid arguments.')
-            x, y   = np.ogrid[0:len(cube.x), 0:len(cube.y)]
-            mask   = ((x - xc)**2 + (y - yc)**2 < radius**2)
-            mask   = np.broadcast_to(mask[:, :, np.newaxis], cube.shape)
-            masked = np.ma.array(cube.values, mask=~mask)
-            value  = getattr(np, 'nan'+ytick)(masked, axis=(0, 1))
-        else:
-            raise KeyError(aperture)
-
-        if xtick == 'freq':
-            kidfq     = cube.kidfq.values
-            freqrange = ~np.isnan(kidfq)
-            if exchs is not None:
-                freqrange[exchs] = False
-            x = kidfq[freqrange]
-            y = value[freqrange]
-            ax.step(x[np.argsort(x)], y[np.argsort(x)], where='mid', **kwargs)
-        elif xtick == 'id':
-            ax.step(cube.kidid.values, value, where='mid', **kwargs)
-        else:
-            raise KeyError(xtick)
-        ax.set_xlabel('{}'.format(xlabeldict[xtick]), fontsize=20, color='grey')
-        ax.set_ylabel('{} ({})'.format(datatype.values, ytick), fontsize=20, color='grey')
-        ax.set_title('spectrum', fontsize=20, color='grey')

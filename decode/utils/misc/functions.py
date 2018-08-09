@@ -3,6 +3,7 @@
 # public items
 __all__ = [
     'OrderedLoader',
+    'deprecation_warning',
     'copy_function',
     'one_thread_per_process',
     'slicewhere',
@@ -12,6 +13,7 @@ __all__ = [
 from collections import OrderedDict
 from contextlib import contextmanager
 from types import CodeType, FunctionType
+from functools import wraps
 
 # dependent packages
 import yaml
@@ -40,6 +42,22 @@ class OrderedLoader(yaml.Loader):
 
 
 # function
+def deprecation_warning(message, cls=PendingDeprecationWarning):
+    import warnings
+    warnings.filterwarnings('always', category=PendingDeprecationWarning)
+
+    def decorator(func):
+
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            warnings.warn(message, cls, stacklevel=2)
+            func(*args, **kwargs)
+
+        return wrapper
+
+    return decorator
+
+
 def copy_function(func, name=None):
     """Copy a function object with different name.
 

@@ -2,73 +2,105 @@
 
 # public items
 __all__ = [
-    'plotcoords',
-    'plotweather',
-    'plotspectrum',
-    'plottimestream',
+    'plotcoords', 'plot_tcoords',
+    'plottimestream', 'plot_timestream',
+    'plotspectrum', 'plot_spectrum',
+    'plot_chmap',
     'plotpsd',
-    'plotallanvar'
+    'plotallanvar',
 ]
 
 # standard library
-import os
 from logging import getLogger
+logger = getLogger(__name__)
 
 # dependent packages
 import decode as dc
 import numpy as np
 import matplotlib.pyplot as plt
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 import xarray as xr
-from astropy.io import fits
 from scipy.signal import hanning
 from ..utils.ndarray.functions import psd, allan_variance
+from ..utils.misc.functions import deprecation_warning
 
 
 # functions
-def plotcoords(dataarray, ax, coords, scantypes=None, **kwargs):
-    """Plot coordinates.
+def plot_tcoords(array, coords, scantypes=None, ax=None, **kwargs):
+    """Plot coordinates related to the time axis.
 
     Args:
-        dataarray (xarray.DataArray): Dataarray which the coodinate information is included.
-        ax (matplotlib.axes): Axis you want to plot on.
+        array (xarray.DataArray): Array which the coodinate information is included.
         coords (list): Name of x axis and y axis.
         scantypes (list): Scantypes. If None, all scantypes are used.
+        ax (matplotlib.axes): Axis you want to plot on.
         kwargs (optional): Plot options passed to ax.plot().
     """
-    if dataarray.type == 'dca':
-        xr.DataArray.dca.plotcoords(dataarray, ax, coords, scantypes, **kwargs)
-    elif dataarray.type == 'dcc':
-        pass
-    elif dataarray.type == 'dcs':
-        pass
+    if ax is None:
+        ax = plt.gca()
+
+    if scantypes is None:
+        ax.plot(array[coords[0]], array[coords[1]], label='ALL', **kwargs)
     else:
-        raise KeyError(dataarray.type)
+        for scantype in scantypes:
+            ax.plot(array[coords[0]][array.scantype == scantype],
+                    array[coords[1]][array.scantype == scantype], label=scantype, **kwargs)
+    ax.set_xlabel(coords[0], fontsize=20, color='grey')
+    ax.set_ylabel(coords[1], fontsize=20, color='grey')
+    ax.set_title('{} vs {}'.format(coords[1], coords[0]), fontsize=20, color='grey')
+    ax.legend()
+
+    logger.info('{} vs {} has been plotted.'.format(coords[1], coords[0]))
 
 
-def plotweather(dataarray, axs, **kwargs):
-    """Plot weather information.
+def plot_timestream(array, ch, xtick='time', scantypes=None, ax=None, **kwargs):
+    """Plot timestream data.
 
     Args:
-        dataarray (xarray.DataArray): Dataarray which the weather information is included.
-        axs (list(matplotlib.axes)): Axes you want to plot on.
+        array (xarray.DataArray): Array which the timestream data are included.
+        ch (int): Channel index.
+        xtick (str): Type of x axis.
+            'time': Time.
+            'index': Time index.
+        scantypes (list): Scantypes. If None, all scantypes are used.
+        ax (matplotlib.axes): Axis you want to plot on.
         kwargs (optional): Plot options passed to ax.plot().
     """
-    if dataarray.type == 'dca':
-        xr.DataArray.dca.plotweather(dataarray, axs, **kwargs)
-    elif dataarray.type == 'dcc':
-        pass
-    elif dataarray.type == 'dcs':
-        pass
+    if ax is None:
+        ax = plt.gca()
+
+    if scantypes is None:
+        if xtick == 'time':
+            ax.plot(array.time, array[:, ch], label='ALL', **kwargs)
+        elif xtick == 'index':
+            ax.plot(np.ogrid[:len(array.time)], array[:, ch], label='ALL', **kwargs)
     else:
-        raise KeyError(dataarray.type)
+        for scantype in scantypes:
+            if xtick == 'time':
+                ax.plot(array.time[array.scantype == scantype],
+                        array[:, ch][array.scantype == scantype], label=scantype, **kwargs)
+            elif xtick == 'index':
+                ax.plot(np.ogrid[:len(array.time[array.scantype == scantype])],
+                        array[:, ch][array.scantype == scantype], label=scantype, **kwargs)
+    ax.set_xlabel('{}'.format(xtick), fontsize=20, color='grey')
+    ax.set_ylabel(str(array.datatype.values), fontsize=20, color='grey')
+    ax.legend()
+
+    kidtpdict = {0: 'wideband', 1: 'filter', 2: 'blind'}
+    try:
+        kidtp = kidtpdict[int(array.kidtp[ch])]
+    except KeyError:
+        kidtp = 'filter'
+    ax.set_title('ch #{} ({})'.format(ch, kidtp), fontsize=20, color='grey')
+
+    logger.info('timestream data (ch={}) has been plotted.'.format(ch))
 
 
-def plotspectrum(dataarray, ax, xtick, ytick, aperture, **kwargs):
+def plot_spectrum(cube, xtick, ytick, aperture, ax=None, **kwargs):
     """Plot a spectrum.
 
     Args:
-        dataarray (xarray.DataArray): Dataarray which the spectrum information is included.
-        ax (matplotlib.axes): Axis you want to plot on.
+        cube (xarray.DataArray): Cube which the spectrum information is included.
         xtick (str): Type of x axis.
             'freq': Frequency [GHz].
             'id': Kid id.
@@ -79,6 +111,7 @@ def plotspectrum(dataarray, ax, xtick, ytick, aperture, **kwargs):
         aperture (str): The shape of aperture.
             'box': Box.
             'circle': Circle.
+        ax (matplotlib.axes): Axis you want to plot on.
         kwargs (optional):
             When 'box' is specified as shape,
                 xc: Center of x.
@@ -98,51 +131,85 @@ def plotspectrum(dataarray, ax, xtick, ytick, aperture, **kwargs):
     Notes:
         All kwargs should be specified as pixel coordinates.
     """
-    if dataarray.type == 'dca':
-        pass
-    elif dataarray.type == 'dcc':
-        xr.DataArray.dcc.plotspectrum(dataarray, ax, xtick, ytick, aperture, **kwargs)
-    elif dataarray.type == 'dcs':
-        pass
-    else:
-        raise KeyError(dataarray.type)
-
-
-def plottimestream(array, ax=None, xtick='time', **kwargs):
-    """Plot timestream data.
-
-    Args:
-        array (xarray.DataArray): Array which the timestream data are included.
-        ax (matplotlib.axes): Axis you want to plot on.
-        xtick (str): Type of x axis.
-            'time': Time.
-            'index': Time index.
-        kwargs (optional): Plot options passed to ax.plot().
-    """
-    logger = getLogger('decode.plot.plottimestream')
-
     if ax is None:
         ax = plt.gca()
 
-    kidtpdict = {0: 'wideband', 1: 'filter', 2: 'blind'}
-    if xtick == 'time':
-        ax.plot(array.time, array, **kwargs)
-    elif xtick == 'index':
-        ax.plot(np.ogrid[:len(array.time)], array, **kwargs)
-    ax.set_xlabel('{}'.format(xtick), fontsize=20, color='grey')
-    # for label in ax.get_xticklabels():
-    #     label.set_rotation(45)
-    ax.set_ylabel(str(array.datatype.values), fontsize=20, color='grey')
-    ax.legend()
+    ### pick up kwargs
+    xc     = kwargs.pop('xc', None)
+    yc     = kwargs.pop('yc', None)
+    width  = kwargs.pop('width', None)
+    height = kwargs.pop('height', None)
+    xmin   = kwargs.pop('xmin', None)
+    xmax   = kwargs.pop('xmax', None)
+    ymin   = kwargs.pop('ymin', None)
+    ymax   = kwargs.pop('ymax', None)
+    radius = kwargs.pop('radius', None)
+    exchs  = kwargs.pop('exchs', None)
 
-    kidid = int(array.kidid)
-    try:
-        kidtp = kidtpdict[int(array.kidtp)]
-    except KeyError:
-        kidtp = 'filter'
-    ax.set_title('ch #{} ({})'.format(kidid, kidtp), fontsize=20, color='grey')
+    ### labels
+    xlabeldict = {'freq': 'frequency [GHz]', 'id': 'kidid'}
 
-    logger.info('timestream data (ch={}) has been plotted.'.format(kidid))
+    cube     = cube.copy()
+    datatype = cube.datatype
+    if aperture == 'box':
+        if None not in [xc, yc, width, height]:
+            xmin, xmax = int(xc - width / 2), int(xc + width / 2)
+            ymin, ymax = int(yc - width / 2), int(yc + width / 2)
+        elif None not in [xmin, xmax, ymin, ymax]:
+            pass
+        else:
+            raise KeyError('Invalid arguments.')
+        value = getattr(cube[xmin:xmax, ymin:ymax, :], ytick)(dim=('x', 'y'))
+    elif aperture == 'circle':
+        if None not in [xc, yc, radius]:
+            pass
+        else:
+            raise KeyError('Invalid arguments.')
+        x, y   = np.ogrid[0:len(cube.x), 0:len(cube.y)]
+        mask   = ((x - xc)**2 + (y - yc)**2 < radius**2)
+        mask   = np.broadcast_to(mask[:, :, np.newaxis], cube.shape)
+        masked = np.ma.array(cube.values, mask=~mask)
+        value  = getattr(np, 'nan'+ytick)(masked, axis=(0, 1))
+    else:
+        raise KeyError(aperture)
+
+    if xtick == 'freq':
+        kidfq     = cube.kidfq.values
+        freqrange = ~np.isnan(kidfq)
+        if exchs is not None:
+            freqrange[exchs] = False
+        x = kidfq[freqrange]
+        y = value[freqrange]
+        ax.step(x[np.argsort(x)], y[np.argsort(x)], where='mid', **kwargs)
+    elif xtick == 'id':
+        ax.step(cube.kidid.values, value, where='mid', **kwargs)
+    else:
+        raise KeyError(xtick)
+    ax.set_xlabel('{}'.format(xlabeldict[xtick]), fontsize=20, color='grey')
+    ax.set_ylabel('{} ({})'.format(datatype.values, ytick), fontsize=20, color='grey')
+    ax.set_title('spectrum', fontsize=20, color='grey')
+
+
+def plot_chmap(cube, ch, ax=None, **kwargs):
+    """Plot an intensity map.
+
+    Args:
+        cube (xarray.DataArray): Cube which the spectrum information is included.
+        ch (int): Channel index
+        ax (matplotlib.axes): Axis the figure is plotted on.
+        kwargs (optional): Plot options passed to ax.imshow().
+    """
+    if ax is None:
+        ax = plt.gca()
+    fig = plt.gcf()
+
+    im = ax.imshow(cube[:, :, ch].T, **kwargs)
+    divider = make_axes_locatable(ax)
+    cax = divider.append_axes('right', '5%', pad='3%')
+    fig.colorbar(im, cax=cax)
+    ax.set_xlabel('x', fontsize=20, color='grey')
+    ax.set_ylabel('y', fontsize=20, color='grey')
+    ax.set_title('intensity map ch #{}'.format(ch), fontsize=20, color='grey')
 
 
 def plotpsd(data, dt, ndivide=1, window=hanning, overlap_half=False, ax=None, **kwargs):
@@ -182,3 +249,24 @@ def plotallanvar(data, dt, tmax=10, ax=None, **kwargs):
     ax.set_xlabel('Time [s]', fontsize=20, color='grey')
     ax.set_ylabel('Allan Variance', fontsize=20, color='grey')
     ax.legend()
+
+
+# alias
+@deprecation_warning('Use plot_tcoords() instead. plotcoords() will be removed in the future.'\
+                     'The order of the arguments has been changed in plot_tcoords().'\
+                     'For a while, De:code properly passes the arguments in plotcoords() to plot_tcoords().')
+def plotcoords(array, ax, coords, scantypes=None, **kwargs):
+    plot_tcoords(array, coords, scantypes=scantypes, ax=ax, **kwargs)
+
+
+@deprecation_warning('Use plot_timestream() instead. plottimestream() has been removed.'\
+                     'The arguments has been changed in plot_timestream().', DeprecationWarning)
+def plottimestream(array, ax=None, xtick='time', **kwargs):
+    pass
+
+
+@deprecation_warning('Use plot_spectrum() instead. plotspectrum() will be removed in the future.'\
+                     'The order of the arguments has been changed in plot_spectrum().'\
+                     'For a while, De:code properly passes the arguments in plotspectrum() to plot_spectrum().')
+def plotspectrum(cube, ax, xtick, ytick, aperture, **kwargs):
+    plot_spectrum(cube, xtick, ytick, aperture, ax=ax, **kwargs)
