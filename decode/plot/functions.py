@@ -53,12 +53,12 @@ def plot_tcoords(array, coords, scantypes=None, ax=None, **kwargs):
     logger.info('{} vs {} has been plotted.'.format(coords[1], coords[0]))
 
 
-def plot_timestream(array, ch, xtick='time', scantypes=None, ax=None, **kwargs):
+def plot_timestream(array, kidid, xtick='time', scantypes=None, ax=None, **kwargs):
     """Plot timestream data.
 
     Args:
         array (xarray.DataArray): Array which the timestream data are included.
-        ch (int): Channel index.
+        kidid (int): Kidid.
         xtick (str): Type of x axis.
             'time': Time.
             'index': Time index.
@@ -69,31 +69,36 @@ def plot_timestream(array, ch, xtick='time', scantypes=None, ax=None, **kwargs):
     if ax is None:
         ax = plt.gca()
 
+    index = np.where(array.kidid == kidid)[0]
+    if len(index) == 0:
+        raise KeyError('Such a kidid does not exist.')
+    index = int(index)
+
     if scantypes is None:
         if xtick == 'time':
-            ax.plot(array.time, array[:, ch], label='ALL', **kwargs)
+            ax.plot(array.time, array[:, index], label='ALL', **kwargs)
         elif xtick == 'index':
-            ax.plot(np.ogrid[:len(array.time)], array[:, ch], label='ALL', **kwargs)
+            ax.plot(np.ogrid[:len(array.time)], array[:, index], label='ALL', **kwargs)
     else:
         for scantype in scantypes:
             if xtick == 'time':
                 ax.plot(array.time[array.scantype == scantype],
-                        array[:, ch][array.scantype == scantype], label=scantype, **kwargs)
+                        array[:, index][array.scantype == scantype], label=scantype, **kwargs)
             elif xtick == 'index':
                 ax.plot(np.ogrid[:len(array.time[array.scantype == scantype])],
-                        array[:, ch][array.scantype == scantype], label=scantype, **kwargs)
+                        array[:, index][array.scantype == scantype], label=scantype, **kwargs)
     ax.set_xlabel('{}'.format(xtick), fontsize=20, color='grey')
     ax.set_ylabel(str(array.datatype.values), fontsize=20, color='grey')
     ax.legend()
 
     kidtpdict = {0: 'wideband', 1: 'filter', 2: 'blind'}
     try:
-        kidtp = kidtpdict[int(array.kidtp[ch])]
+        kidtp = kidtpdict[int(array.kidtp[kidid])]
     except KeyError:
         kidtp = 'filter'
-    ax.set_title('ch #{} ({})'.format(ch, kidtp), fontsize=20, color='grey')
+    ax.set_title('ch #{} ({})'.format(kidid, kidtp), fontsize=20, color='grey')
 
-    logger.info('timestream data (ch={}) has been plotted.'.format(ch))
+    logger.info('timestream data (ch={}) has been plotted.'.format(kidid))
 
 
 def plot_spectrum(cube, xtick, ytick, aperture, ax=None, **kwargs):
@@ -190,12 +195,12 @@ def plot_spectrum(cube, xtick, ytick, aperture, ax=None, **kwargs):
     ax.set_title('spectrum', fontsize=20, color='grey')
 
 
-def plot_chmap(cube, ch, ax=None, **kwargs):
+def plot_chmap(cube, kidid, ax=None, **kwargs):
     """Plot an intensity map.
 
     Args:
         cube (xarray.DataArray): Cube which the spectrum information is included.
-        ch (int): Channel index
+        kidid (int): Kidid.
         ax (matplotlib.axes): Axis the figure is plotted on.
         kwargs (optional): Plot options passed to ax.imshow().
     """
@@ -203,13 +208,18 @@ def plot_chmap(cube, ch, ax=None, **kwargs):
         ax = plt.gca()
     fig = plt.gcf()
 
-    im = ax.imshow(cube[:, :, ch].T, **kwargs)
+    index = np.where(cube.kidid == kidid)[0]
+    if len(index) == 0:
+        raise KeyError('Such a kidid does not exist.')
+    index = int(index)
+
+    im = ax.imshow(cube[:, :, index].T, **kwargs)
     divider = make_axes_locatable(ax)
     cax = divider.append_axes('right', '5%', pad='3%')
     fig.colorbar(im, cax=cax)
     ax.set_xlabel('x', fontsize=20, color='grey')
     ax.set_ylabel('y', fontsize=20, color='grey')
-    ax.set_title('intensity map ch #{}'.format(ch), fontsize=20, color='grey')
+    ax.set_title('intensity map ch #{}'.format(kidid), fontsize=20, color='grey')
 
 
 def plotpsd(data, dt, ndivide=1, window=hanning, overlap_half=False, ax=None, **kwargs):

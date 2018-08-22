@@ -60,11 +60,13 @@ dcube_3d:
     CDELT2: 0.002
     CRPIX2: 1
     CUNIT2: deg
-    CTYPE3: KIDID
+    CTYPE3: FREQ
     CRVAL3: 0.0
     CDELT3: 1
     CRPIX3: 1
-    CUNIT3: 1
+    CUNIT3: GHz
+    RESTFREQ: 3.3e11
+    SPECSYS: BARYCENT
     TELESCOP: ASTE
     INSTRUM: DESHIMA
     OBSERVER: Edwin Hubble

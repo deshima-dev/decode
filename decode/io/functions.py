@@ -10,6 +10,7 @@ __all__ = [
 
 # standard library
 from datetime import datetime
+from pytz import timezone
 from logging import getLogger
 from uuid import uuid4
 from pathlib import Path
@@ -264,11 +265,11 @@ def loaddfits(fitsname, coordtype='azel', loadtype='temperature', starttime=None
     return array
 
 
-def savefits(dataarray, fitsname, **kwargs):
-    """Save a dataarray to a 3D-cube FITS file.
+def savefits(cube, fitsname, **kwargs):
+    """Save a cube to a 3D-cube FITS file.
 
     Args:
-        dataarray (xarray.DataArray): Dataarray to be saved.
+        cube (xarray.DataArray): Cube to be saved.
         fitsname (str): Name of output FITS file.
         kwargs (optional): Other arguments common with astropy.io.fits.writeto().
     """
@@ -290,7 +291,12 @@ def savefits(dataarray, fitsname, **kwargs):
             data   = cube.values[:, :, 0].T
         else:
             header = fits.Header(hdrdata['dcube_3d'])
-            data   = cube.values.T
+
+            kidfq     = cube.kidfq.values
+            freqrange = ~np.isnan(kidfq)
+            orderedfq = np.argsort(kidfq[freqrange])
+            newcube   = cube[:, :, orderedfq]
+            data      = newcube.values.T
     else:
         raise TypeError(ndim)
 
@@ -307,7 +313,8 @@ def savefits(dataarray, fitsname, **kwargs):
                    'CDELT2': float(cube.y[1] - cube.y[0]),
                    'DATE': datetime.now(timezone('UTC')).isoformat()})
     if (ndim == 3) and (not dropdeg):
-        header.update({'CRVAL3': float(cube.kidid[0])})
+        header.update({'CRVAL3': float(newcube.kidfq[0]),
+                       'CDELT3': float(newcube.kidfq[1] - newcube.kidfq[0])})
 
     fitsname = str(Path(fitsname).expanduser())
     fits.writeto(fitsname, data, header, **kwargs)
