@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>decode package &mdash; De:code 0.4.3 documentation</title>
+  <title>decode package &mdash; De:code 0.5.0 documentation</title>
   
 
   
@@ -56,7 +56,7 @@
             
             
               <div class="version">
-                0.4.3
+                0.5.0
               </div>
             
           
@@ -343,17 +343,23 @@ array are kept in the output one. Default is True.</li>
 
 <dl class="function">
 <dt id="decode.fromcube">
-<code class="descclassname">decode.</code><code class="descname">fromcube</code><span class="sig-paren">(</span><em>cube</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/decode/core/cube/functions.html#fromcube"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#decode.fromcube" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">decode.</code><code class="descname">fromcube</code><span class="sig-paren">(</span><em>cube</em>, <em>template</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/decode/core/cube/functions.html#fromcube"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#decode.fromcube" title="Permalink to this definition">¶</a></dt>
 <dd><p>Covert a decode cube to a decode array.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>cube</strong> (<em>decode.cube</em>) – Decode cube which will be converted.</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>cube</strong> (<em>decode.cube</em>) – Decode cube to be cast.</li>
+<li><strong>template</strong> (<em>decode.array</em>) – Decode array whose shape the cube is cast on.</li>
+</ul>
+</td>
 </tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">Decode array.</td>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">Decode array.</p>
+</td>
 </tr>
-<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">decode array (decode.array)</td>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">decode array (decode.array)</p>
+</td>
 </tr>
 </tbody>
 </table>
@@ -499,14 +505,14 @@ array are kept in the output one. Default is True.</li>
 <dt id="decode.setlogger">
 <em class="property">class </em><code class="descclassname">decode.</code><code class="descname">setlogger</code><span class="sig-paren">(</span><em>level=None</em>, <em>filename=None</em>, <em>overwrite=False</em>, <em>encoding='utf-8'</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/decode/logging.html#setlogger"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#decode.setlogger" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
-<dl class="staticmethod">
+<dl class="method">
 <dt id="decode.setlogger.sethandlers">
-<em class="property">static </em><code class="descname">sethandlers</code><span class="sig-paren">(</span><em>filename</em>, <em>overwrite</em>, <em>encoding</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/decode/logging.html#setlogger.sethandlers"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#decode.setlogger.sethandlers" title="Permalink to this definition">¶</a></dt>
+<code class="descname">sethandlers</code><span class="sig-paren">(</span><em>filename</em>, <em>overwrite</em>, <em>encoding</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/decode/logging.html#setlogger.sethandlers"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#decode.setlogger.sethandlers" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="staticmethod">
+<dl class="method">
 <dt id="decode.setlogger.setlevel">
-<em class="property">static </em><code class="descname">setlevel</code><span class="sig-paren">(</span><em>level</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/decode/logging.html#setlogger.setlevel"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#decode.setlogger.setlevel" title="Permalink to this definition">¶</a></dt>
+<code class="descname">setlevel</code><span class="sig-paren">(</span><em>level</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/decode/logging.html#setlogger.setlevel"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#decode.setlogger.setlevel" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
@@ -680,7 +686,7 @@ array are kept in the output one. Default is True.</li>
     <script type="text/javascript">
         var DOCUMENTATION_OPTIONS = {
             URL_ROOT:'../',
-            VERSION:'0.4.3',
+            VERSION:'0.5.0',
             LANGUAGE:'None',
             COLLAPSE_INDEX:false,
             FILE_SUFFIX:'.html',

@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>decode.plot.functions &mdash; De:code 0.4.3 documentation</title>
+  <title>decode.plot.functions &mdash; De:code 0.5.0 documentation</title>
   
 
   
@@ -56,7 +56,7 @@
             
             
               <div class="version">
-                0.4.3
+                0.5.0
               </div>
             
           
@@ -147,73 +147,110 @@
 
 <span class="c1"># public items</span>
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
-    <span class="s1">&#39;plotcoords&#39;</span><span class="p">,</span>
-    <span class="s1">&#39;plotweather&#39;</span><span class="p">,</span>
-    <span class="s1">&#39;plotspectrum&#39;</span><span class="p">,</span>
-    <span class="s1">&#39;plottimestream&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;plotcoords&#39;</span><span class="p">,</span> <span class="s1">&#39;plot_tcoords&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;plottimestream&#39;</span><span class="p">,</span> <span class="s1">&#39;plot_timestream&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;plotspectrum&#39;</span><span class="p">,</span> <span class="s1">&#39;plot_spectrum&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;plot_chmap&#39;</span><span class="p">,</span>
     <span class="s1">&#39;plotpsd&#39;</span><span class="p">,</span>
-    <span class="s1">&#39;plotallanvar&#39;</span>
+    <span class="s1">&#39;plotallanvar&#39;</span><span class="p">,</span>
 <span class="p">]</span>
 
 <span class="c1"># standard library</span>
-<span class="kn">import</span> <span class="nn">os</span>
 <span class="kn">from</span> <span class="nn">logging</span> <span class="k">import</span> <span class="n">getLogger</span>
+<span class="n">logger</span> <span class="o">=</span> <span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
 
 <span class="c1"># dependent packages</span>
 <span class="kn">import</span> <span class="nn">decode</span> <span class="k">as</span> <span class="nn">dc</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="kn">from</span> <span class="nn">mpl_toolkits.axes_grid1</span> <span class="k">import</span> <span class="n">make_axes_locatable</span>
 <span class="kn">import</span> <span class="nn">xarray</span> <span class="k">as</span> <span class="nn">xr</span>
-<span class="kn">from</span> <span class="nn">astropy.io</span> <span class="k">import</span> <span class="n">fits</span>
 <span class="kn">from</span> <span class="nn">scipy.signal</span> <span class="k">import</span> <span class="n">hanning</span>
 <span class="kn">from</span> <span class="nn">..utils.ndarray.functions</span> <span class="k">import</span> <span class="n">psd</span><span class="p">,</span> <span class="n">allan_variance</span>
+<span class="kn">from</span> <span class="nn">..utils.misc.functions</span> <span class="k">import</span> <span class="n">deprecation_warning</span>
 
 
 <span class="c1"># functions</span>
-<div class="viewcode-block" id="plotcoords"><a class="viewcode-back" href="../../../apis/decode.plot.html#decode.plot.functions.plotcoords">[docs]</a><span class="k">def</span> <span class="nf">plotcoords</span><span class="p">(</span><span class="n">dataarray</span><span class="p">,</span> <span class="n">ax</span><span class="p">,</span> <span class="n">coords</span><span class="p">,</span> <span class="n">scantypes</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Plot coordinates.</span>
+<div class="viewcode-block" id="plot_tcoords"><a class="viewcode-back" href="../../../apis/decode.plot.html#decode.plot.functions.plot_tcoords">[docs]</a><span class="k">def</span> <span class="nf">plot_tcoords</span><span class="p">(</span><span class="n">array</span><span class="p">,</span> <span class="n">coords</span><span class="p">,</span> <span class="n">scantypes</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Plot coordinates related to the time axis.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        dataarray (xarray.DataArray): Dataarray which the coodinate information is included.</span>
-<span class="sd">        ax (matplotlib.axes): Axis you want to plot on.</span>
+<span class="sd">        array (xarray.DataArray): Array which the coodinate information is included.</span>
 <span class="sd">        coords (list): Name of x axis and y axis.</span>
 <span class="sd">        scantypes (list): Scantypes. If None, all scantypes are used.</span>
+<span class="sd">        ax (matplotlib.axes): Axis you want to plot on.</span>
 <span class="sd">        kwargs (optional): Plot options passed to ax.plot().</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="n">dataarray</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="s1">&#39;dca&#39;</span><span class="p">:</span>
-        <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="o">.</span><span class="n">dca</span><span class="o">.</span><span class="n">plotcoords</span><span class="p">(</span><span class="n">dataarray</span><span class="p">,</span> <span class="n">ax</span><span class="p">,</span> <span class="n">coords</span><span class="p">,</span> <span class="n">scantypes</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-    <span class="k">elif</span> <span class="n">dataarray</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="s1">&#39;dcc&#39;</span><span class="p">:</span>
-        <span class="k">pass</span>
-    <span class="k">elif</span> <span class="n">dataarray</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="s1">&#39;dcs&#39;</span><span class="p">:</span>
-        <span class="k">pass</span>
+    <span class="k">if</span> <span class="n">ax</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">gca</span><span class="p">()</span>
+
+    <span class="k">if</span> <span class="n">scantypes</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">array</span><span class="p">[</span><span class="n">coords</span><span class="p">[</span><span class="mi">0</span><span class="p">]],</span> <span class="n">array</span><span class="p">[</span><span class="n">coords</span><span class="p">[</span><span class="mi">1</span><span class="p">]],</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;ALL&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="n">dataarray</span><span class="o">.</span><span class="n">type</span><span class="p">)</span></div>
+        <span class="k">for</span> <span class="n">scantype</span> <span class="ow">in</span> <span class="n">scantypes</span><span class="p">:</span>
+            <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">array</span><span class="p">[</span><span class="n">coords</span><span class="p">[</span><span class="mi">0</span><span class="p">]][</span><span class="n">array</span><span class="o">.</span><span class="n">scantype</span> <span class="o">==</span> <span class="n">scantype</span><span class="p">],</span>
+                    <span class="n">array</span><span class="p">[</span><span class="n">coords</span><span class="p">[</span><span class="mi">1</span><span class="p">]][</span><span class="n">array</span><span class="o">.</span><span class="n">scantype</span> <span class="o">==</span> <span class="n">scantype</span><span class="p">],</span> <span class="n">label</span><span class="o">=</span><span class="n">scantype</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="n">coords</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;grey&#39;</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="n">coords</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;grey&#39;</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">{}</span><span class="s1"> vs </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">coords</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">coords</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;grey&#39;</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">{}</span><span class="s1"> vs </span><span class="si">{}</span><span class="s1"> has been plotted.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">coords</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">coords</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span></div>
 
 
-<div class="viewcode-block" id="plotweather"><a class="viewcode-back" href="../../../apis/decode.plot.html#decode.plot.functions.plotweather">[docs]</a><span class="k">def</span> <span class="nf">plotweather</span><span class="p">(</span><span class="n">dataarray</span><span class="p">,</span> <span class="n">axs</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Plot weather information.</span>
+<div class="viewcode-block" id="plot_timestream"><a class="viewcode-back" href="../../../apis/decode.plot.html#decode.plot.functions.plot_timestream">[docs]</a><span class="k">def</span> <span class="nf">plot_timestream</span><span class="p">(</span><span class="n">array</span><span class="p">,</span> <span class="n">kidid</span><span class="p">,</span> <span class="n">xtick</span><span class="o">=</span><span class="s1">&#39;time&#39;</span><span class="p">,</span> <span class="n">scantypes</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Plot timestream data.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        dataarray (xarray.DataArray): Dataarray which the weather information is included.</span>
-<span class="sd">        axs (list(matplotlib.axes)): Axes you want to plot on.</span>
+<span class="sd">        array (xarray.DataArray): Array which the timestream data are included.</span>
+<span class="sd">        kidid (int): Kidid.</span>
+<span class="sd">        xtick (str): Type of x axis.</span>
+<span class="sd">            &#39;time&#39;: Time.</span>
+<span class="sd">            &#39;index&#39;: Time index.</span>
+<span class="sd">        scantypes (list): Scantypes. If None, all scantypes are used.</span>
+<span class="sd">        ax (matplotlib.axes): Axis you want to plot on.</span>
 <span class="sd">        kwargs (optional): Plot options passed to ax.plot().</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="n">dataarray</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="s1">&#39;dca&#39;</span><span class="p">:</span>
-        <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="o">.</span><span class="n">dca</span><span class="o">.</span><span class="n">plotweather</span><span class="p">(</span><span class="n">dataarray</span><span class="p">,</span> <span class="n">axs</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-    <span class="k">elif</span> <span class="n">dataarray</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="s1">&#39;dcc&#39;</span><span class="p">:</span>
-        <span class="k">pass</span>
-    <span class="k">elif</span> <span class="n">dataarray</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="s1">&#39;dcs&#39;</span><span class="p">:</span>
-        <span class="k">pass</span>
+    <span class="k">if</span> <span class="n">ax</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">gca</span><span class="p">()</span>
+
+    <span class="n">index</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">array</span><span class="o">.</span><span class="n">kidid</span> <span class="o">==</span> <span class="n">kidid</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">index</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="s1">&#39;Such a kidid does not exist.&#39;</span><span class="p">)</span>
+    <span class="n">index</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">index</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">scantypes</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">xtick</span> <span class="o">==</span> <span class="s1">&#39;time&#39;</span><span class="p">:</span>
+            <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">array</span><span class="o">.</span><span class="n">time</span><span class="p">,</span> <span class="n">array</span><span class="p">[:,</span> <span class="n">index</span><span class="p">],</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;ALL&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">xtick</span> <span class="o">==</span> <span class="s1">&#39;index&#39;</span><span class="p">:</span>
+            <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ogrid</span><span class="p">[:</span><span class="nb">len</span><span class="p">(</span><span class="n">array</span><span class="o">.</span><span class="n">time</span><span class="p">)],</span> <span class="n">array</span><span class="p">[:,</span> <span class="n">index</span><span class="p">],</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;ALL&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="n">dataarray</span><span class="o">.</span><span class="n">type</span><span class="p">)</span></div>
+        <span class="k">for</span> <span class="n">scantype</span> <span class="ow">in</span> <span class="n">scantypes</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">xtick</span> <span class="o">==</span> <span class="s1">&#39;time&#39;</span><span class="p">:</span>
+                <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">array</span><span class="o">.</span><span class="n">time</span><span class="p">[</span><span class="n">array</span><span class="o">.</span><span class="n">scantype</span> <span class="o">==</span> <span class="n">scantype</span><span class="p">],</span>
+                        <span class="n">array</span><span class="p">[:,</span> <span class="n">index</span><span class="p">][</span><span class="n">array</span><span class="o">.</span><span class="n">scantype</span> <span class="o">==</span> <span class="n">scantype</span><span class="p">],</span> <span class="n">label</span><span class="o">=</span><span class="n">scantype</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">xtick</span> <span class="o">==</span> <span class="s1">&#39;index&#39;</span><span class="p">:</span>
+                <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ogrid</span><span class="p">[:</span><span class="nb">len</span><span class="p">(</span><span class="n">array</span><span class="o">.</span><span class="n">time</span><span class="p">[</span><span class="n">array</span><span class="o">.</span><span class="n">scantype</span> <span class="o">==</span> <span class="n">scantype</span><span class="p">])],</span>
+                        <span class="n">array</span><span class="p">[:,</span> <span class="n">index</span><span class="p">][</span><span class="n">array</span><span class="o">.</span><span class="n">scantype</span> <span class="o">==</span> <span class="n">scantype</span><span class="p">],</span> <span class="n">label</span><span class="o">=</span><span class="n">scantype</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">xtick</span><span class="p">),</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;grey&#39;</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">array</span><span class="o">.</span><span class="n">datatype</span><span class="o">.</span><span class="n">values</span><span class="p">),</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;grey&#39;</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+
+    <span class="n">kidtpdict</span> <span class="o">=</span> <span class="p">{</span><span class="mi">0</span><span class="p">:</span> <span class="s1">&#39;wideband&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">:</span> <span class="s1">&#39;filter&#39;</span><span class="p">,</span> <span class="mi">2</span><span class="p">:</span> <span class="s1">&#39;blind&#39;</span><span class="p">}</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">kidtp</span> <span class="o">=</span> <span class="n">kidtpdict</span><span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">array</span><span class="o">.</span><span class="n">kidtp</span><span class="p">[</span><span class="n">kidid</span><span class="p">])]</span>
+    <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+        <span class="n">kidtp</span> <span class="o">=</span> <span class="s1">&#39;filter&#39;</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;ch #</span><span class="si">{}</span><span class="s1"> (</span><span class="si">{}</span><span class="s1">)&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">kidid</span><span class="p">,</span> <span class="n">kidtp</span><span class="p">),</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;grey&#39;</span><span class="p">)</span>
+
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;timestream data (ch=</span><span class="si">{}</span><span class="s1">) has been plotted.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">kidid</span><span class="p">))</span></div>
 
 
-<div class="viewcode-block" id="plotspectrum"><a class="viewcode-back" href="../../../apis/decode.plot.html#decode.plot.functions.plotspectrum">[docs]</a><span class="k">def</span> <span class="nf">plotspectrum</span><span class="p">(</span><span class="n">dataarray</span><span class="p">,</span> <span class="n">ax</span><span class="p">,</span> <span class="n">xtick</span><span class="p">,</span> <span class="n">ytick</span><span class="p">,</span> <span class="n">aperture</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<div class="viewcode-block" id="plot_spectrum"><a class="viewcode-back" href="../../../apis/decode.plot.html#decode.plot.functions.plot_spectrum">[docs]</a><span class="k">def</span> <span class="nf">plot_spectrum</span><span class="p">(</span><span class="n">cube</span><span class="p">,</span> <span class="n">xtick</span><span class="p">,</span> <span class="n">ytick</span><span class="p">,</span> <span class="n">aperture</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Plot a spectrum.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        dataarray (xarray.DataArray): Dataarray which the spectrum information is included.</span>
-<span class="sd">        ax (matplotlib.axes): Axis you want to plot on.</span>
+<span class="sd">        cube (xarray.DataArray): Cube which the spectrum information is included.</span>
 <span class="sd">        xtick (str): Type of x axis.</span>
 <span class="sd">            &#39;freq&#39;: Frequency [GHz].</span>
 <span class="sd">            &#39;id&#39;: Kid id.</span>
@@ -224,6 +261,7 @@
 <span class="sd">        aperture (str): The shape of aperture.</span>
 <span class="sd">            &#39;box&#39;: Box.</span>
 <span class="sd">            &#39;circle&#39;: Circle.</span>
+<span class="sd">        ax (matplotlib.axes): Axis you want to plot on.</span>
 <span class="sd">        kwargs (optional):</span>
 <span class="sd">            When &#39;box&#39; is specified as shape,</span>
 <span class="sd">                xc: Center of x.</span>
@@ -243,51 +281,90 @@
 <span class="sd">    Notes:</span>
 <span class="sd">        All kwargs should be specified as pixel coordinates.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="n">dataarray</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="s1">&#39;dca&#39;</span><span class="p">:</span>
-        <span class="k">pass</span>
-    <span class="k">elif</span> <span class="n">dataarray</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="s1">&#39;dcc&#39;</span><span class="p">:</span>
-        <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="o">.</span><span class="n">dcc</span><span class="o">.</span><span class="n">plotspectrum</span><span class="p">(</span><span class="n">dataarray</span><span class="p">,</span> <span class="n">ax</span><span class="p">,</span> <span class="n">xtick</span><span class="p">,</span> <span class="n">ytick</span><span class="p">,</span> <span class="n">aperture</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-    <span class="k">elif</span> <span class="n">dataarray</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="s1">&#39;dcs&#39;</span><span class="p">:</span>
-        <span class="k">pass</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="n">dataarray</span><span class="o">.</span><span class="n">type</span><span class="p">)</span></div>
-
-
-<div class="viewcode-block" id="plottimestream"><a class="viewcode-back" href="../../../apis/decode.plot.html#decode.plot.functions.plottimestream">[docs]</a><span class="k">def</span> <span class="nf">plottimestream</span><span class="p">(</span><span class="n">array</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">xtick</span><span class="o">=</span><span class="s1">&#39;time&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Plot timestream data.</span>
-
-<span class="sd">    Args:</span>
-<span class="sd">        array (xarray.DataArray): Array which the timestream data are included.</span>
-<span class="sd">        ax (matplotlib.axes): Axis you want to plot on.</span>
-<span class="sd">        xtick (str): Type of x axis.</span>
-<span class="sd">            &#39;time&#39;: Time.</span>
-<span class="sd">            &#39;index&#39;: Time index.</span>
-<span class="sd">        kwargs (optional): Plot options passed to ax.plot().</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">logger</span> <span class="o">=</span> <span class="n">getLogger</span><span class="p">(</span><span class="s1">&#39;decode.plot.plottimestream&#39;</span><span class="p">)</span>
-
     <span class="k">if</span> <span class="n">ax</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">gca</span><span class="p">()</span>
 
-    <span class="n">kidtpdict</span> <span class="o">=</span> <span class="p">{</span><span class="mi">0</span><span class="p">:</span> <span class="s1">&#39;wideband&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">:</span> <span class="s1">&#39;filter&#39;</span><span class="p">,</span> <span class="mi">2</span><span class="p">:</span> <span class="s1">&#39;blind&#39;</span><span class="p">}</span>
-    <span class="k">if</span> <span class="n">xtick</span> <span class="o">==</span> <span class="s1">&#39;time&#39;</span><span class="p">:</span>
-        <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">array</span><span class="o">.</span><span class="n">time</span><span class="p">,</span> <span class="n">array</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-    <span class="k">elif</span> <span class="n">xtick</span> <span class="o">==</span> <span class="s1">&#39;index&#39;</span><span class="p">:</span>
-        <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ogrid</span><span class="p">[:</span><span class="nb">len</span><span class="p">(</span><span class="n">array</span><span class="o">.</span><span class="n">time</span><span class="p">)],</span> <span class="n">array</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-    <span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">xtick</span><span class="p">),</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;grey&#39;</span><span class="p">)</span>
-    <span class="c1"># for label in ax.get_xticklabels():</span>
-    <span class="c1">#     label.set_rotation(45)</span>
-    <span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">array</span><span class="o">.</span><span class="n">datatype</span><span class="o">.</span><span class="n">values</span><span class="p">),</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;grey&#39;</span><span class="p">)</span>
-    <span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+    <span class="c1">### pick up kwargs</span>
+    <span class="n">xc</span>     <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;xc&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="n">yc</span>     <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;yc&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="n">width</span>  <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;width&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="n">height</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;height&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="n">xmin</span>   <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;xmin&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="n">xmax</span>   <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;xmax&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="n">ymin</span>   <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;ymin&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="n">ymax</span>   <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;ymax&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="n">radius</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;radius&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="n">exchs</span>  <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;exchs&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
 
-    <span class="n">kidid</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">array</span><span class="o">.</span><span class="n">kidid</span><span class="p">)</span>
-    <span class="k">try</span><span class="p">:</span>
-        <span class="n">kidtp</span> <span class="o">=</span> <span class="n">kidtpdict</span><span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">array</span><span class="o">.</span><span class="n">kidtp</span><span class="p">)]</span>
-    <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
-        <span class="n">kidtp</span> <span class="o">=</span> <span class="s1">&#39;filter&#39;</span>
-    <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;ch #</span><span class="si">{}</span><span class="s1"> (</span><span class="si">{}</span><span class="s1">)&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">kidid</span><span class="p">,</span> <span class="n">kidtp</span><span class="p">),</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;grey&#39;</span><span class="p">)</span>
+    <span class="c1">### labels</span>
+    <span class="n">xlabeldict</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;freq&#39;</span><span class="p">:</span> <span class="s1">&#39;frequency [GHz]&#39;</span><span class="p">,</span> <span class="s1">&#39;id&#39;</span><span class="p">:</span> <span class="s1">&#39;kidid&#39;</span><span class="p">}</span>
 
-    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;timestream data (ch=</span><span class="si">{}</span><span class="s1">) has been plotted.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">kidid</span><span class="p">))</span></div>
+    <span class="n">cube</span>     <span class="o">=</span> <span class="n">cube</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="n">datatype</span> <span class="o">=</span> <span class="n">cube</span><span class="o">.</span><span class="n">datatype</span>
+    <span class="k">if</span> <span class="n">aperture</span> <span class="o">==</span> <span class="s1">&#39;box&#39;</span><span class="p">:</span>
+        <span class="k">if</span> <span class="kc">None</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="n">xc</span><span class="p">,</span> <span class="n">yc</span><span class="p">,</span> <span class="n">width</span><span class="p">,</span> <span class="n">height</span><span class="p">]:</span>
+            <span class="n">xmin</span><span class="p">,</span> <span class="n">xmax</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">xc</span> <span class="o">-</span> <span class="n">width</span> <span class="o">/</span> <span class="mi">2</span><span class="p">),</span> <span class="nb">int</span><span class="p">(</span><span class="n">xc</span> <span class="o">+</span> <span class="n">width</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span>
+            <span class="n">ymin</span><span class="p">,</span> <span class="n">ymax</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">yc</span> <span class="o">-</span> <span class="n">width</span> <span class="o">/</span> <span class="mi">2</span><span class="p">),</span> <span class="nb">int</span><span class="p">(</span><span class="n">yc</span> <span class="o">+</span> <span class="n">width</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="kc">None</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="n">xmin</span><span class="p">,</span> <span class="n">xmax</span><span class="p">,</span> <span class="n">ymin</span><span class="p">,</span> <span class="n">ymax</span><span class="p">]:</span>
+            <span class="k">pass</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="s1">&#39;Invalid arguments.&#39;</span><span class="p">)</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">cube</span><span class="p">[</span><span class="n">xmin</span><span class="p">:</span><span class="n">xmax</span><span class="p">,</span> <span class="n">ymin</span><span class="p">:</span><span class="n">ymax</span><span class="p">,</span> <span class="p">:],</span> <span class="n">ytick</span><span class="p">)(</span><span class="n">dim</span><span class="o">=</span><span class="p">(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="s1">&#39;y&#39;</span><span class="p">))</span>
+    <span class="k">elif</span> <span class="n">aperture</span> <span class="o">==</span> <span class="s1">&#39;circle&#39;</span><span class="p">:</span>
+        <span class="k">if</span> <span class="kc">None</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="n">xc</span><span class="p">,</span> <span class="n">yc</span><span class="p">,</span> <span class="n">radius</span><span class="p">]:</span>
+            <span class="k">pass</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="s1">&#39;Invalid arguments.&#39;</span><span class="p">)</span>
+        <span class="n">x</span><span class="p">,</span> <span class="n">y</span>   <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ogrid</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="nb">len</span><span class="p">(</span><span class="n">cube</span><span class="o">.</span><span class="n">x</span><span class="p">),</span> <span class="mi">0</span><span class="p">:</span><span class="nb">len</span><span class="p">(</span><span class="n">cube</span><span class="o">.</span><span class="n">y</span><span class="p">)]</span>
+        <span class="n">mask</span>   <span class="o">=</span> <span class="p">((</span><span class="n">x</span> <span class="o">-</span> <span class="n">xc</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="p">(</span><span class="n">y</span> <span class="o">-</span> <span class="n">yc</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span> <span class="o">&lt;</span> <span class="n">radius</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">mask</span>   <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">broadcast_to</span><span class="p">(</span><span class="n">mask</span><span class="p">[:,</span> <span class="p">:,</span> <span class="n">np</span><span class="o">.</span><span class="n">newaxis</span><span class="p">],</span> <span class="n">cube</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+        <span class="n">masked</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ma</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">cube</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="n">mask</span><span class="o">=~</span><span class="n">mask</span><span class="p">)</span>
+        <span class="n">value</span>  <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">np</span><span class="p">,</span> <span class="s1">&#39;nan&#39;</span><span class="o">+</span><span class="n">ytick</span><span class="p">)(</span><span class="n">masked</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="n">aperture</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">xtick</span> <span class="o">==</span> <span class="s1">&#39;freq&#39;</span><span class="p">:</span>
+        <span class="n">kidfq</span>     <span class="o">=</span> <span class="n">cube</span><span class="o">.</span><span class="n">kidfq</span><span class="o">.</span><span class="n">values</span>
+        <span class="n">freqrange</span> <span class="o">=</span> <span class="o">~</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">kidfq</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">exchs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">freqrange</span><span class="p">[</span><span class="n">exchs</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">kidfq</span><span class="p">[</span><span class="n">freqrange</span><span class="p">]</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="n">value</span><span class="p">[</span><span class="n">freqrange</span><span class="p">]</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">x</span><span class="p">)],</span> <span class="n">y</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">x</span><span class="p">)],</span> <span class="n">where</span><span class="o">=</span><span class="s1">&#39;mid&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">xtick</span> <span class="o">==</span> <span class="s1">&#39;id&#39;</span><span class="p">:</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">cube</span><span class="o">.</span><span class="n">kidid</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">where</span><span class="o">=</span><span class="s1">&#39;mid&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="n">xtick</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">xlabeldict</span><span class="p">[</span><span class="n">xtick</span><span class="p">]),</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;grey&#39;</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">{}</span><span class="s1"> (</span><span class="si">{}</span><span class="s1">)&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">datatype</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="n">ytick</span><span class="p">),</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;grey&#39;</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;spectrum&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;grey&#39;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="plot_chmap"><a class="viewcode-back" href="../../../apis/decode.plot.html#decode.plot.functions.plot_chmap">[docs]</a><span class="k">def</span> <span class="nf">plot_chmap</span><span class="p">(</span><span class="n">cube</span><span class="p">,</span> <span class="n">kidid</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Plot an intensity map.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        cube (xarray.DataArray): Cube which the spectrum information is included.</span>
+<span class="sd">        kidid (int): Kidid.</span>
+<span class="sd">        ax (matplotlib.axes): Axis the figure is plotted on.</span>
+<span class="sd">        kwargs (optional): Plot options passed to ax.imshow().</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">ax</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">gca</span><span class="p">()</span>
+    <span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">gcf</span><span class="p">()</span>
+
+    <span class="n">index</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">cube</span><span class="o">.</span><span class="n">kidid</span> <span class="o">==</span> <span class="n">kidid</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">index</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="s1">&#39;Such a kidid does not exist.&#39;</span><span class="p">)</span>
+    <span class="n">index</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">index</span><span class="p">)</span>
+
+    <span class="n">im</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">cube</span><span class="p">[:,</span> <span class="p">:,</span> <span class="n">index</span><span class="p">]</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="n">divider</span> <span class="o">=</span> <span class="n">make_axes_locatable</span><span class="p">(</span><span class="n">ax</span><span class="p">)</span>
+    <span class="n">cax</span> <span class="o">=</span> <span class="n">divider</span><span class="o">.</span><span class="n">append_axes</span><span class="p">(</span><span class="s1">&#39;right&#39;</span><span class="p">,</span> <span class="s1">&#39;5%&#39;</span><span class="p">,</span> <span class="n">pad</span><span class="o">=</span><span class="s1">&#39;3%&#39;</span><span class="p">)</span>
+    <span class="n">fig</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">im</span><span class="p">,</span> <span class="n">cax</span><span class="o">=</span><span class="n">cax</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;grey&#39;</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;grey&#39;</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;intensity map ch #</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">kidid</span><span class="p">),</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;grey&#39;</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="plotpsd"><a class="viewcode-back" href="../../../apis/decode.plot.html#decode.plot.functions.plotpsd">[docs]</a><span class="k">def</span> <span class="nf">plotpsd</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">dt</span><span class="p">,</span> <span class="n">ndivide</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">window</span><span class="o">=</span><span class="n">hanning</span><span class="p">,</span> <span class="n">overlap_half</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
@@ -327,6 +404,27 @@
     <span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;Time [s]&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;grey&#39;</span><span class="p">)</span>
     <span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;Allan Variance&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;grey&#39;</span><span class="p">)</span>
     <span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span></div>
+
+
+<span class="c1"># alias</span>
+<div class="viewcode-block" id="plotcoords"><a class="viewcode-back" href="../../../apis/decode.plot.html#decode.plot.functions.plotcoords">[docs]</a><span class="nd">@deprecation_warning</span><span class="p">(</span><span class="s1">&#39;Use plot_tcoords() instead. plotcoords() will be removed in the future.&#39;</span>\
+                     <span class="s1">&#39;The order of the arguments has been changed in plot_tcoords().&#39;</span>\
+                     <span class="s1">&#39;For a while, De:code properly passes the arguments in plotcoords() to plot_tcoords().&#39;</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">plotcoords</span><span class="p">(</span><span class="n">array</span><span class="p">,</span> <span class="n">ax</span><span class="p">,</span> <span class="n">coords</span><span class="p">,</span> <span class="n">scantypes</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="n">plot_tcoords</span><span class="p">(</span><span class="n">array</span><span class="p">,</span> <span class="n">coords</span><span class="p">,</span> <span class="n">scantypes</span><span class="o">=</span><span class="n">scantypes</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="plottimestream"><a class="viewcode-back" href="../../../apis/decode.plot.html#decode.plot.functions.plottimestream">[docs]</a><span class="nd">@deprecation_warning</span><span class="p">(</span><span class="s1">&#39;Use plot_timestream() instead. plottimestream() has been removed.&#39;</span>\
+                     <span class="s1">&#39;The arguments has been changed in plot_timestream().&#39;</span><span class="p">,</span> <span class="ne">DeprecationWarning</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">plottimestream</span><span class="p">(</span><span class="n">array</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">xtick</span><span class="o">=</span><span class="s1">&#39;time&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">pass</span></div>
+
+
+<div class="viewcode-block" id="plotspectrum"><a class="viewcode-back" href="../../../apis/decode.plot.html#decode.plot.functions.plotspectrum">[docs]</a><span class="nd">@deprecation_warning</span><span class="p">(</span><span class="s1">&#39;Use plot_spectrum() instead. plotspectrum() will be removed in the future.&#39;</span>\
+                     <span class="s1">&#39;The order of the arguments has been changed in plot_spectrum().&#39;</span>\
+                     <span class="s1">&#39;For a while, De:code properly passes the arguments in plotspectrum() to plot_spectrum().&#39;</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">plotspectrum</span><span class="p">(</span><span class="n">cube</span><span class="p">,</span> <span class="n">ax</span><span class="p">,</span> <span class="n">xtick</span><span class="p">,</span> <span class="n">ytick</span><span class="p">,</span> <span class="n">aperture</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="n">plot_spectrum</span><span class="p">(</span><span class="n">cube</span><span class="p">,</span> <span class="n">xtick</span><span class="p">,</span> <span class="n">ytick</span><span class="p">,</span> <span class="n">aperture</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
 </pre></div>
 
            </div>
@@ -361,7 +459,7 @@
     <script type="text/javascript">
         var DOCUMENTATION_OPTIONS = {
             URL_ROOT:'../../../',
-            VERSION:'0.4.3',
+            VERSION:'0.5.0',
             LANGUAGE:'None',
             COLLAPSE_INDEX:false,
             FILE_SUFFIX:'.html',

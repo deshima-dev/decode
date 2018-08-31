@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>decode.io.functions &mdash; De:code 0.4.3 documentation</title>
+  <title>decode.io.functions &mdash; De:code 0.5.0 documentation</title>
   
 
   
@@ -56,7 +56,7 @@
             
             
               <div class="version">
-                0.4.3
+                0.5.0
               </div>
             
           
@@ -154,11 +154,16 @@
 <span class="p">]</span>
 
 <span class="c1"># standard library</span>
+<span class="kn">from</span> <span class="nn">datetime</span> <span class="k">import</span> <span class="n">datetime</span>
+<span class="kn">from</span> <span class="nn">pytz</span> <span class="k">import</span> <span class="n">timezone</span>
 <span class="kn">from</span> <span class="nn">logging</span> <span class="k">import</span> <span class="n">getLogger</span>
 <span class="kn">from</span> <span class="nn">uuid</span> <span class="k">import</span> <span class="n">uuid4</span>
 <span class="kn">from</span> <span class="nn">pathlib</span> <span class="k">import</span> <span class="n">Path</span>
+<span class="kn">from</span> <span class="nn">pkgutil</span> <span class="k">import</span> <span class="n">get_data</span>
+<span class="n">logger</span> <span class="o">=</span> <span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
 
 <span class="c1"># dependent packages</span>
+<span class="kn">import</span> <span class="nn">yaml</span>
 <span class="kn">import</span> <span class="nn">decode</span> <span class="k">as</span> <span class="nn">dc</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">import</span> <span class="nn">xarray</span> <span class="k">as</span> <span class="nn">xr</span>
@@ -212,10 +217,9 @@
 <span class="sd">    Returns:</span>
 <span class="sd">        decode array (decode.array): Loaded decode array.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="n">mode</span> <span class="ow">in</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">]:</span>
-        <span class="n">logger</span> <span class="o">=</span> <span class="n">getLogger</span><span class="p">(</span><span class="s1">&#39;decode.io.loaddfits&#39;</span><span class="p">)</span>
-    <span class="k">else</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">mode</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">]:</span>
         <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="n">mode</span><span class="p">)</span>
+
     <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;coordtype starttime endtime mode loadtype&#39;</span><span class="p">)</span>
     <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">{}</span><span class="s1"> </span><span class="si">{}</span><span class="s1"> </span><span class="si">{}</span><span class="s1"> </span><span class="si">{}</span><span class="s1"> </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">coordtype</span><span class="p">,</span> <span class="n">starttime</span><span class="p">,</span> <span class="n">endtime</span><span class="p">,</span> <span class="n">mode</span><span class="p">,</span> <span class="n">loadtype</span><span class="p">))</span>
 
@@ -406,24 +410,60 @@
     <span class="k">return</span> <span class="n">array</span></div>
 
 
-<div class="viewcode-block" id="savefits"><a class="viewcode-back" href="../../../apis/decode.io.html#decode.io.functions.savefits">[docs]</a><span class="k">def</span> <span class="nf">savefits</span><span class="p">(</span><span class="n">dataarray</span><span class="p">,</span> <span class="n">fitsname</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Save a dataarray to a 3D-cube FITS file.</span>
+<div class="viewcode-block" id="savefits"><a class="viewcode-back" href="../../../apis/decode.io.html#decode.io.functions.savefits">[docs]</a><span class="k">def</span> <span class="nf">savefits</span><span class="p">(</span><span class="n">cube</span><span class="p">,</span> <span class="n">fitsname</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Save a cube to a 3D-cube FITS file.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        dataarray (xarray.DataArray): Dataarray to be saved.</span>
+<span class="sd">        cube (xarray.DataArray): Cube to be saved.</span>
 <span class="sd">        fitsname (str): Name of output FITS file.</span>
 <span class="sd">        kwargs (optional): Other arguments common with astropy.io.fits.writeto().</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">fitsname</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="n">fitsname</span><span class="p">)</span><span class="o">.</span><span class="n">expanduser</span><span class="p">())</span>
+    <span class="c1">### pick up kwargs</span>
+    <span class="n">dropdeg</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;dropdeg&#39;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+    <span class="n">ndim</span>    <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">cube</span><span class="o">.</span><span class="n">dims</span><span class="p">)</span>
 
-    <span class="k">if</span> <span class="n">dataarray</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="s1">&#39;dca&#39;</span><span class="p">:</span>
-        <span class="k">pass</span>
-    <span class="k">elif</span> <span class="n">dataarray</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="s1">&#39;dcc&#39;</span><span class="p">:</span>
-        <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="o">.</span><span class="n">dcc</span><span class="o">.</span><span class="n">savefits</span><span class="p">(</span><span class="n">dataarray</span><span class="p">,</span> <span class="n">fitsname</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-    <span class="k">elif</span> <span class="n">dataarray</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="s1">&#39;dcs&#39;</span><span class="p">:</span>
-        <span class="k">pass</span>
+    <span class="c1">### load yaml</span>
+    <span class="n">FITSINFO</span> <span class="o">=</span> <span class="n">get_data</span><span class="p">(</span><span class="s1">&#39;decode&#39;</span><span class="p">,</span> <span class="s1">&#39;data/fitsinfo.yaml&#39;</span><span class="p">)</span>
+    <span class="n">hdrdata</span> <span class="o">=</span> <span class="n">yaml</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">FITSINFO</span><span class="p">,</span> <span class="n">dc</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">OrderedLoader</span><span class="p">)</span>
+
+    <span class="c1">### default header</span>
+    <span class="k">if</span> <span class="n">ndim</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="n">header</span> <span class="o">=</span> <span class="n">fits</span><span class="o">.</span><span class="n">Header</span><span class="p">(</span><span class="n">hdrdata</span><span class="p">[</span><span class="s1">&#39;dcube_2d&#39;</span><span class="p">])</span>
+        <span class="n">data</span>   <span class="o">=</span> <span class="n">cube</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">T</span>
+    <span class="k">elif</span> <span class="n">ndim</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">dropdeg</span><span class="p">:</span>
+            <span class="n">header</span> <span class="o">=</span> <span class="n">fits</span><span class="o">.</span><span class="n">Header</span><span class="p">(</span><span class="n">hdrdata</span><span class="p">[</span><span class="s1">&#39;dcube_2d&#39;</span><span class="p">])</span>
+            <span class="n">data</span>   <span class="o">=</span> <span class="n">cube</span><span class="o">.</span><span class="n">values</span><span class="p">[:,</span> <span class="p">:,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">T</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">header</span> <span class="o">=</span> <span class="n">fits</span><span class="o">.</span><span class="n">Header</span><span class="p">(</span><span class="n">hdrdata</span><span class="p">[</span><span class="s1">&#39;dcube_3d&#39;</span><span class="p">])</span>
+
+            <span class="n">kidfq</span>     <span class="o">=</span> <span class="n">cube</span><span class="o">.</span><span class="n">kidfq</span><span class="o">.</span><span class="n">values</span>
+            <span class="n">freqrange</span> <span class="o">=</span> <span class="o">~</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">kidfq</span><span class="p">)</span>
+            <span class="n">orderedfq</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">kidfq</span><span class="p">[</span><span class="n">freqrange</span><span class="p">])</span>
+            <span class="n">newcube</span>   <span class="o">=</span> <span class="n">cube</span><span class="p">[:,</span> <span class="p">:,</span> <span class="n">orderedfq</span><span class="p">]</span>
+            <span class="n">data</span>      <span class="o">=</span> <span class="n">newcube</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">T</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="k">pass</span></div>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="n">ndim</span><span class="p">)</span>
+
+    <span class="c1">### update Header</span>
+    <span class="k">if</span> <span class="n">cube</span><span class="o">.</span><span class="n">coordsys</span> <span class="o">==</span> <span class="s1">&#39;AZEL&#39;</span><span class="p">:</span>
+        <span class="n">header</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s1">&#39;CTYPE1&#39;</span><span class="p">:</span> <span class="s1">&#39;dAZ&#39;</span><span class="p">,</span> <span class="s1">&#39;CTYPE2&#39;</span><span class="p">:</span> <span class="s1">&#39;dEL&#39;</span><span class="p">})</span>
+    <span class="k">elif</span> <span class="n">cube</span><span class="o">.</span><span class="n">coordsys</span> <span class="o">==</span> <span class="s1">&#39;RADEC&#39;</span><span class="p">:</span>
+        <span class="n">header</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s1">&#39;OBSRA&#39;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">cube</span><span class="o">.</span><span class="n">xref</span><span class="p">),</span> <span class="s1">&#39;OBSDEC&#39;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">cube</span><span class="o">.</span><span class="n">yref</span><span class="p">)})</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">pass</span>
+    <span class="n">header</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s1">&#39;CRVAL1&#39;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">cube</span><span class="o">.</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span>
+                   <span class="s1">&#39;CDELT1&#39;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">cube</span><span class="o">.</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">cube</span><span class="o">.</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span>
+                   <span class="s1">&#39;CRVAL2&#39;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">cube</span><span class="o">.</span><span class="n">y</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span>
+                   <span class="s1">&#39;CDELT2&#39;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">cube</span><span class="o">.</span><span class="n">y</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">cube</span><span class="o">.</span><span class="n">y</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span>
+                   <span class="s1">&#39;DATE&#39;</span><span class="p">:</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">(</span><span class="n">timezone</span><span class="p">(</span><span class="s1">&#39;UTC&#39;</span><span class="p">))</span><span class="o">.</span><span class="n">isoformat</span><span class="p">()})</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">3</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="ow">not</span> <span class="n">dropdeg</span><span class="p">):</span>
+        <span class="n">header</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s1">&#39;CRVAL3&#39;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">newcube</span><span class="o">.</span><span class="n">kidfq</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span>
+                       <span class="s1">&#39;CDELT3&#39;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">newcube</span><span class="o">.</span><span class="n">kidfq</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">newcube</span><span class="o">.</span><span class="n">kidfq</span><span class="p">[</span><span class="mi">0</span><span class="p">])})</span>
+
+    <span class="n">fitsname</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="n">fitsname</span><span class="p">)</span><span class="o">.</span><span class="n">expanduser</span><span class="p">())</span>
+    <span class="n">fits</span><span class="o">.</span><span class="n">writeto</span><span class="p">(</span><span class="n">fitsname</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">header</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">{}</span><span class="s1"> has been created.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">fitsname</span><span class="p">))</span></div>
 
 
 <div class="viewcode-block" id="loadnetcdf"><a class="viewcode-back" href="../../../apis/decode.io.html#decode.io.functions.loadnetcdf">[docs]</a><span class="k">def</span> <span class="nf">loadnetcdf</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">copy</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
@@ -436,8 +476,6 @@
 <span class="sd">    Returns:</span>
 <span class="sd">        dataarray (xarray.DataArray): Loaded dataarray.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">logger</span> <span class="o">=</span> <span class="n">getLogger</span><span class="p">(</span><span class="s1">&#39;decode.io.loadnetcdf&#39;</span><span class="p">)</span>
-
     <span class="n">filename</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span><span class="o">.</span><span class="n">expanduser</span><span class="p">())</span>
 
     <span class="k">if</span> <span class="n">copy</span><span class="p">:</span>
@@ -465,8 +503,6 @@
 <span class="sd">        filename (str): Filename (used as &lt;filename&gt;.nc).</span>
 <span class="sd">            If not spacified, random 8-character name will be used.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">logger</span> <span class="o">=</span> <span class="n">getLogger</span><span class="p">(</span><span class="s1">&#39;decode.io.savenetcdf&#39;</span><span class="p">)</span>
-
     <span class="k">if</span> <span class="n">filename</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">dataarray</span><span class="o">.</span><span class="n">name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">filename</span> <span class="o">=</span> <span class="n">dataarray</span><span class="o">.</span><span class="n">name</span>
@@ -514,7 +550,7 @@
     <script type="text/javascript">
         var DOCUMENTATION_OPTIONS = {
             URL_ROOT:'../../../',
-            VERSION:'0.4.3',
+            VERSION:'0.5.0',
             LANGUAGE:'None',
             COLLAPSE_INDEX:false,
             FILE_SUFFIX:'.html',

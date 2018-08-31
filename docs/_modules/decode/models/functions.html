@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>decode.models.functions &mdash; De:code 0.4.3 documentation</title>
+  <title>decode.models.functions &mdash; De:code 0.5.0 documentation</title>
   
 
   
@@ -56,7 +56,7 @@
             
             
               <div class="version">
-                0.4.3
+                0.5.0
               </div>
             
           
@@ -147,13 +147,10 @@
 
 <span class="c1"># public items</span>
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
-    <span class="s1">&#39;skewgauss&#39;</span><span class="p">,</span>
-    <span class="s1">&#39;savgol_filter&#39;</span><span class="p">,</span>
     <span class="s1">&#39;pca&#39;</span><span class="p">,</span>
-    <span class="s1">&#39;rsky_calibration&#39;</span><span class="p">,</span>
     <span class="s1">&#39;chopper_calibration&#39;</span><span class="p">,</span>
-    <span class="s1">&#39;r_subtraction&#39;</span><span class="p">,</span>
     <span class="s1">&#39;r_division&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;gauss_fit&#39;</span>
 <span class="p">]</span>
 
 <span class="c1"># standard library</span>
@@ -162,68 +159,8 @@
 <span class="c1"># dependent packages</span>
 <span class="kn">import</span> <span class="nn">decode</span> <span class="k">as</span> <span class="nn">dc</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-<span class="kn">from</span> <span class="nn">scipy.special</span> <span class="k">import</span> <span class="n">erf</span>
-<span class="kn">from</span> <span class="nn">scipy</span> <span class="k">import</span> <span class="n">signal</span>
 <span class="kn">from</span> <span class="nn">sklearn.decomposition</span> <span class="k">import</span> <span class="n">TruncatedSVD</span>
 <span class="kn">import</span> <span class="nn">xarray</span> <span class="k">as</span> <span class="nn">xr</span>
-
-
-<span class="c1">##### skewed Gaussian</span>
-<div class="viewcode-block" id="skewgauss"><a class="viewcode-back" href="../../../apis/decode.models.html#decode.models.functions.skewgauss">[docs]</a><span class="k">def</span> <span class="nf">skewgauss</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">sigma</span><span class="p">,</span> <span class="n">mu</span><span class="p">,</span> <span class="n">alpha</span><span class="p">,</span> <span class="n">a</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Skewed Gaussian.</span>
-
-<span class="sd">    Args:</span>
-<span class="sd">        x (np.ndarray): Dataset.</span>
-<span class="sd">        sigma (float): Standard deviation.</span>
-<span class="sd">        mu (float): Mean.</span>
-<span class="sd">        alpha (float): Skewness.</span>
-<span class="sd">        a (float): Normalization factor.</span>
-
-<span class="sd">    Returns:</span>
-<span class="sd">        skewed gaussian (np.ndarray): Skewed Gaussian.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">normpdf</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="p">(</span><span class="n">sigma</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)))</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="p">(</span><span class="n">x</span> <span class="o">-</span> <span class="n">mu</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">sigma</span><span class="o">**</span><span class="mi">2</span><span class="p">))</span>
-    <span class="n">normcdf</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">erf</span><span class="p">((</span><span class="n">alpha</span> <span class="o">*</span> <span class="p">((</span><span class="n">x</span> <span class="o">-</span> <span class="n">mu</span><span class="p">)</span> <span class="o">/</span> <span class="n">sigma</span><span class="p">))</span> <span class="o">/</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">2</span><span class="p">))))</span>
-
-    <span class="k">return</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">a</span> <span class="o">*</span> <span class="n">normpdf</span> <span class="o">*</span> <span class="n">normcdf</span></div>
-
-
-<div class="viewcode-block" id="savgol_filter"><a class="viewcode-back" href="../../../apis/decode.models.html#decode.models.functions.savgol_filter">[docs]</a><span class="nd">@dc</span><span class="o">.</span><span class="n">xarrayfunc</span>
-<span class="k">def</span> <span class="nf">savgol_filter</span><span class="p">(</span><span class="n">array</span><span class="p">,</span> <span class="n">win</span><span class="o">=</span><span class="mi">2001</span><span class="p">,</span> <span class="n">polyn</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">iteration</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">threshold</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Apply scipy.signal.savgol_filter iteratively.</span>
-
-<span class="sd">    Args:</span>
-<span class="sd">        array (decode.array): Decode array which will be filtered.</span>
-<span class="sd">        win (int): Length of window.</span>
-<span class="sd">        polyn (int): Order of polynominal function.</span>
-<span class="sd">        iteration (int): The number of iterations.</span>
-<span class="sd">        threshold (float): Threshold above which the data will be used as signals</span>
-<span class="sd">            in units of sigma.</span>
-
-<span class="sd">    Returns:</span>
-<span class="sd">        fitted (decode.array): Fitted results.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">logger</span> <span class="o">=</span> <span class="n">getLogger</span><span class="p">(</span><span class="s1">&#39;decode.models.savgol_filter&#39;</span><span class="p">)</span>
-    <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s1">&#39;Do not use this function. We recommend you to use dc.models.pca instead.&#39;</span><span class="p">)</span>
-    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;win polyn iteration threshold&#39;</span><span class="p">)</span>
-    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">{}</span><span class="s1"> </span><span class="si">{}</span><span class="s1"> </span><span class="si">{}</span><span class="s1"> </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">win</span><span class="p">,</span> <span class="n">polyn</span><span class="p">,</span> <span class="n">iteration</span><span class="p">,</span> <span class="n">threshold</span><span class="p">))</span>
-    <span class="c1">### 1st estimation</span>
-    <span class="n">array</span>    <span class="o">=</span> <span class="n">array</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
-    <span class="n">fitted</span>   <span class="o">=</span> <span class="n">signal</span><span class="o">.</span><span class="n">savgol_filter</span><span class="p">(</span><span class="n">array</span><span class="p">,</span> <span class="n">win</span><span class="p">,</span> <span class="n">polyn</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-    <span class="n">filtered</span> <span class="o">=</span> <span class="n">array</span> <span class="o">-</span> <span class="n">fitted</span>
-    <span class="c1">### nth iteration</span>
-    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">iteration</span><span class="p">):</span>
-        <span class="n">sigma</span>  <span class="o">=</span> <span class="n">filtered</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-        <span class="n">mask</span>   <span class="o">=</span> <span class="p">(</span><span class="n">filtered</span> <span class="o">&gt;=</span> <span class="n">threshold</span> <span class="o">*</span> <span class="n">sigma</span><span class="p">)</span>
-        <span class="n">masked</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ma</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">filtered</span><span class="p">,</span> <span class="n">mask</span><span class="o">=</span><span class="n">mask</span><span class="p">)</span>
-        <span class="c1">### maskされた点についてはthreshold * sigmaのデータで埋める</span>
-        <span class="n">filled</span> <span class="o">=</span> <span class="n">masked</span><span class="o">.</span><span class="n">filled</span><span class="p">(</span><span class="n">threshold</span> <span class="o">*</span> <span class="n">sigma</span><span class="p">)</span>
-        <span class="c1">### fitted dataを足し、このデータに対して再度savgol_filterをかける</span>
-        <span class="n">clipped</span>  <span class="o">=</span> <span class="n">filled</span> <span class="o">+</span> <span class="n">fitted</span>
-        <span class="n">fitted</span>   <span class="o">=</span> <span class="n">signal</span><span class="o">.</span><span class="n">savgol_filter</span><span class="p">(</span><span class="n">clipped</span><span class="p">,</span> <span class="n">win</span><span class="p">,</span> <span class="n">polyn</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-        <span class="n">filtered</span> <span class="o">=</span> <span class="n">array</span> <span class="o">-</span> <span class="n">fitted</span>
-
-    <span class="k">return</span> <span class="n">fitted</span></div>
 
 
 <div class="viewcode-block" id="pca"><a class="viewcode-back" href="../../../apis/decode.models.html#decode.models.functions.pca">[docs]</a><span class="k">def</span> <span class="nf">pca</span><span class="p">(</span><span class="n">onarray</span><span class="p">,</span> <span class="n">offarray</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">exchs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">pc</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;mean&#39;</span><span class="p">):</span>
@@ -303,90 +240,6 @@
         <span class="k">return</span> <span class="n">Xatm</span></div>
 
 
-<div class="viewcode-block" id="rsky_calibration"><a class="viewcode-back" href="../../../apis/decode.models.html#decode.models.functions.rsky_calibration">[docs]</a><span class="k">def</span> <span class="nf">rsky_calibration</span><span class="p">(</span><span class="n">onarray</span><span class="p">,</span> <span class="n">offarray</span><span class="p">,</span> <span class="n">rarray</span><span class="p">,</span> <span class="n">Tamb</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;mean&#39;</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Apply R-sky calibrations.</span>
-
-<span class="sd">    Args:</span>
-<span class="sd">        onarray (decode.array): Decode array of on-point observations.</span>
-<span class="sd">        offarray (decode.array): Decode array of off-point observations.</span>
-<span class="sd">        rarray (decode.array): Decode array of R observations.</span>
-<span class="sd">        Tamb (float): Ambient temperature [K].</span>
-<span class="sd">        mode (str): The way of correcting offsets.</span>
-<span class="sd">            &#39;mean&#39;: Mean.</span>
-<span class="sd">            &#39;median&#39;: Median.</span>
-
-<span class="sd">    Returns:</span>
-<span class="sd">        onarray_cal (decode.array): Calibrated array of on-point observations.</span>
-<span class="sd">        offarray_cal (decode.array): Calibrated array of off-point observations.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">logger</span> <span class="o">=</span> <span class="n">getLogger</span><span class="p">(</span><span class="s1">&#39;decode.models.rsky_calibration&#39;</span><span class="p">)</span>
-    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;mode&#39;</span><span class="p">)</span>
-    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">mode</span><span class="p">))</span>
-
-    <span class="n">offid</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">offarray</span><span class="o">.</span><span class="n">scanid</span><span class="p">)</span>
-    <span class="n">onid</span>  <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">onarray</span><span class="o">.</span><span class="n">scanid</span><span class="p">)</span>
-    <span class="n">rid</span>   <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">rarray</span><span class="o">.</span><span class="n">scanid</span><span class="p">)</span>
-
-    <span class="n">onarray</span>   <span class="o">=</span> <span class="n">onarray</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span> <span class="c1"># Xarray</span>
-    <span class="n">onvalues</span>  <span class="o">=</span> <span class="n">onarray</span><span class="o">.</span><span class="n">values</span>
-    <span class="n">onscanid</span>  <span class="o">=</span> <span class="n">onarray</span><span class="o">.</span><span class="n">scanid</span><span class="o">.</span><span class="n">values</span>
-    <span class="n">offarray</span>  <span class="o">=</span> <span class="n">offarray</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span> <span class="c1"># Xarray</span>
-    <span class="n">offvalues</span> <span class="o">=</span> <span class="n">offarray</span><span class="o">.</span><span class="n">values</span>
-    <span class="n">offscanid</span> <span class="o">=</span> <span class="n">offarray</span><span class="o">.</span><span class="n">scanid</span><span class="o">.</span><span class="n">values</span>
-    <span class="n">rarray</span>    <span class="o">=</span> <span class="n">rarray</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span> <span class="c1"># Xarray</span>
-    <span class="n">rvalues</span>   <span class="o">=</span> <span class="n">rarray</span><span class="o">.</span><span class="n">values</span>
-    <span class="n">rscanid</span>   <span class="o">=</span> <span class="n">rarray</span><span class="o">.</span><span class="n">scanid</span><span class="o">.</span><span class="n">values</span>
-    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">onid</span><span class="p">:</span>
-        <span class="n">oleftid</span>  <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">searchsorted</span><span class="p">(</span><span class="n">offid</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
-        <span class="n">orightid</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">searchsorted</span><span class="p">(</span><span class="n">offid</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span>
-        <span class="n">rleftid</span>  <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">searchsorted</span><span class="p">(</span><span class="n">rid</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
-        <span class="n">rrightid</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">searchsorted</span><span class="p">(</span><span class="n">rid</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span>
-
-        <span class="n">Xon</span> <span class="o">=</span> <span class="n">onvalues</span><span class="p">[</span><span class="n">onscanid</span> <span class="o">==</span> <span class="n">i</span><span class="p">]</span>
-        <span class="k">if</span> <span class="n">oleftid</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
-            <span class="n">Xoff</span>   <span class="o">=</span> <span class="n">offvalues</span><span class="p">[</span><span class="n">offscanid</span> <span class="o">==</span> <span class="n">offid</span><span class="p">[</span><span class="n">orightid</span><span class="p">]]</span>
-            <span class="n">Xoff_m</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">np</span><span class="p">,</span> <span class="s1">&#39;nan&#39;</span><span class="o">+</span><span class="n">mode</span><span class="p">)(</span><span class="n">Xoff</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-        <span class="k">elif</span> <span class="n">orightid</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">offid</span><span class="p">):</span>
-            <span class="n">Xoff</span>   <span class="o">=</span> <span class="n">offvalues</span><span class="p">[</span><span class="n">offscanid</span> <span class="o">==</span> <span class="n">offid</span><span class="p">[</span><span class="n">oleftid</span><span class="p">]]</span>
-            <span class="n">Xoff_m</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">np</span><span class="p">,</span> <span class="s1">&#39;nan&#39;</span><span class="o">+</span><span class="n">mode</span><span class="p">)(</span><span class="n">Xoff</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">Xoff_l</span>  <span class="o">=</span> <span class="n">offvalues</span><span class="p">[</span><span class="n">offscanid</span> <span class="o">==</span> <span class="n">offid</span><span class="p">[</span><span class="n">oleftid</span><span class="p">]]</span>
-            <span class="n">Xoff_r</span>  <span class="o">=</span> <span class="n">offvalues</span><span class="p">[</span><span class="n">offscanid</span> <span class="o">==</span> <span class="n">offid</span><span class="p">[</span><span class="n">orightid</span><span class="p">]]</span>
-            <span class="n">Xoff_m</span>  <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">np</span><span class="p">,</span> <span class="s1">&#39;nan&#39;</span><span class="o">+</span><span class="n">mode</span><span class="p">)(</span><span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">([</span><span class="n">Xoff_l</span><span class="p">,</span> <span class="n">Xoff_r</span><span class="p">]),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-
-        <span class="k">if</span> <span class="n">rleftid</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
-            <span class="n">Xr</span>   <span class="o">=</span> <span class="n">rvalues</span><span class="p">[</span><span class="n">rscanid</span> <span class="o">==</span> <span class="n">rid</span><span class="p">[</span><span class="n">rrightid</span><span class="p">]]</span>
-            <span class="n">Xr_m</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">np</span><span class="p">,</span> <span class="s1">&#39;nan&#39;</span><span class="o">+</span><span class="n">mode</span><span class="p">)(</span><span class="n">Xr</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-        <span class="k">elif</span> <span class="n">rrightid</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">rid</span><span class="p">):</span>
-            <span class="n">Xr</span>   <span class="o">=</span> <span class="n">rvalues</span><span class="p">[</span><span class="n">rscanid</span> <span class="o">==</span> <span class="n">rid</span><span class="p">[</span><span class="n">rleftid</span><span class="p">]]</span>
-            <span class="n">Xr_m</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">np</span><span class="p">,</span> <span class="s1">&#39;nan&#39;</span><span class="o">+</span><span class="n">mode</span><span class="p">)(</span><span class="n">Xr</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">Xr_l</span>  <span class="o">=</span> <span class="n">rvalues</span><span class="p">[</span><span class="n">rscanid</span> <span class="o">==</span> <span class="n">rid</span><span class="p">[</span><span class="n">rleftid</span><span class="p">]]</span>
-            <span class="n">Xr_r</span>  <span class="o">=</span> <span class="n">rvalues</span><span class="p">[</span><span class="n">rscanid</span> <span class="o">==</span> <span class="n">rid</span><span class="p">[</span><span class="n">rrightid</span><span class="p">]]</span>
-            <span class="n">Xr_m</span>  <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">np</span><span class="p">,</span> <span class="s1">&#39;nan&#39;</span><span class="o">+</span><span class="n">mode</span><span class="p">)(</span><span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">([</span><span class="n">Xr_l</span><span class="p">,</span> <span class="n">Xr_r</span><span class="p">]),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-        <span class="n">onvalues</span><span class="p">[</span><span class="n">onscanid</span> <span class="o">==</span> <span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">Tamb</span> <span class="o">*</span> <span class="p">(</span><span class="n">Xon</span> <span class="o">-</span> <span class="n">Xoff_m</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">Xr_m</span> <span class="o">-</span> <span class="n">Xoff_m</span><span class="p">)</span>
-
-    <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="n">offid</span><span class="p">:</span>
-        <span class="n">rleftid</span>  <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">searchsorted</span><span class="p">(</span><span class="n">rid</span><span class="p">,</span> <span class="n">j</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
-        <span class="n">rrightid</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">searchsorted</span><span class="p">(</span><span class="n">rid</span><span class="p">,</span> <span class="n">j</span><span class="p">)</span>
-
-        <span class="n">Xoff</span>   <span class="o">=</span> <span class="n">offvalues</span><span class="p">[</span><span class="n">offscanid</span> <span class="o">==</span> <span class="n">j</span><span class="p">]</span>
-        <span class="n">Xoff_m</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">np</span><span class="p">,</span> <span class="s1">&#39;nan&#39;</span><span class="o">+</span><span class="n">mode</span><span class="p">)(</span><span class="n">Xoff</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">rleftid</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
-            <span class="n">Xr</span>   <span class="o">=</span> <span class="n">rvalues</span><span class="p">[</span><span class="n">rscanid</span> <span class="o">==</span> <span class="n">rid</span><span class="p">[</span><span class="n">rrightid</span><span class="p">]]</span>
-            <span class="n">Xr_m</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">np</span><span class="p">,</span> <span class="s1">&#39;nan&#39;</span><span class="o">+</span><span class="n">mode</span><span class="p">)(</span><span class="n">Xr</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-        <span class="k">elif</span> <span class="n">rrightid</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">rid</span><span class="p">):</span>
-            <span class="n">Xr</span>   <span class="o">=</span> <span class="n">rvalues</span><span class="p">[</span><span class="n">rscanid</span> <span class="o">==</span> <span class="n">rid</span><span class="p">[</span><span class="n">rleftid</span><span class="p">]]</span>
-            <span class="n">Xr_m</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">np</span><span class="p">,</span> <span class="s1">&#39;nan&#39;</span><span class="o">+</span><span class="n">mode</span><span class="p">)(</span><span class="n">Xr</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">Xr_l</span>  <span class="o">=</span> <span class="n">rvalues</span><span class="p">[</span><span class="n">rscanid</span> <span class="o">==</span> <span class="n">rid</span><span class="p">[</span><span class="n">rleftid</span><span class="p">]]</span>
-            <span class="n">Xr_r</span>  <span class="o">=</span> <span class="n">rvalues</span><span class="p">[</span><span class="n">rscanid</span> <span class="o">==</span> <span class="n">rid</span><span class="p">[</span><span class="n">rrightid</span><span class="p">]]</span>
-            <span class="n">Xr_m</span>  <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">np</span><span class="p">,</span> <span class="s1">&#39;nan&#39;</span><span class="o">+</span><span class="n">mode</span><span class="p">)(</span><span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">([</span><span class="n">Xr_l</span><span class="p">,</span> <span class="n">Xr_r</span><span class="p">]),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-        <span class="n">offvalues</span><span class="p">[</span><span class="n">offscanid</span> <span class="o">==</span> <span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">Tamb</span> <span class="o">*</span> <span class="p">(</span><span class="n">Xoff</span> <span class="o">-</span> <span class="n">Xoff_m</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">Xr_m</span> <span class="o">-</span> <span class="n">Xoff_m</span><span class="p">)</span>
-
-    <span class="k">return</span> <span class="n">onarray</span><span class="p">,</span> <span class="n">offarray</span></div>
-
-
 <div class="viewcode-block" id="chopper_calibration"><a class="viewcode-back" href="../../../apis/decode.models.html#decode.models.functions.chopper_calibration">[docs]</a><span class="k">def</span> <span class="nf">chopper_calibration</span><span class="p">(</span><span class="n">onarray</span><span class="p">,</span> <span class="n">offarray</span><span class="p">,</span> <span class="n">rarray</span><span class="p">,</span> <span class="n">Tamb</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;mean&#39;</span><span class="p">):</span>
     <span class="n">logger</span> <span class="o">=</span> <span class="n">getLogger</span><span class="p">(</span><span class="s1">&#39;decode.models.chopper_calibration&#39;</span><span class="p">)</span>
     <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;mode&#39;</span><span class="p">)</span>
@@ -426,93 +279,6 @@
         <span class="n">offvalues</span><span class="p">[</span><span class="n">offscanid</span> <span class="o">==</span> <span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">Tamb</span> <span class="o">*</span> <span class="p">(</span><span class="n">Xoff</span> <span class="o">-</span> <span class="n">Xoff_m</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">Xoff_m</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="n">onarray</span><span class="p">,</span> <span class="n">offarray</span></div>
-
-
-<div class="viewcode-block" id="r_subtraction"><a class="viewcode-back" href="../../../apis/decode.models.html#decode.models.functions.r_subtraction">[docs]</a><span class="k">def</span> <span class="nf">r_subtraction</span><span class="p">(</span><span class="n">onarray</span><span class="p">,</span> <span class="n">offarray</span><span class="p">,</span> <span class="n">rarray</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;mean&#39;</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Apply R subtraction.</span>
-
-<span class="sd">    Args:</span>
-<span class="sd">        onarray (decode.array): Decode array of on-point observations.</span>
-<span class="sd">        offarray (decode.array): Decode array of off-point observations.</span>
-<span class="sd">        rarray (decode.array): Decode array of R observations.</span>
-<span class="sd">        mode (str): Method for the selection of nominal R value.</span>
-<span class="sd">            &#39;mean&#39;: Mean.</span>
-<span class="sd">            &#39;median&#39;: Median.</span>
-
-<span class="sd">    Returns:</span>
-<span class="sd">        onarray_cal (decode.array): Calibrated array of on-point observations.</span>
-<span class="sd">        offarray_cal (decode.array): Calibrated array of off-point observations.</span>
-
-<span class="sd">    Warnings:</span>
-<span class="sd">         Current implementation is too slow!</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">logger</span> <span class="o">=</span> <span class="n">getLogger</span><span class="p">(</span><span class="s1">&#39;decode.models.r_subtraction&#39;</span><span class="p">)</span>
-    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;mode&#39;</span><span class="p">)</span>
-    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">mode</span><span class="p">))</span>
-
-    <span class="n">offid</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">offarray</span><span class="o">.</span><span class="n">scanid</span><span class="p">)</span>
-    <span class="n">onid</span>  <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">onarray</span><span class="o">.</span><span class="n">scanid</span><span class="p">)</span>
-    <span class="n">rid</span>   <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">rarray</span><span class="o">.</span><span class="n">scanid</span><span class="p">)</span>
-
-    <span class="n">onarray</span>  <span class="o">=</span> <span class="n">onarray</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
-    <span class="n">offarray</span> <span class="o">=</span> <span class="n">offarray</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
-
-    <span class="n">Xon_rsub</span>  <span class="o">=</span> <span class="p">[]</span>
-    <span class="n">Xoff_rsub</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="c1"># print(len(onid))</span>
-    <span class="k">for</span> <span class="n">n</span><span class="p">,</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">onid</span><span class="p">):</span>
-        <span class="c1"># print(&#39;{}&#39;.format(n), end=&#39;, &#39;)</span>
-        <span class="n">rleftid</span>  <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">searchsorted</span><span class="p">(</span><span class="n">rid</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
-        <span class="n">rrightid</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">searchsorted</span><span class="p">(</span><span class="n">rid</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span>
-
-        <span class="n">Xon</span> <span class="o">=</span> <span class="n">onarray</span><span class="p">[</span><span class="n">onarray</span><span class="o">.</span><span class="n">scanid</span> <span class="o">==</span> <span class="n">i</span><span class="p">]</span>
-        <span class="k">if</span> <span class="n">rleftid</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
-            <span class="n">Xr</span>   <span class="o">=</span> <span class="n">rarray</span><span class="p">[</span><span class="n">rarray</span><span class="o">.</span><span class="n">scanid</span> <span class="o">==</span> <span class="n">rid</span><span class="p">[</span><span class="n">rrightid</span><span class="p">]]</span>
-            <span class="n">Xr_m</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">Xr</span><span class="p">,</span> <span class="n">mode</span><span class="p">)(</span><span class="n">dim</span><span class="o">=</span><span class="s1">&#39;t&#39;</span><span class="p">)</span>
-        <span class="k">elif</span> <span class="n">rrightid</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">rid</span><span class="p">):</span>
-            <span class="n">Xr</span>   <span class="o">=</span> <span class="n">rarray</span><span class="p">[</span><span class="n">rarray</span><span class="o">.</span><span class="n">scanid</span> <span class="o">==</span> <span class="n">rid</span><span class="p">[</span><span class="n">rleftid</span><span class="p">]]</span>
-            <span class="n">Xr_m</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">Xr</span><span class="p">,</span> <span class="n">mode</span><span class="p">)(</span><span class="n">dim</span><span class="o">=</span><span class="s1">&#39;t&#39;</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">Xr_l</span>  <span class="o">=</span> <span class="n">rarray</span><span class="p">[</span><span class="n">rarray</span><span class="o">.</span><span class="n">scanid</span> <span class="o">==</span> <span class="n">rid</span><span class="p">[</span><span class="n">rleftid</span><span class="p">]]</span>
-            <span class="n">Xr_r</span>  <span class="o">=</span> <span class="n">rarray</span><span class="p">[</span><span class="n">rarray</span><span class="o">.</span><span class="n">scanid</span> <span class="o">==</span> <span class="n">rid</span><span class="p">[</span><span class="n">rrightid</span><span class="p">]]</span>
-            <span class="n">Xr_m</span>  <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">dc</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">Xr_l</span><span class="p">,</span> <span class="n">Xr_r</span><span class="p">],</span> <span class="n">dim</span><span class="o">=</span><span class="s1">&#39;t&#39;</span><span class="p">),</span> <span class="n">mode</span><span class="p">)(</span><span class="n">dim</span><span class="o">=</span><span class="s1">&#39;t&#39;</span><span class="p">)</span>
-        <span class="n">Xon_rsub</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Xon</span> <span class="o">-</span> <span class="n">Xr_m</span><span class="p">)</span>
-        <span class="c1"># Xon -= Xr_m</span>
-
-    <span class="c1"># print(len(offid))</span>
-    <span class="k">for</span> <span class="n">n</span><span class="p">,</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">offid</span><span class="p">):</span>
-        <span class="c1"># print(&#39;{}&#39;.format(n), end=&#39;, &#39;)</span>
-        <span class="n">rleftid</span>  <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">searchsorted</span><span class="p">(</span><span class="n">rid</span><span class="p">,</span> <span class="n">j</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
-        <span class="n">rrightid</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">searchsorted</span><span class="p">(</span><span class="n">rid</span><span class="p">,</span> <span class="n">j</span><span class="p">)</span>
-
-        <span class="n">Xoff</span>   <span class="o">=</span> <span class="n">offarray</span><span class="p">[</span><span class="n">offarray</span><span class="o">.</span><span class="n">scanid</span> <span class="o">==</span> <span class="n">j</span><span class="p">]</span>
-        <span class="n">Xoff_m</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">Xoff</span><span class="p">,</span> <span class="n">mode</span><span class="p">)(</span><span class="n">dim</span><span class="o">=</span><span class="s1">&#39;t&#39;</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">rleftid</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
-            <span class="n">Xr</span>   <span class="o">=</span> <span class="n">rarray</span><span class="p">[</span><span class="n">rarray</span><span class="o">.</span><span class="n">scanid</span> <span class="o">==</span> <span class="n">rid</span><span class="p">[</span><span class="n">rrightid</span><span class="p">]]</span>
-            <span class="n">Xr_m</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">Xr</span><span class="p">,</span> <span class="n">mode</span><span class="p">)(</span><span class="n">dim</span><span class="o">=</span><span class="s1">&#39;t&#39;</span><span class="p">)</span>
-        <span class="k">elif</span> <span class="n">rrightid</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">rid</span><span class="p">):</span>
-            <span class="n">Xr</span>   <span class="o">=</span> <span class="n">rarray</span><span class="p">[</span><span class="n">rarray</span><span class="o">.</span><span class="n">scanid</span> <span class="o">==</span> <span class="n">rid</span><span class="p">[</span><span class="n">rleftid</span><span class="p">]]</span>
-            <span class="n">Xr_m</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">Xr</span><span class="p">,</span> <span class="n">mode</span><span class="p">)(</span><span class="n">dim</span><span class="o">=</span><span class="s1">&#39;t&#39;</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">Xr_l</span>  <span class="o">=</span> <span class="n">rarray</span><span class="p">[</span><span class="n">rarray</span><span class="o">.</span><span class="n">scanid</span> <span class="o">==</span> <span class="n">rid</span><span class="p">[</span><span class="n">rleftid</span><span class="p">]]</span>
-            <span class="n">Xr_r</span>  <span class="o">=</span> <span class="n">rarray</span><span class="p">[</span><span class="n">rarray</span><span class="o">.</span><span class="n">scanid</span> <span class="o">==</span> <span class="n">rid</span><span class="p">[</span><span class="n">rrightid</span><span class="p">]]</span>
-            <span class="n">Xr_m</span>  <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">dc</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">Xr_l</span><span class="p">,</span> <span class="n">Xr_r</span><span class="p">],</span> <span class="n">dim</span><span class="o">=</span><span class="s1">&#39;t&#39;</span><span class="p">),</span> <span class="n">mode</span><span class="p">)(</span><span class="n">dim</span><span class="o">=</span><span class="s1">&#39;t&#39;</span><span class="p">)</span>
-        <span class="n">Xoff_rsub</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Xoff</span> <span class="o">-</span> <span class="n">Xr_m</span><span class="p">)</span>
-        <span class="c1"># Xoff -= Xr_m</span>
-    <span class="n">Xonoff_rsub</span> <span class="o">=</span> <span class="n">dc</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">Xon_rsub</span> <span class="o">+</span> <span class="n">Xoff_rsub</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="s1">&#39;t&#39;</span><span class="p">)</span>
-    <span class="c1"># Xonoff_rsub = dc.concat([onarray, offarray], dim=&#39;t&#39;)</span>
-    <span class="n">Xonoff_rsub_sorted</span> <span class="o">=</span> <span class="n">Xonoff_rsub</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">Xonoff_rsub</span><span class="o">.</span><span class="n">time</span><span class="o">.</span><span class="n">values</span><span class="p">)]</span>
-
-    <span class="n">scantype</span>    <span class="o">=</span> <span class="n">Xonoff_rsub_sorted</span><span class="o">.</span><span class="n">scantype</span><span class="o">.</span><span class="n">values</span>
-    <span class="n">newscanid</span>   <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">cumsum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">([</span><span class="kc">False</span><span class="p">,</span> <span class="n">scantype</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span> <span class="o">!=</span> <span class="n">scantype</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]]))</span>
-    <span class="n">onmask</span>      <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">in1d</span><span class="p">(</span><span class="n">Xonoff_rsub_sorted</span><span class="o">.</span><span class="n">scanid</span><span class="p">,</span> <span class="n">onid</span><span class="p">)</span>
-    <span class="n">offmask</span>     <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">in1d</span><span class="p">(</span><span class="n">Xonoff_rsub_sorted</span><span class="o">.</span><span class="n">scanid</span><span class="p">,</span> <span class="n">offid</span><span class="p">)</span>
-    <span class="n">Xon_rsub</span>    <span class="o">=</span> <span class="n">Xonoff_rsub_sorted</span><span class="p">[</span><span class="n">onmask</span><span class="p">]</span>
-    <span class="n">Xoff_rsub</span>   <span class="o">=</span> <span class="n">Xonoff_rsub_sorted</span><span class="p">[</span><span class="n">offmask</span><span class="p">]</span>
-    <span class="n">Xon_rsub</span><span class="o">.</span><span class="n">coords</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s1">&#39;scanid&#39;</span><span class="p">:</span> <span class="p">(</span><span class="s1">&#39;t&#39;</span><span class="p">,</span> <span class="n">newscanid</span><span class="p">[</span><span class="n">onmask</span><span class="p">])})</span>
-    <span class="n">Xoff_rsub</span><span class="o">.</span><span class="n">coords</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s1">&#39;scanid&#39;</span><span class="p">:</span> <span class="p">(</span><span class="s1">&#39;t&#39;</span><span class="p">,</span> <span class="n">newscanid</span><span class="p">[</span><span class="n">offmask</span><span class="p">])})</span>
-
-    <span class="k">return</span> <span class="n">Xon_rsub</span><span class="p">,</span> <span class="n">Xoff_rsub</span></div>
 
 
 <div class="viewcode-block" id="r_division"><a class="viewcode-back" href="../../../apis/decode.models.html#decode.models.functions.r_division">[docs]</a><span class="k">def</span> <span class="nf">r_division</span><span class="p">(</span><span class="n">onarray</span><span class="p">,</span> <span class="n">offarray</span><span class="p">,</span> <span class="n">rarray</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;mean&#39;</span><span class="p">):</span>
@@ -595,6 +361,133 @@
     <span class="n">Xoff_rdiv</span><span class="o">.</span><span class="n">coords</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s1">&#39;scanid&#39;</span><span class="p">:</span> <span class="p">(</span><span class="s1">&#39;t&#39;</span><span class="p">,</span> <span class="n">newscanid</span><span class="p">[</span><span class="n">offmask</span><span class="p">])})</span>
 
     <span class="k">return</span> <span class="n">Xon_rdiv</span><span class="p">,</span> <span class="n">Xoff_rdiv</span></div>
+
+
+<div class="viewcode-block" id="gauss_fit"><a class="viewcode-back" href="../../../apis/decode.models.html#decode.models.functions.gauss_fit">[docs]</a><span class="k">def</span> <span class="nf">gauss_fit</span><span class="p">(</span><span class="n">map_data</span><span class="p">,</span> <span class="n">chs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;deg&#39;</span><span class="p">,</span> <span class="n">amplitude</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">x_mean</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">y_mean</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">x_stddev</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">y_stddev</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">theta</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">cov_matrix</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">noise</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;make a 2D Gaussian model and fit the observed data with the model.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        map_data (xarray.Dataarray): Dataarray of cube or single chs.</span>
+<span class="sd">        chs (list of int): in prep.</span>
+<span class="sd">        mode (str): Coordinates for the fitting</span>
+<span class="sd">            &#39;pix&#39;</span>
+<span class="sd">            &#39;deg&#39;</span>
+<span class="sd">        amplitude (float or None): Initial amplitude value of Gaussian fitting.</span>
+<span class="sd">        x_mean (float): Initial value of mean of the fitting Gaussian in x.</span>
+<span class="sd">        y_mean (float): Initial value of mean of the fitting Gaussian in y.</span>
+<span class="sd">        x_stddev (float or None): Standard deviation of the Gaussian in x before rotating by theta.</span>
+<span class="sd">        y_stddev  (float or None): Standard deviation of the Gaussian in y before rotating by theta.</span>
+<span class="sd">        theta (float, optional or None): Rotation angle in radians.</span>
+<span class="sd">        cov_matrix (ndarray, optional): A 2x2 covariance matrix. If specified, overrides the ``x_stddev``, ``y_stddev``, and ``theta`` defaults.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        decode cube (xarray cube) with fitting results in array and attrs.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="n">chs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">chs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ogrid</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">63</span><span class="p">]</span> <span class="c1"># the number of channels would be changed</span>
+
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">chs</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">n</span><span class="p">,</span><span class="n">ch</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">chs</span><span class="p">):</span>
+            <span class="n">subdata</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">full_like</span><span class="p">(</span><span class="n">map_data</span><span class="p">[:,</span> <span class="p">:,</span> <span class="n">ch</span><span class="p">],</span> <span class="n">map_data</span><span class="o">.</span><span class="n">values</span><span class="p">[:,</span> <span class="p">:,</span> <span class="n">ch</span><span class="p">]))</span>
+            <span class="n">subdata</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">subdata</span><span class="p">)]</span> <span class="o">=</span> <span class="mi">0</span>
+
+            <span class="k">if</span> <span class="n">mode</span> <span class="o">==</span> <span class="s1">&#39;deg&#39;</span><span class="p">:</span>
+                <span class="n">mX</span><span class="p">,</span> <span class="n">mY</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">meshgrid</span><span class="p">(</span><span class="n">map_data</span><span class="o">.</span><span class="n">x</span><span class="p">,</span> <span class="n">map_data</span><span class="o">.</span><span class="n">y</span><span class="p">)</span>
+
+            <span class="k">elif</span> <span class="n">mode</span> <span class="o">==</span> <span class="s1">&#39;pix&#39;</span><span class="p">:</span>
+                <span class="n">mX</span><span class="p">,</span> <span class="n">mY</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mgrid</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="nb">len</span><span class="p">(</span><span class="n">map_data</span><span class="o">.</span><span class="n">y</span><span class="p">),</span> <span class="mi">0</span><span class="p">:</span><span class="nb">len</span><span class="p">(</span><span class="n">map_data</span><span class="o">.</span><span class="n">x</span><span class="p">)]</span>
+
+            <span class="n">g_init</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">Gaussian2D</span><span class="p">(</span><span class="n">amplitude</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">nanmax</span><span class="p">(</span><span class="n">subdata</span><span class="p">),</span>
+                                       <span class="n">x_mean</span><span class="o">=</span><span class="n">x_mean</span><span class="p">,</span> <span class="n">y_mean</span><span class="o">=</span><span class="n">y_mean</span><span class="p">,</span>
+                                       <span class="n">x_stddev</span><span class="o">=</span><span class="n">x_stddev</span><span class="p">,</span> <span class="n">y_stddev</span><span class="o">=</span><span class="n">y_stddev</span><span class="p">,</span> <span class="n">theta</span><span class="o">=</span><span class="n">theta</span><span class="p">,</span>
+                                       <span class="n">cov_matrix</span><span class="o">=</span><span class="n">cov_matrix</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">+</span> <span class="n">models</span><span class="o">.</span><span class="n">Const2D</span><span class="p">(</span><span class="n">noise</span><span class="p">)</span>
+            <span class="n">fit_g</span>  <span class="o">=</span> <span class="n">fitting</span><span class="o">.</span><span class="n">LevMarLSQFitter</span><span class="p">()</span>
+            <span class="n">g</span>      <span class="o">=</span> <span class="n">fit_g</span><span class="p">(</span><span class="n">g_init</span><span class="p">,</span> <span class="n">mX</span><span class="p">,</span> <span class="n">mY</span><span class="p">,</span> <span class="n">subdata</span><span class="p">)</span>
+
+            <span class="n">g_init2</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">Gaussian2D</span><span class="p">(</span><span class="n">amplitude</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">nanmax</span><span class="p">(</span><span class="n">subdata</span><span class="o">-</span><span class="n">g</span><span class="o">.</span><span class="n">amplitude_1</span><span class="p">),</span>
+                                        <span class="n">x_mean</span><span class="o">=</span><span class="n">x_mean</span><span class="p">,</span> <span class="n">y_mean</span><span class="o">=</span><span class="n">y_mean</span><span class="p">,</span>
+                                        <span class="n">x_stddev</span><span class="o">=</span><span class="n">x_stddev</span><span class="p">,</span> <span class="n">y_stddev</span><span class="o">=</span><span class="n">y_stddev</span><span class="p">,</span> <span class="n">theta</span><span class="o">=</span><span class="n">theta</span><span class="p">,</span>
+                                        <span class="n">cov_matrix</span><span class="o">=</span><span class="n">cov_matrix</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+            <span class="n">fit_g2</span>  <span class="o">=</span> <span class="n">fitting</span><span class="o">.</span><span class="n">LevMarLSQFitter</span><span class="p">()</span>
+            <span class="n">g2</span>      <span class="o">=</span> <span class="n">fit_g2</span><span class="p">(</span><span class="n">g_init2</span><span class="p">,</span> <span class="n">mX</span><span class="p">,</span> <span class="n">mY</span><span class="p">,</span> <span class="n">subdata</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">n</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">results</span>   <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">g2</span><span class="p">(</span><span class="n">mX</span><span class="p">,</span><span class="n">mY</span><span class="p">)])</span>
+                <span class="n">peaks</span>     <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">g2</span><span class="o">.</span><span class="n">amplitude</span><span class="o">.</span><span class="n">value</span><span class="p">])</span>
+                <span class="n">x_means</span>   <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">g2</span><span class="o">.</span><span class="n">x_mean</span><span class="o">.</span><span class="n">value</span><span class="p">])</span>
+                <span class="n">y_means</span>   <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">g2</span><span class="o">.</span><span class="n">y_mean</span><span class="o">.</span><span class="n">value</span><span class="p">])</span>
+                <span class="n">x_stddevs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">g2</span><span class="o">.</span><span class="n">x_stddev</span><span class="o">.</span><span class="n">value</span><span class="p">])</span>
+                <span class="n">y_stddevs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">g2</span><span class="o">.</span><span class="n">y_stddev</span><span class="o">.</span><span class="n">value</span><span class="p">])</span>
+                <span class="n">thetas</span>    <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">g2</span><span class="o">.</span><span class="n">theta</span><span class="o">.</span><span class="n">value</span><span class="p">])</span>
+                <span class="k">if</span> <span class="n">fit_g2</span><span class="o">.</span><span class="n">fit_info</span><span class="p">[</span><span class="s1">&#39;param_cov&#39;</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">unserts</span> <span class="o">=</span> <span class="n">nop</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">0</span><span class="p">])</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">error</span>   <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">diag</span><span class="p">(</span><span class="n">fit_g2</span><span class="o">.</span><span class="n">fit_info</span><span class="p">[</span><span class="s1">&#39;param_cov&#39;</span><span class="p">])</span><span class="o">**</span><span class="mf">0.5</span>
+                    <span class="n">uncerts</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">error</span><span class="p">[</span><span class="mi">0</span><span class="p">]])</span>
+
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">results</span>   <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">results</span><span class="p">,</span> <span class="p">[</span><span class="n">g2</span><span class="p">(</span><span class="n">mX</span><span class="p">,</span><span class="n">mY</span><span class="p">)],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+                <span class="n">peaks</span>     <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">peaks</span><span class="p">,</span> <span class="p">[</span><span class="n">g2</span><span class="o">.</span><span class="n">amplitude</span><span class="o">.</span><span class="n">value</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+                <span class="n">x_means</span>   <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">x_means</span><span class="p">,</span> <span class="p">[</span><span class="n">g2</span><span class="o">.</span><span class="n">x_mean</span><span class="o">.</span><span class="n">value</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+                <span class="n">y_means</span>   <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">y_means</span><span class="p">,</span> <span class="p">[</span><span class="n">g2</span><span class="o">.</span><span class="n">y_mean</span><span class="o">.</span><span class="n">value</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+                <span class="n">x_stddevs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">x_stddevs</span><span class="p">,</span> <span class="p">[</span><span class="n">g2</span><span class="o">.</span><span class="n">x_stddev</span><span class="o">.</span><span class="n">value</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+                <span class="n">y_stddevs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">y_stddevs</span><span class="p">,</span> <span class="p">[</span><span class="n">g2</span><span class="o">.</span><span class="n">y_stddev</span><span class="o">.</span><span class="n">value</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+                <span class="n">thetas</span>    <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">thetas</span><span class="p">,</span> <span class="p">[</span><span class="n">g2</span><span class="o">.</span><span class="n">theta</span><span class="o">.</span><span class="n">value</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+                <span class="k">if</span> <span class="n">fit_g2</span><span class="o">.</span><span class="n">fit_info</span><span class="p">[</span><span class="s1">&#39;param_cov&#39;</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">uncerts</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">uncerts</span><span class="p">,</span> <span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">error</span>   <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">diag</span><span class="p">(</span><span class="n">fit_g2</span><span class="o">.</span><span class="n">fit_info</span><span class="p">[</span><span class="s1">&#39;param_cov&#39;</span><span class="p">])</span><span class="o">**</span><span class="mf">0.5</span>
+                    <span class="n">uncerts</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">uncerts</span><span class="p">,</span> <span class="p">[</span><span class="n">error</span><span class="p">[</span><span class="mi">0</span><span class="p">]],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+        <span class="n">result</span> <span class="o">=</span> <span class="n">map_data</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">result</span><span class="o">.</span><span class="n">values</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="n">results</span><span class="p">)</span>
+        <span class="n">result</span><span class="o">.</span><span class="n">attrs</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s1">&#39;peak&#39;</span><span class="p">:</span> <span class="n">peaks</span><span class="p">,</span> <span class="s1">&#39;x_mean&#39;</span><span class="p">:</span> <span class="n">x_means</span><span class="p">,</span> <span class="s1">&#39;y_mean&#39;</span><span class="p">:</span> <span class="n">y_means</span><span class="p">,</span>
+                             <span class="s1">&#39;x_stddev&#39;</span><span class="p">:</span> <span class="n">x_stddevs</span><span class="p">,</span> <span class="s1">&#39;y_stddev&#39;</span><span class="p">:</span> <span class="n">y_stddevs</span><span class="p">,</span>
+                             <span class="s1">&#39;theta&#39;</span><span class="p">:</span> <span class="n">thetas</span><span class="p">,</span> <span class="s1">&#39;uncert&#39;</span><span class="p">:</span> <span class="n">uncerts</span><span class="p">})</span>
+
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">subdata</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">full_like</span><span class="p">(</span><span class="n">map_data</span><span class="p">[:,</span> <span class="p">:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">map_data</span><span class="o">.</span><span class="n">values</span><span class="p">[:,</span> <span class="p">:,</span> <span class="mi">0</span><span class="p">]))</span>
+        <span class="n">subdata</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">subdata</span><span class="p">)]</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="k">if</span> <span class="n">mode</span> <span class="o">==</span> <span class="s1">&#39;deg&#39;</span><span class="p">:</span>
+            <span class="n">mX</span><span class="p">,</span> <span class="n">mY</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">meshgrid</span><span class="p">(</span><span class="n">map_data</span><span class="o">.</span><span class="n">x</span><span class="p">,</span> <span class="n">map_data</span><span class="o">.</span><span class="n">y</span><span class="p">)</span>
+
+        <span class="k">elif</span> <span class="n">mode</span> <span class="o">==</span> <span class="s1">&#39;pix&#39;</span><span class="p">:</span>
+            <span class="n">mX</span><span class="p">,</span> <span class="n">mY</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mgrid</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="nb">len</span><span class="p">(</span><span class="n">map_data</span><span class="o">.</span><span class="n">y</span><span class="p">),</span> <span class="mi">0</span><span class="p">:</span><span class="nb">len</span><span class="p">(</span><span class="n">map_data</span><span class="o">.</span><span class="n">x</span><span class="p">)]</span>
+
+        <span class="n">g_init</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">Gaussian2D</span><span class="p">(</span><span class="n">amplitude</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">nanmax</span><span class="p">(</span><span class="n">subdata</span><span class="p">),</span>
+                                   <span class="n">x_mean</span><span class="o">=</span><span class="n">x_mean</span><span class="p">,</span> <span class="n">y_mean</span><span class="o">=</span><span class="n">y_mean</span><span class="p">,</span>
+                                   <span class="n">x_stddev</span><span class="o">=</span><span class="n">x_stddev</span><span class="p">,</span> <span class="n">y_stddev</span><span class="o">=</span><span class="n">y_stddev</span><span class="p">,</span> <span class="n">theta</span><span class="o">=</span><span class="n">theta</span><span class="p">,</span>
+                                   <span class="n">cov_matrix</span><span class="o">=</span><span class="n">cov_matrix</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">+</span> <span class="n">models</span><span class="o">.</span><span class="n">Const2D</span><span class="p">(</span><span class="n">noise</span><span class="p">)</span>
+        <span class="n">fit_g</span>  <span class="o">=</span> <span class="n">fitting</span><span class="o">.</span><span class="n">LevMarLSQFitter</span><span class="p">()</span>
+        <span class="n">g</span>      <span class="o">=</span> <span class="n">fit_g</span><span class="p">(</span><span class="n">g_init</span><span class="p">,</span> <span class="n">mX</span><span class="p">,</span> <span class="n">mY</span><span class="p">,</span> <span class="n">subdata</span><span class="p">)</span>
+
+        <span class="n">g_init2</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">Gaussian2D</span><span class="p">(</span><span class="n">amplitude</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">nanmax</span><span class="p">(</span><span class="n">subdata</span><span class="o">-</span><span class="n">g</span><span class="o">.</span><span class="n">amplitude_1</span><span class="p">),</span>
+                                    <span class="n">x_mean</span><span class="o">=</span><span class="n">x_mean</span><span class="p">,</span> <span class="n">y_mean</span><span class="o">=</span><span class="n">y_mean</span><span class="p">,</span>
+                                    <span class="n">x_stddev</span><span class="o">=</span><span class="n">x_stddev</span><span class="p">,</span> <span class="n">y_stddev</span><span class="o">=</span><span class="n">y_stddev</span><span class="p">,</span> <span class="n">theta</span><span class="o">=</span><span class="n">theta</span><span class="p">,</span>
+                                    <span class="n">cov_matrix</span><span class="o">=</span><span class="n">cov_matrix</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">fit_g2</span>  <span class="o">=</span> <span class="n">fitting</span><span class="o">.</span><span class="n">LevMarLSQFitter</span><span class="p">()</span>
+        <span class="n">g2</span>      <span class="o">=</span> <span class="n">fit_g2</span><span class="p">(</span><span class="n">g_init2</span><span class="p">,</span> <span class="n">mX</span><span class="p">,</span> <span class="n">mY</span><span class="p">,</span> <span class="n">subdata</span><span class="p">)</span>
+
+        <span class="n">results</span>   <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">g2</span><span class="p">(</span><span class="n">mX</span><span class="p">,</span> <span class="n">mY</span><span class="p">)])</span>
+        <span class="n">peaks</span>     <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">g2</span><span class="o">.</span><span class="n">amplitude</span><span class="o">.</span><span class="n">value</span><span class="p">])</span>
+        <span class="n">x_means</span>   <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">g2</span><span class="o">.</span><span class="n">x_mean</span><span class="o">.</span><span class="n">value</span><span class="p">])</span>
+        <span class="n">y_means</span>   <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">g2</span><span class="o">.</span><span class="n">y_mean</span><span class="o">.</span><span class="n">value</span><span class="p">])</span>
+        <span class="n">x_stddevs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">g2</span><span class="o">.</span><span class="n">x_stddev</span><span class="o">.</span><span class="n">value</span><span class="p">])</span>
+        <span class="n">y_stddevs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">g2</span><span class="o">.</span><span class="n">y_stddev</span><span class="o">.</span><span class="n">value</span><span class="p">])</span>
+        <span class="n">thetas</span>    <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">g2</span><span class="o">.</span><span class="n">theta</span><span class="o">.</span><span class="n">value</span><span class="p">])</span>
+        <span class="n">error</span>     <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">diag</span><span class="p">(</span><span class="n">fit_g2</span><span class="o">.</span><span class="n">fit_info</span><span class="p">[</span><span class="s1">&#39;param_cov&#39;</span><span class="p">])</span><span class="o">**</span><span class="mf">0.5</span>
+        <span class="n">uncerts</span>   <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">error</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+        <span class="n">result</span> <span class="o">=</span> <span class="n">map_data</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">result</span><span class="o">.</span><span class="n">values</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="n">results</span><span class="p">)</span>
+        <span class="n">result</span><span class="o">.</span><span class="n">attrs</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s1">&#39;peak&#39;</span><span class="p">:</span> <span class="n">peaks</span><span class="p">,</span> <span class="s1">&#39;x_mean&#39;</span><span class="p">:</span> <span class="n">x_means</span><span class="p">,</span> <span class="s1">&#39;y_mean&#39;</span><span class="p">:</span> <span class="n">y_means</span><span class="p">,</span>
+                             <span class="s1">&#39;x_stddev&#39;</span><span class="p">:</span> <span class="n">x_stddevs</span><span class="p">,</span> <span class="s1">&#39;y_stddev&#39;</span><span class="p">:</span> <span class="n">y_stddevs</span><span class="p">,</span>
+                             <span class="s1">&#39;theta&#39;</span><span class="p">:</span> <span class="n">thetas</span><span class="p">,</span> <span class="s1">&#39;uncert&#39;</span><span class="p">:</span> <span class="n">uncerts</span><span class="p">})</span>
+
+    <span class="k">return</span> <span class="n">result</span></div>
 </pre></div>
 
            </div>
@@ -629,7 +522,7 @@
     <script type="text/javascript">
         var DOCUMENTATION_OPTIONS = {
             URL_ROOT:'../../../',
-            VERSION:'0.4.3',
+            VERSION:'0.5.0',
             LANGUAGE:'None',
             COLLAPSE_INDEX:false,
             FILE_SUFFIX:'.html',

@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>decode.models package &mdash; De:code 0.4.3 documentation</title>
+  <title>decode.models package &mdash; De:code 0.5.0 documentation</title>
   
 
   
@@ -56,7 +56,7 @@
             
             
               <div class="version">
-                0.4.3
+                0.5.0
               </div>
             
           
@@ -160,61 +160,6 @@
 <div class="section" id="module-decode.models.functions">
 <span id="decode-models-functions-module"></span><h2>decode.models.functions module<a class="headerlink" href="#module-decode.models.functions" title="Permalink to this headline">¶</a></h2>
 <dl class="function">
-<dt id="decode.models.functions.skewgauss">
-<code class="descclassname">decode.models.functions.</code><code class="descname">skewgauss</code><span class="sig-paren">(</span><em>x</em>, <em>sigma</em>, <em>mu</em>, <em>alpha</em>, <em>a</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/decode/models/functions.html#skewgauss"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#decode.models.functions.skewgauss" title="Permalink to this definition">¶</a></dt>
-<dd><p>Skewed Gaussian.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>x</strong> (<em>np.ndarray</em>) – Dataset.</li>
-<li><strong>sigma</strong> (<em>float</em>) – Standard deviation.</li>
-<li><strong>mu</strong> (<em>float</em>) – Mean.</li>
-<li><strong>alpha</strong> (<em>float</em>) – Skewness.</li>
-<li><strong>a</strong> (<em>float</em>) – Normalization factor.</li>
-</ul>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">Skewed Gaussian.</p>
-</td>
-</tr>
-<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">skewed gaussian (np.ndarray)</p>
-</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="function">
-<dt id="decode.models.functions.savgol_filter">
-<code class="descclassname">decode.models.functions.</code><code class="descname">savgol_filter</code><span class="sig-paren">(</span><em>array</em>, <em>win=2001</em>, <em>polyn=3</em>, <em>iteration=1</em>, <em>threshold=1</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/decode/models/functions.html#savgol_filter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#decode.models.functions.savgol_filter" title="Permalink to this definition">¶</a></dt>
-<dd><p>Apply scipy.signal.savgol_filter iteratively.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>array</strong> (<em>decode.array</em>) – Decode array which will be filtered.</li>
-<li><strong>win</strong> (<em>int</em>) – Length of window.</li>
-<li><strong>polyn</strong> (<em>int</em>) – Order of polynominal function.</li>
-<li><strong>iteration</strong> (<em>int</em>) – The number of iterations.</li>
-<li><strong>threshold</strong> (<em>float</em>) – Threshold above which the data will be used as signals
-in units of sigma.</li>
-</ul>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">Fitted results.</p>
-</td>
-</tr>
-<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">fitted (decode.array)</p>
-</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="function">
 <dt id="decode.models.functions.pca">
 <code class="descclassname">decode.models.functions.</code><code class="descname">pca</code><span class="sig-paren">(</span><em>onarray</em>, <em>offarray</em>, <em>n=10</em>, <em>exchs=None</em>, <em>pc=False</em>, <em>mode='mean'</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/decode/models/functions.html#pca"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#decode.models.functions.pca" title="Permalink to this definition">¶</a></dt>
 <dd><p>Apply Principal Component Analysis (PCA) method to estimate baselines at each time.</p>
@@ -251,72 +196,9 @@ Cs (list(np.ndarray)): Coefficients.</p>
 </dd></dl>
 
 <dl class="function">
-<dt id="decode.models.functions.rsky_calibration">
-<code class="descclassname">decode.models.functions.</code><code class="descname">rsky_calibration</code><span class="sig-paren">(</span><em>onarray</em>, <em>offarray</em>, <em>rarray</em>, <em>Tamb</em>, <em>mode='mean'</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/decode/models/functions.html#rsky_calibration"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#decode.models.functions.rsky_calibration" title="Permalink to this definition">¶</a></dt>
-<dd><p>Apply R-sky calibrations.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>onarray</strong> (<em>decode.array</em>) – Decode array of on-point observations.</li>
-<li><strong>offarray</strong> (<em>decode.array</em>) – Decode array of off-point observations.</li>
-<li><strong>rarray</strong> (<em>decode.array</em>) – Decode array of R observations.</li>
-<li><strong>Tamb</strong> (<em>float</em>) – Ambient temperature [K].</li>
-<li><strong>mode</strong> (<em>str</em>) – The way of correcting offsets.
-‘mean’: Mean.
-‘median’: Median.</li>
-</ul>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">Calibrated array of on-point observations.
-offarray_cal (decode.array): Calibrated array of off-point observations.</p>
-</td>
-</tr>
-<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">onarray_cal (decode.array)</p>
-</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="function">
 <dt id="decode.models.functions.chopper_calibration">
 <code class="descclassname">decode.models.functions.</code><code class="descname">chopper_calibration</code><span class="sig-paren">(</span><em>onarray</em>, <em>offarray</em>, <em>rarray</em>, <em>Tamb</em>, <em>mode='mean'</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/decode/models/functions.html#chopper_calibration"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#decode.models.functions.chopper_calibration" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
-
-<dl class="function">
-<dt id="decode.models.functions.r_subtraction">
-<code class="descclassname">decode.models.functions.</code><code class="descname">r_subtraction</code><span class="sig-paren">(</span><em>onarray</em>, <em>offarray</em>, <em>rarray</em>, <em>mode='mean'</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/decode/models/functions.html#r_subtraction"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#decode.models.functions.r_subtraction" title="Permalink to this definition">¶</a></dt>
-<dd><p>Apply R subtraction.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>onarray</strong> (<em>decode.array</em>) – Decode array of on-point observations.</li>
-<li><strong>offarray</strong> (<em>decode.array</em>) – Decode array of off-point observations.</li>
-<li><strong>rarray</strong> (<em>decode.array</em>) – Decode array of R observations.</li>
-<li><strong>mode</strong> (<em>str</em>) – Method for the selection of nominal R value.
-‘mean’: Mean.
-‘median’: Median.</li>
-</ul>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">Calibrated array of on-point observations.
-offarray_cal (decode.array): Calibrated array of off-point observations.</p>
-</td>
-</tr>
-<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">onarray_cal (decode.array)</p>
-</td>
-</tr>
-</tbody>
-</table>
-<div class="admonition warning">
-<p class="first admonition-title">Warning</p>
-<p class="last">Current implementation is too slow!</p>
-</div>
-</dd></dl>
 
 <dl class="function">
 <dt id="decode.models.functions.r_division">
@@ -341,6 +223,37 @@ offarray_cal (decode.array): Calibrated array of off-point observations.</p>
 </td>
 </tr>
 <tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">onarray_cal (decode.array)</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="decode.models.functions.gauss_fit">
+<code class="descclassname">decode.models.functions.</code><code class="descname">gauss_fit</code><span class="sig-paren">(</span><em>map_data</em>, <em>chs=None</em>, <em>mode='deg'</em>, <em>amplitude=1</em>, <em>x_mean=0</em>, <em>y_mean=0</em>, <em>x_stddev=None</em>, <em>y_stddev=None</em>, <em>theta=None</em>, <em>cov_matrix=None</em>, <em>noise=0</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/decode/models/functions.html#gauss_fit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#decode.models.functions.gauss_fit" title="Permalink to this definition">¶</a></dt>
+<dd><p>make a 2D Gaussian model and fit the observed data with the model.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>map_data</strong> (<em>xarray.Dataarray</em>) – Dataarray of cube or single chs.</li>
+<li><strong>chs</strong> (<em>list of int</em>) – in prep.</li>
+<li><strong>mode</strong> (<em>str</em>) – Coordinates for the fitting
+‘pix’
+‘deg’</li>
+<li><strong>amplitude</strong> (<em>float</em><em> or </em><em>None</em>) – Initial amplitude value of Gaussian fitting.</li>
+<li><strong>x_mean</strong> (<em>float</em>) – Initial value of mean of the fitting Gaussian in x.</li>
+<li><strong>y_mean</strong> (<em>float</em>) – Initial value of mean of the fitting Gaussian in y.</li>
+<li><strong>x_stddev</strong> (<em>float</em><em> or </em><em>None</em>) – Standard deviation of the Gaussian in x before rotating by theta.</li>
+<li><strong>y_stddev</strong> (<em>float</em><em> or </em><em>None</em>) – Standard deviation of the Gaussian in y before rotating by theta.</li>
+<li><strong>theta</strong> (<em>float</em><em>, </em><em>optional</em><em> or </em><em>None</em>) – Rotation angle in radians.</li>
+<li><strong>cov_matrix</strong> (<em>ndarray</em><em>, </em><em>optional</em>) – A 2x2 covariance matrix. If specified, overrides the <code class="docutils literal notranslate"><span class="pre">x_stddev</span></code>, <code class="docutils literal notranslate"><span class="pre">y_stddev</span></code>, and <code class="docutils literal notranslate"><span class="pre">theta</span></code> defaults.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">decode cube (xarray cube) with fitting results in array and attrs.</p>
 </td>
 </tr>
 </tbody>
@@ -386,7 +299,7 @@ offarray_cal (decode.array): Calibrated array of off-point observations.</p>
     <script type="text/javascript">
         var DOCUMENTATION_OPTIONS = {
             URL_ROOT:'../',
-            VERSION:'0.4.3',
+            VERSION:'0.5.0',
             LANGUAGE:'None',
             COLLAPSE_INDEX:false,
             FILE_SUFFIX:'.html',

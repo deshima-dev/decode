@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>decode.io package &mdash; De:code 0.4.3 documentation</title>
+  <title>decode.io package &mdash; De:code 0.5.0 documentation</title>
   
 
   
@@ -56,7 +56,7 @@
             
             
               <div class="version">
-                0.4.3
+                0.5.0
               </div>
             
           
@@ -222,14 +222,14 @@ xmax_on (float): Maximum x of on-point data.</p>
 
 <dl class="function">
 <dt id="decode.io.functions.savefits">
-<code class="descclassname">decode.io.functions.</code><code class="descname">savefits</code><span class="sig-paren">(</span><em>dataarray</em>, <em>fitsname</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/decode/io/functions.html#savefits"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#decode.io.functions.savefits" title="Permalink to this definition">¶</a></dt>
-<dd><p>Save a dataarray to a 3D-cube FITS file.</p>
+<code class="descclassname">decode.io.functions.</code><code class="descname">savefits</code><span class="sig-paren">(</span><em>cube</em>, <em>fitsname</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/decode/io/functions.html#savefits"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#decode.io.functions.savefits" title="Permalink to this definition">¶</a></dt>
+<dd><p>Save a cube to a 3D-cube FITS file.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>dataarray</strong> (<em>xarray.DataArray</em>) – Dataarray to be saved.</li>
+<li><strong>cube</strong> (<em>xarray.DataArray</em>) – Cube to be saved.</li>
 <li><strong>fitsname</strong> (<em>str</em>) – Name of output FITS file.</li>
 <li><strong>kwargs</strong> (<em>optional</em>) – Other arguments common with astropy.io.fits.writeto().</li>
 </ul>
@@ -321,7 +321,7 @@ If not spacified, random 8-character name will be used.</li>
     <script type="text/javascript">
         var DOCUMENTATION_OPTIONS = {
             URL_ROOT:'../',
-            VERSION:'0.4.3',
+            VERSION:'0.5.0',
             LANGUAGE:'None',
             COLLAPSE_INDEX:false,
             FILE_SUFFIX:'.html',
