@@ -206,20 +206,17 @@ def plot_chmap(cube, kidid, ax=None, **kwargs):
     """
     if ax is None:
         ax = plt.gca()
-    fig = plt.gcf()
 
     index = np.where(cube.kidid == kidid)[0]
     if len(index) == 0:
         raise KeyError('Such a kidid does not exist.')
     index = int(index)
 
-    im = ax.imshow(cube[:, :, index].T, **kwargs)
-    divider = make_axes_locatable(ax)
-    cax = divider.append_axes('right', '5%', pad='3%')
-    fig.colorbar(im, cax=cax)
+    im = ax.pcolormesh(cube.x, cube.y, cube[:, :, index].T, **kwargs)
     ax.set_xlabel('x')
     ax.set_ylabel('y')
     ax.set_title('intensity map ch #{}'.format(kidid))
+    return im
 
 
 def plotpsd(data, dt, ndivide=1, window=hanning, overlap_half=False, ax=None, **kwargs):
