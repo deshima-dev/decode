@@ -45,9 +45,9 @@ def plot_tcoords(array, coords, scantypes=None, ax=None, **kwargs):
         for scantype in scantypes:
             ax.plot(array[coords[0]][array.scantype == scantype],
                     array[coords[1]][array.scantype == scantype], label=scantype, **kwargs)
-    ax.set_xlabel(coords[0], fontsize=20, color='grey')
-    ax.set_ylabel(coords[1], fontsize=20, color='grey')
-    ax.set_title('{} vs {}'.format(coords[1], coords[0]), fontsize=20, color='grey')
+    ax.set_xlabel(coords[0])
+    ax.set_ylabel(coords[1])
+    ax.set_title('{} vs {}'.format(coords[1], coords[0]))
     ax.legend()
 
     logger.info('{} vs {} has been plotted.'.format(coords[1], coords[0]))
@@ -87,8 +87,8 @@ def plot_timestream(array, kidid, xtick='time', scantypes=None, ax=None, **kwarg
             elif xtick == 'index':
                 ax.plot(np.ogrid[:len(array.time[array.scantype == scantype])],
                         array[:, index][array.scantype == scantype], label=scantype, **kwargs)
-    ax.set_xlabel('{}'.format(xtick), fontsize=20, color='grey')
-    ax.set_ylabel(str(array.datatype.values), fontsize=20, color='grey')
+    ax.set_xlabel('{}'.format(xtick))
+    ax.set_ylabel(str(array.datatype.values))
     ax.legend()
 
     kidtpdict = {0: 'wideband', 1: 'filter', 2: 'blind'}
@@ -96,7 +96,7 @@ def plot_timestream(array, kidid, xtick='time', scantypes=None, ax=None, **kwarg
         kidtp = kidtpdict[int(array.kidtp[kidid])]
     except KeyError:
         kidtp = 'filter'
-    ax.set_title('ch #{} ({})'.format(kidid, kidtp), fontsize=20, color='grey')
+    ax.set_title('ch #{} ({})'.format(kidid, kidtp))
 
     logger.info('timestream data (ch={}) has been plotted.'.format(kidid))
 
@@ -190,9 +190,9 @@ def plot_spectrum(cube, xtick, ytick, aperture, ax=None, **kwargs):
         ax.step(cube.kidid.values, value, where='mid', **kwargs)
     else:
         raise KeyError(xtick)
-    ax.set_xlabel('{}'.format(xlabeldict[xtick]), fontsize=20, color='grey')
-    ax.set_ylabel('{} ({})'.format(datatype.values, ytick), fontsize=20, color='grey')
-    ax.set_title('spectrum', fontsize=20, color='grey')
+    ax.set_xlabel('{}'.format(xlabeldict[xtick]))
+    ax.set_ylabel('{} ({})'.format(datatype.values, ytick))
+    ax.set_title('spectrum')
 
 
 def plot_chmap(cube, kidid, ax=None, **kwargs):
@@ -217,9 +217,9 @@ def plot_chmap(cube, kidid, ax=None, **kwargs):
     divider = make_axes_locatable(ax)
     cax = divider.append_axes('right', '5%', pad='3%')
     fig.colorbar(im, cax=cax)
-    ax.set_xlabel('x', fontsize=20, color='grey')
-    ax.set_ylabel('y', fontsize=20, color='grey')
-    ax.set_title('intensity map ch #{}'.format(kidid), fontsize=20, color='grey')
+    ax.set_xlabel('x')
+    ax.set_ylabel('y')
+    ax.set_title('intensity map ch #{}'.format(kidid))
 
 
 def plotpsd(data, dt, ndivide=1, window=hanning, overlap_half=False, ax=None, **kwargs):
@@ -237,8 +237,8 @@ def plotpsd(data, dt, ndivide=1, window=hanning, overlap_half=False, ax=None, **
         ax = plt.gca()
     vk, psddata = psd(data, dt, ndivide, window, overlap_half)
     ax.loglog(vk, psddata, **kwargs)
-    ax.set_xlabel('Frequency [Hz]', fontsize=20, color='grey')
-    ax.set_ylabel('PSD', fontsize=20, color='grey')
+    ax.set_xlabel('Frequency [Hz]')
+    ax.set_ylabel('PSD')
     ax.legend()
 
 
@@ -256,8 +256,8 @@ def plotallanvar(data, dt, tmax=10, ax=None, **kwargs):
         ax = plt.gca()
     tk, allanvar = allan_variance(data, dt, tmax)
     ax.loglog(tk, allanvar, **kwargs)
-    ax.set_xlabel('Time [s]', fontsize=20, color='grey')
-    ax.set_ylabel('Allan Variance', fontsize=20, color='grey')
+    ax.set_xlabel('Time [s]')
+    ax.set_ylabel('Allan Variance')
     ax.legend()
 
 
