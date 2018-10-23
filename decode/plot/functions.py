@@ -93,7 +93,7 @@ def plot_timestream(array, kidid, xtick='time', scantypes=None, ax=None, **kwarg
 
     kidtpdict = {0: 'wideband', 1: 'filter', 2: 'blind'}
     try:
-        kidtp = kidtpdict[int(array.kidtp[kidid])]
+        kidtp = kidtpdict[int(array.kidtp[index])]
     except KeyError:
         kidtp = 'filter'
     ax.set_title('ch #{} ({})'.format(kidid, kidtp))
