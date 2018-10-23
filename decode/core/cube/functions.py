@@ -80,10 +80,10 @@ def fromcube(cube, template):
     gy, gx = cube.y.values, cube.x.values
     iy = interp1d(gy, np.arange(len(gy)))(y)
     ix = interp1d(gx, np.arange(len(gx)))(x)
-    
+
     for ch in range(len(cube.ch)):
         array[:,ch] = map_coordinates(cube.values[:,:,ch], (ix, iy))
-    
+
     return array
 
 
@@ -210,7 +210,7 @@ def tocube(array, **kwargs):
     temp = np.full([ny*nx, nch], np.nan)
     temp[mask] = gridarray.values
     data = temp.reshape((ny, nx, nch)).swapaxes(0, 1)
-    
+
     temp = np.full([ny*nx, nch], np.nan)
     temp[mask] = noisearray.values
     noise = temp.reshape((ny, nx, nch)).swapaxes(0, 1)
