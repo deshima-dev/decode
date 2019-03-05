@@ -1,4 +1,7 @@
 ## User defined files:
+.vscode
+.ipython
+.matplotlib
 /docs/_doctree/
 /testdocs/
 
