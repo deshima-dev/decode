@@ -6,9 +6,16 @@
 from setuptools import setup
 
 # module constants
-# INSTALL_REQUIRES = [
-#     'xarray >= 0.9.6',
-# ]
+INSTALL_REQUIRES = [
+    'numpy',
+    'scipy',
+    'astropy',
+    'xarray',
+    'matplotlib',
+    'scikit-learn',
+    'pyyaml',
+    'tqdm',
+]
 
 PACKAGES = [
     'decode',
@@ -31,7 +38,7 @@ PACKAGES = [
 setup(
     name = 'decode',
     description = __doc__,
-    version = '0.5.1',
+    version = '0.5.2',
     author = 'DESHIMA software team',
     author_email = 'tishida@ioa.s.u-tokyo.ac.jp',
     url = 'https://github.com/deshima-dev/decode',
