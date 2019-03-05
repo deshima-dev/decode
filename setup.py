@@ -38,11 +38,11 @@ PACKAGES = [
 setup(
     name = 'decode',
     description = __doc__,
-    version = '0.5.2',
+    version = '0.5.3',
     author = 'DESHIMA software team',
     author_email = 'tishida@ioa.s.u-tokyo.ac.jp',
     url = 'https://github.com/deshima-dev/decode',
-    # install_requires = INSTALL_REQUIRES,
+    install_requires = INSTALL_REQUIRES,
     packages = PACKAGES,
     package_data = {'decode': ['data/*.yaml']},
 )
