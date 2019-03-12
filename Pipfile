@@ -10,6 +10,7 @@ pylint = "*"
 twine = "*"
 sphinx = "*"
 sphinx-rtd-theme = "*"
+tornado = "~=5.1"
 
 [packages]
 numpy = "*"
