@@ -15,6 +15,7 @@ INSTALL_REQUIRES = [
     'scikit-learn',
     'pyyaml',
     'tqdm',
+    'netCDF4',
 ]
 
 PACKAGES = [
@@ -38,7 +39,7 @@ PACKAGES = [
 setup(
     name = 'decode',
     description = __doc__,
-    version = '0.5.3',
+    version = '0.5.4',
     author = 'DESHIMA software team',
     author_email = 'tishida@ioa.s.u-tokyo.ac.jp',
     url = 'https://github.com/deshima-dev/decode',
