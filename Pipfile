@@ -20,6 +20,7 @@ matplotlib = "*"
 scikit-learn = "*"
 pyyaml = "*"
 tqdm = "*"
+netcdf4 = "*"
 
 [requires]
 python_version = "3.6"
