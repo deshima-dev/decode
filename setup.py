@@ -1,7 +1,3 @@
-# coding: utf-8
-
-"DESHIMA Code for data analysis"
-
 # standard library
 from setuptools import setup
 
@@ -33,14 +29,13 @@ PACKAGES = [
 ]
 
 
-
 # main
 setup(
     name = 'decode',
-    description = __doc__,
+    description = 'DESHIMA code for data analysis',
     version = '0.5.4',
     author = 'DESHIMA software team',
-    author_email = 'tishida@ioa.s.u-tokyo.ac.jp',
+    author_email = 'taniguchi@a.phys.nagoya-u.ac.jp',
     url = 'https://github.com/deshima-dev/decode',
     install_requires = INSTALL_REQUIRES,
     packages = PACKAGES,
