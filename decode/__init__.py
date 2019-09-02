@@ -1,4 +1,6 @@
 __version__ = '0.5.4'
+__author__ = 'DESHIMA software team'
+
 
 from . import utils
 from .core import *
