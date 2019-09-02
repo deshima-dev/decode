@@ -27,7 +27,6 @@ PACKAGES = [
     'decode.logging',
     'decode.plot',
     'decode.models',
-    'decode.joke',
     'decode.utils',
     'decode.utils.misc',
     'decode.utils.ndarray'

@@ -1,4 +1,4 @@
-# coding: utf-8
+__version__ = '0.5.4'
 
 from . import utils
 from .core import *
@@ -6,15 +6,8 @@ from . import io
 from . import plot
 from .logging import *
 from . import models
-from .joke import *
 del core
 del logging
-del joke
 
-# for sphinx build
+# for sphinx docs
 __all__ = dir()
-__all__.remove('superspec')
-__all__.remove('youtube')
-
-# version
-__version__ = '0.5.4'
