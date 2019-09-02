@@ -1,22 +1,8 @@
+# De:code
 
-![][deshima-logo-color]
+[![](https://img.shields.io/pypi/v/decode.svg?label=PyPI&style=flat-square)](https://pypi.org/pypi/decode/)
+[![](https://img.shields.io/pypi/pyversions/decode.svg?label=Python&color=yellow&style=flat-square)](https://pypi.org/pypi/decode/)
+[![Travis](https://img.shields.io/travis/deshima-dev/decode/master.svg?label=Travis%20CI&style=flat-square)](https://travis-ci.org/deshima-dev/decode)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg?label=License&style=flat-square)](LICENSE)
 
-<br>
-
-# De:code - DESHIMA Code for data analysis
-
-De:code is a Python data analysis package.
-
-## Installation
-
-## Requirements
-
-## Links
-
-+ [Repository's Wiki][repos-wiki]
-+ [Package's Documentation][documentation]
-
-<!-- link URLs -->
-[repos-wiki]: https://github.com/deshima-dev/decode/wiki
-[documentation]: https://deshima-dev.github.io/decode/
-[deshima-logo-color]: https://github.com/deshima-dev/decode/wiki/Images/deshima-logo-color.png
+:zap: DESHIMA code for data analysis
