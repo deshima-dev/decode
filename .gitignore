@@ -1,9 +1,13 @@
-## User defined files:
+# Editor settings
 .vscode
+
+# Pychon package configs
 .ipython
 .matplotlib
-/docs/_doctree/
-/testdocs/
+
+# Sphinx docs
+docs/_build
+docs/_apidoc
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
