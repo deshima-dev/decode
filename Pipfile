@@ -3,30 +3,30 @@ name = "pypi"
 url = "https://pypi.org/simple"
 verify_ssl = true
 
-[dev-packages]
-ipython = "*"
-jupyter = "*"
-pylint = "*"
-twine = "*"
-sphinx = "*"
-sphinx-rtd-theme = "*"
-tornado = "~=5.1"
-
 [packages]
 numpy = "*"
 scipy = "*"
-astropy = "*"
 xarray = "*"
+astropy = "*"
 matplotlib = "*"
 scikit-learn = "*"
+netcdf4 = "*"
 pyyaml = "*"
 tqdm = "*"
-netcdf4 = "*"
+
+[dev-packages]
+ipython = "*"
+jupyterlab = "*"
+twine = "*"
+black = "*"
+flake8 = "*"
+sphinx = "*"
+sphinx-rtd-theme = "*"
+setuptools-py2cfg = "*"
+decode = {editable = true,path = "."}
 
 [requires]
-python_version = "3.6"
+python_version = "3.7"
 
-[scripts]
-jupyter = "jupyter notebook ${HOME}"
-configure = "etc/configure"
-distribute = "etc/distribute"
+[pipenv]
+allow_prereleases = true
