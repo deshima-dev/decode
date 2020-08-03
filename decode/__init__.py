@@ -1,5 +1,6 @@
-__version__ = '0.5.6'
-__author__ = 'DESHIMA software team'
+# flake8: noqa
+__version__ = "0.5.6"
+__author__ = "DESHIMA software team"
 
 
 from . import utils
@@ -8,6 +9,7 @@ from . import io
 from . import plot
 from .logging import *
 from . import models
+
 del core
 del logging
 

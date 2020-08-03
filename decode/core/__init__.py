@@ -1,4 +1,6 @@
 # coding: utf-8
+# flake8: noqa
+
 
 # classes
 class BaseAccessor(object):
@@ -21,7 +23,7 @@ class BaseAccessor(object):
     @property
     def scalarcoords(self):
         """A dictionary of values that don't label any axes (point-like)."""
-        return {k: v.values for k, v in self.coords.items() if v.dims==()}
+        return {k: v.values for k, v in self.coords.items() if v.dims == ()}
 
 
 # dependent packages

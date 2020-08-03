@@ -1,28 +1,25 @@
 # coding: utf-8
+__all__ = ["setlogger"]
 
-__all__ = [
-    'setlogger',
-]
 
 # standard library
 import logging
 from copy import copy
 from pathlib import Path
+
 logger = logging.getLogger(__name__)
 
-# dependent packages
-import decode as dc
 
 # module constants
-DATEFORMAT = '%Y-%m-%d %H:%M:%S'
-LOGFORMAT  = '{asctime} | {levelname:8} | {funcName}: {message}'
-DEFAULTLEVEL = 'INFO'
+DATEFORMAT = "%Y-%m-%d %H:%M:%S"
+LOGFORMAT = "{asctime} | {levelname:8} | {funcName}: {message}"
+DEFAULTLEVEL = "INFO"
 
 
 # classes
 class setlogger(object):
-    def __init__(self, level=None, filename=None, overwrite=False, encoding='utf-8'):
-        self.logger = logging.getLogger('decode')
+    def __init__(self, level=None, filename=None, overwrite=False, encoding="utf-8"):
+        self.logger = logging.getLogger("decode")
         self.logger.addHandler(logging.NullHandler())
         # save current state
         self.oldhandlers = copy(self.logger.handlers)
@@ -39,10 +36,10 @@ class setlogger(object):
             handler = logging.StreamHandler()
         else:
             filename = str(Path(filename).expanduser())
-            mode = 'w' if overwrite else 'a'
+            mode = "w" if overwrite else "a"
             handler = logging.FileHandler(filename, mode, encoding)
 
-        formatter = logging.Formatter(LOGFORMAT, DATEFORMAT, style='{')
+        formatter = logging.Formatter(LOGFORMAT, DATEFORMAT, style="{")
         handler.setFormatter(formatter)
         self.logger.addHandler(handler)
 
