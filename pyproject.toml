@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "decode"
-version = "0.5.7"
+version = "0.5.8"
 description = "DESHIMA code for data analysis"
 keywords = [
     "astronomy",
@@ -19,7 +19,7 @@ homepage = "https://github.com/deshima-dev/decode/"
 documentation = "https://deshima-dev.github.io/decode/"
 
 [tool.poetry.dependencies]
-python = "^3.6.1"
+python = "^3.6"
 astropy = "^4.0"
 matplotlib = "^3.2"
 netcdf4 = "^1.5"
