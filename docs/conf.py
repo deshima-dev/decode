@@ -22,7 +22,7 @@ copyright = '2019, DESHIMA software team'
 author = 'DESHIMA software team'
 
 # The full version, including alpha/beta/rc tags
-release = '0.5.5'
+release = '0.5.6'
 
 
 # -- General configuration ---------------------------------------------------
