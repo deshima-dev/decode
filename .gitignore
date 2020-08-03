@@ -1,10 +1,6 @@
 # Editor settings
 .vscode
 
-# Pychon package configs
-.ipython
-.matplotlib
-
 # Sphinx docs
 docs/_build
 docs/_apidoc
