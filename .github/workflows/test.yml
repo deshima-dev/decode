@@ -24,9 +24,9 @@ jobs:
         run: pip install poetry
       - name: Install dependencies
         run: poetry install
-      # - name: Lint with flake8
-      #   run: poetry run flake8 decode
-      # - name: Format with black
-      #   run: poetry run black --check decode
+      - name: Lint with flake8
+        run: poetry run flake8 decode
+      - name: Format with black
+        run: poetry run black --check decode
       - name: Test with pytest
         run: poetry run pytest
