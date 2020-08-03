@@ -18,11 +18,11 @@ sys.path.insert(0, os.path.abspath('../'))
 # -- Project information -----------------------------------------------------
 
 project = 'De:code'
-copyright = '2019, DESHIMA software team'
+copyright = '2018-2020 DESHIMA software team'
 author = 'DESHIMA software team'
 
 # The full version, including alpha/beta/rc tags
-release = '0.5.5'
+release = '0.5.6'
 
 
 # -- General configuration ---------------------------------------------------

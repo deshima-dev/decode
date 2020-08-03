@@ -1,0 +1,44 @@
+[tool.poetry]
+name = "decode"
+version = "0.5.6"
+description = "DESHIMA code for data analysis"
+keywords = [
+    "astronomy",
+    "submillimeter",
+    "spectroscopy",
+    "deshima",
+    "data-analysis",
+]
+authors = [
+    "Akio Taniguchi <taniguchi@a.phys.nagoya-u.ac.jp>",
+    "Tsuyoshi Ishida <tishida@ioa.s.u-tokyo.ac.jp>",
+]
+license = "MIT"
+readme = "README.md"
+homepage = "https://github.com/deshima-dev/decode/"
+documentation = "https://deshima-dev.github.io/decode/"
+
+[tool.poetry.dependencies]
+python = "^3.6.1"
+astropy = "^4.0"
+matplotlib = "^3.2"
+netcdf4 = "^1.5"
+numpy = "^1.18"
+pyyaml = "^3.13"
+scikit-learn = "^0.22"
+scipy = "^1.4"
+tqdm = "^4.41"
+xarray = "^0.15"
+
+[tool.poetry.dev-dependencies]
+black = "^19.10b0"
+flake8 = "^3.8"
+ipython = "^7.14"
+jupyterlab = "^2.2"
+pytest = "^6.0"
+sphinx = "^3.1"
+sphinx-rtd-theme = "^0.5"
+
+[build-system]
+requires = ["poetry>=0.12"]
+build-backend = "poetry.masonry.api"
