@@ -1,56 +1,66 @@
 # coding: utf-8
 
+
 # public items
 __all__ = []
 
+
 # standard library
 from collections import OrderedDict
-from datetime import datetime
-from logging import getLogger
+
 
 # dependent packages
-import decode as dc
 import numpy as np
-import matplotlib.pyplot as plt
 import xarray as xr
 from .. import BaseAccessor
 
+
 # local constants
-TCOORDS = lambda array: OrderedDict([
-    ('vrad', ('t', np.zeros(array.shape[0], dtype=float))),
-    ('x',    ('t', np.zeros(array.shape[0], dtype=float))),
-    ('y',    ('t', np.zeros(array.shape[0], dtype=float))),
-    ('time', ('t', np.zeros(array.shape[0], dtype=float))),
-    ('temp', ('t', np.zeros(array.shape[0], dtype=float))),
-    ('pressure', ('t', np.zeros(array.shape[0], dtype=float))),
-    ('vapor-pressure', ('t', np.zeros(array.shape[0], dtype=float))),
-    ('windspd', ('t', np.zeros(array.shape[0], dtype=float))),
-    ('winddir', ('t', np.zeros(array.shape[0], dtype=float))),
-    ('scantype', ('t', np.full(array.shape[0], 'GRAD', dtype='U4'))),
-    ('scanid', ('t', np.zeros(array.shape[0], dtype=int))),
-])
-
-CHCOORDS = lambda array: OrderedDict([
-    ('masterid', ('ch', np.zeros(array.shape[1], dtype=int))),
-    ('kidid', ('ch', np.zeros(array.shape[1], dtype=int))),
-    ('kidfq', ('ch', np.zeros(array.shape[1], dtype=float))),
-    ('kidtp', ('ch', np.zeros(array.shape[1], dtype=int)))
-])
-
-DATACOORDS = lambda array: OrderedDict([
-    ('weight', (('t', 'ch'), np.ones(array.shape, dtype=float)))
-])
-
-SCALARCOORDS = OrderedDict([
-    ('coordsys', 'RADEC'),
-    ('datatype', 'Temperature'),
-    ('xref', 0.0),
-    ('yref', 0.0),
-    ('type', 'dca'),
-])
+def TCOORDS(array):
+    return OrderedDict(
+        [
+            ("vrad", ("t", np.zeros(array.shape[0], dtype=float))),
+            ("x", ("t", np.zeros(array.shape[0], dtype=float))),
+            ("y", ("t", np.zeros(array.shape[0], dtype=float))),
+            ("time", ("t", np.zeros(array.shape[0], dtype=float))),
+            ("temp", ("t", np.zeros(array.shape[0], dtype=float))),
+            ("pressure", ("t", np.zeros(array.shape[0], dtype=float))),
+            ("vapor-pressure", ("t", np.zeros(array.shape[0], dtype=float))),
+            ("windspd", ("t", np.zeros(array.shape[0], dtype=float))),
+            ("winddir", ("t", np.zeros(array.shape[0], dtype=float))),
+            ("scantype", ("t", np.full(array.shape[0], "GRAD", dtype="U4"))),
+            ("scanid", ("t", np.zeros(array.shape[0], dtype=int))),
+        ]
+    )
 
 
-@xr.register_dataarray_accessor('dca')
+def CHCOORDS(array):
+    return OrderedDict(
+        [
+            ("masterid", ("ch", np.zeros(array.shape[1], dtype=int))),
+            ("kidid", ("ch", np.zeros(array.shape[1], dtype=int))),
+            ("kidfq", ("ch", np.zeros(array.shape[1], dtype=float))),
+            ("kidtp", ("ch", np.zeros(array.shape[1], dtype=int))),
+        ]
+    )
+
+
+def DATACOORDS(array):
+    return OrderedDict([("weight", (("t", "ch"), np.ones(array.shape, dtype=float)))])
+
+
+SCALARCOORDS = OrderedDict(
+    [
+        ("coordsys", "RADEC"),
+        ("datatype", "Temperature"),
+        ("xref", 0.0),
+        ("yref", 0.0),
+        ("type", "dca"),
+    ]
+)
+
+
+@xr.register_dataarray_accessor("dca")
 class DecodeArrayAccessor(BaseAccessor):
     def __init__(self, array):
         """Initialize the Decode accessor of an array.
@@ -79,14 +89,14 @@ class DecodeArrayAccessor(BaseAccessor):
     @property
     def tcoords(self):
         """Dictionary of arrays that label time axis."""
-        return {k: v.values for k, v in self.coords.items() if v.dims==('t',)}
+        return {k: v.values for k, v in self.coords.items() if v.dims == ("t",)}
 
     @property
     def chcoords(self):
         """Dictionary of arrays that label channel axis."""
-        return {k: v.values for k, v in self.coords.items() if v.dims==('ch',)}
+        return {k: v.values for k, v in self.coords.items() if v.dims == ("ch",)}
 
     @property
     def datacoords(self):
         """Dictionary of arrays that label time and channel axis."""
-        return {k: v.values for k, v in self.coords.items() if v.dims==('t', 'ch')}
+        return {k: v.values for k, v in self.coords.items() if v.dims == ("t", "ch")}
