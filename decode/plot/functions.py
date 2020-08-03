@@ -1,28 +1,34 @@
 # coding: utf-8
 
+
 # public items
 __all__ = [
-    'plotcoords', 'plot_tcoords',
-    'plottimestream', 'plot_timestream',
-    'plotspectrum', 'plot_spectrum',
-    'plot_chmap',
-    'plotpsd',
-    'plotallanvar',
+    "plotcoords",
+    "plot_tcoords",
+    "plottimestream",
+    "plot_timestream",
+    "plotspectrum",
+    "plot_spectrum",
+    "plot_chmap",
+    "plotpsd",
+    "plotallanvar",
 ]
+
 
 # standard library
 from logging import getLogger
-logger = getLogger(__name__)
+
 
 # dependent packages
-import decode as dc
 import numpy as np
 import matplotlib.pyplot as plt
-from mpl_toolkits.axes_grid1 import make_axes_locatable
-import xarray as xr
 from scipy.signal import hanning
 from ..utils.ndarray.functions import psd, allan_variance
 from ..utils.misc.functions import deprecation_warning
+
+
+# module logger
+logger = getLogger(__name__)
 
 
 # functions
@@ -40,20 +46,24 @@ def plot_tcoords(array, coords, scantypes=None, ax=None, **kwargs):
         ax = plt.gca()
 
     if scantypes is None:
-        ax.plot(array[coords[0]], array[coords[1]], label='ALL', **kwargs)
+        ax.plot(array[coords[0]], array[coords[1]], label="ALL", **kwargs)
     else:
         for scantype in scantypes:
-            ax.plot(array[coords[0]][array.scantype == scantype],
-                    array[coords[1]][array.scantype == scantype], label=scantype, **kwargs)
+            ax.plot(
+                array[coords[0]][array.scantype == scantype],
+                array[coords[1]][array.scantype == scantype],
+                label=scantype,
+                **kwargs
+            )
     ax.set_xlabel(coords[0])
     ax.set_ylabel(coords[1])
-    ax.set_title('{} vs {}'.format(coords[1], coords[0]))
+    ax.set_title("{} vs {}".format(coords[1], coords[0]))
     ax.legend()
 
-    logger.info('{} vs {} has been plotted.'.format(coords[1], coords[0]))
+    logger.info("{} vs {} has been plotted.".format(coords[1], coords[0]))
 
 
-def plot_timestream(array, kidid, xtick='time', scantypes=None, ax=None, **kwargs):
+def plot_timestream(array, kidid, xtick="time", scantypes=None, ax=None, **kwargs):
     """Plot timestream data.
 
     Args:
@@ -71,34 +81,42 @@ def plot_timestream(array, kidid, xtick='time', scantypes=None, ax=None, **kwarg
 
     index = np.where(array.kidid == kidid)[0]
     if len(index) == 0:
-        raise KeyError('Such a kidid does not exist.')
+        raise KeyError("Such a kidid does not exist.")
     index = int(index)
 
     if scantypes is None:
-        if xtick == 'time':
-            ax.plot(array.time, array[:, index], label='ALL', **kwargs)
-        elif xtick == 'index':
-            ax.plot(np.ogrid[:len(array.time)], array[:, index], label='ALL', **kwargs)
+        if xtick == "time":
+            ax.plot(array.time, array[:, index], label="ALL", **kwargs)
+        elif xtick == "index":
+            ax.plot(np.ogrid[: len(array.time)], array[:, index], label="ALL", **kwargs)
     else:
         for scantype in scantypes:
-            if xtick == 'time':
-                ax.plot(array.time[array.scantype == scantype],
-                        array[:, index][array.scantype == scantype], label=scantype, **kwargs)
-            elif xtick == 'index':
-                ax.plot(np.ogrid[:len(array.time[array.scantype == scantype])],
-                        array[:, index][array.scantype == scantype], label=scantype, **kwargs)
-    ax.set_xlabel('{}'.format(xtick))
+            if xtick == "time":
+                ax.plot(
+                    array.time[array.scantype == scantype],
+                    array[:, index][array.scantype == scantype],
+                    label=scantype,
+                    **kwargs
+                )
+            elif xtick == "index":
+                ax.plot(
+                    np.ogrid[: len(array.time[array.scantype == scantype])],
+                    array[:, index][array.scantype == scantype],
+                    label=scantype,
+                    **kwargs
+                )
+    ax.set_xlabel("{}".format(xtick))
     ax.set_ylabel(str(array.datatype.values))
     ax.legend()
 
-    kidtpdict = {0: 'wideband', 1: 'filter', 2: 'blind'}
+    kidtpdict = {0: "wideband", 1: "filter", 2: "blind"}
     try:
         kidtp = kidtpdict[int(array.kidtp[index])]
     except KeyError:
-        kidtp = 'filter'
-    ax.set_title('ch #{} ({})'.format(kidid, kidtp))
+        kidtp = "filter"
+    ax.set_title("ch #{} ({})".format(kidid, kidtp))
 
-    logger.info('timestream data (ch={}) has been plotted.'.format(kidid))
+    logger.info("timestream data (ch={}) has been plotted.".format(kidid))
 
 
 def plot_spectrum(cube, xtick, ytick, aperture, ax=None, **kwargs):
@@ -139,60 +157,60 @@ def plot_spectrum(cube, xtick, ytick, aperture, ax=None, **kwargs):
     if ax is None:
         ax = plt.gca()
 
-    ### pick up kwargs
-    xc     = kwargs.pop('xc', None)
-    yc     = kwargs.pop('yc', None)
-    width  = kwargs.pop('width', None)
-    height = kwargs.pop('height', None)
-    xmin   = kwargs.pop('xmin', None)
-    xmax   = kwargs.pop('xmax', None)
-    ymin   = kwargs.pop('ymin', None)
-    ymax   = kwargs.pop('ymax', None)
-    radius = kwargs.pop('radius', None)
-    exchs  = kwargs.pop('exchs', None)
+    # pick up kwargs
+    xc = kwargs.pop("xc", None)
+    yc = kwargs.pop("yc", None)
+    width = kwargs.pop("width", None)
+    height = kwargs.pop("height", None)
+    xmin = kwargs.pop("xmin", None)
+    xmax = kwargs.pop("xmax", None)
+    ymin = kwargs.pop("ymin", None)
+    ymax = kwargs.pop("ymax", None)
+    radius = kwargs.pop("radius", None)
+    exchs = kwargs.pop("exchs", None)
 
-    ### labels
-    xlabeldict = {'freq': 'frequency [GHz]', 'id': 'kidid'}
+    # labels
+    xlabeldict = {"freq": "frequency [GHz]", "id": "kidid"}
 
-    cube     = cube.copy()
+    cube = cube.copy()
     datatype = cube.datatype
-    if aperture == 'box':
+    if aperture == "box":
         if None not in [xc, yc, width, height]:
             xmin, xmax = int(xc - width / 2), int(xc + width / 2)
             ymin, ymax = int(yc - width / 2), int(yc + width / 2)
         elif None not in [xmin, xmax, ymin, ymax]:
             pass
         else:
-            raise KeyError('Invalid arguments.')
-        value = getattr(cube[xmin:xmax, ymin:ymax, :], ytick)(dim=('x', 'y'))
-    elif aperture == 'circle':
+            raise KeyError("Invalid arguments.")
+        value = getattr(cube[xmin:xmax, ymin:ymax, :], ytick)(dim=("x", "y"))
+    elif aperture == "circle":
         if None not in [xc, yc, radius]:
             pass
         else:
-            raise KeyError('Invalid arguments.')
-        x, y   = np.ogrid[0:len(cube.x), 0:len(cube.y)]
-        mask   = ((x - xc)**2 + (y - yc)**2 < radius**2)
-        mask   = np.broadcast_to(mask[:, :, np.newaxis], cube.shape)
+            raise KeyError("Invalid arguments.")
+        x, y = np.ogrid[0 : len(cube.x), 0 : len(cube.y)]
+        mask = (x - xc) ** 2 + (y - yc) ** 2 < radius ** 2
+        mask = np.broadcast_to(mask[:, :, np.newaxis], cube.shape)
         masked = np.ma.array(cube.values, mask=~mask)
-        value  = getattr(np, 'nan'+ytick)(masked, axis=(0, 1))
+        value = getattr(np, "nan" + ytick)(masked, axis=(0, 1))
     else:
         raise KeyError(aperture)
 
-    if xtick == 'freq':
-        kidfq     = cube.kidfq.values
+    if xtick == "freq":
+        kidfq = cube.kidfq.values
         freqrange = ~np.isnan(kidfq)
         if exchs is not None:
             freqrange[exchs] = False
         x = kidfq[freqrange]
         y = value[freqrange]
-        ax.step(x[np.argsort(x)], y[np.argsort(x)], where='mid', **kwargs)
-    elif xtick == 'id':
-        ax.step(cube.kidid.values, value, where='mid', **kwargs)
+        ax.step(x[np.argsort(x)], y[np.argsort(x)], where="mid", **kwargs)
+    elif xtick == "id":
+        ax.step(cube.kidid.values, value, where="mid", **kwargs)
     else:
         raise KeyError(xtick)
-    ax.set_xlabel('{}'.format(xlabeldict[xtick]))
-    ax.set_ylabel('{} ({})'.format(datatype.values, ytick))
-    ax.set_title('spectrum')
+    ax.set_xlabel("{}".format(xlabeldict[xtick]))
+    ax.set_ylabel("{} ({})".format(datatype.values, ytick))
+    ax.set_title("spectrum")
 
 
 def plot_chmap(cube, kidid, ax=None, **kwargs):
@@ -209,13 +227,13 @@ def plot_chmap(cube, kidid, ax=None, **kwargs):
 
     index = np.where(cube.kidid == kidid)[0]
     if len(index) == 0:
-        raise KeyError('Such a kidid does not exist.')
+        raise KeyError("Such a kidid does not exist.")
     index = int(index)
 
     im = ax.pcolormesh(cube.x, cube.y, cube[:, :, index].T, **kwargs)
-    ax.set_xlabel('x')
-    ax.set_ylabel('y')
-    ax.set_title('intensity map ch #{}'.format(kidid))
+    ax.set_xlabel("x")
+    ax.set_ylabel("y")
+    ax.set_title("intensity map ch #{}".format(kidid))
     return im
 
 
@@ -225,7 +243,8 @@ def plotpsd(data, dt, ndivide=1, window=hanning, overlap_half=False, ax=None, **
     Args:
         data (np.ndarray): Input data.
         dt (float): Time between each data.
-        ndivide (int): Do averaging (split data into ndivide, get psd of each, and average them).
+        ndivide (int): Do averaging (split data into ndivide,
+            get psd of each, and average them).
         overlap_half (bool): Split data to half-overlapped regions.
         ax (matplotlib.axes): Axis the figure is plotted on.
         kwargs (optional): Plot options passed to ax.plot().
@@ -234,8 +253,8 @@ def plotpsd(data, dt, ndivide=1, window=hanning, overlap_half=False, ax=None, **
         ax = plt.gca()
     vk, psddata = psd(data, dt, ndivide, window, overlap_half)
     ax.loglog(vk, psddata, **kwargs)
-    ax.set_xlabel('Frequency [Hz]')
-    ax.set_ylabel('PSD')
+    ax.set_xlabel("Frequency [Hz]")
+    ax.set_ylabel("PSD")
     ax.legend()
 
 
@@ -253,27 +272,36 @@ def plotallanvar(data, dt, tmax=10, ax=None, **kwargs):
         ax = plt.gca()
     tk, allanvar = allan_variance(data, dt, tmax)
     ax.loglog(tk, allanvar, **kwargs)
-    ax.set_xlabel('Time [s]')
-    ax.set_ylabel('Allan Variance')
+    ax.set_xlabel("Time [s]")
+    ax.set_ylabel("Allan Variance")
     ax.legend()
 
 
 # alias
-@deprecation_warning('Use plot_tcoords() instead. plotcoords() will be removed in the future.'\
-                     'The order of the arguments has been changed in plot_tcoords().'\
-                     'For a while, De:code properly passes the arguments in plotcoords() to plot_tcoords().')
+@deprecation_warning(
+    "Use plot_tcoords() instead. plotcoords() will be removed in the future."
+    " The order of the arguments has been changed in plot_tcoords()."
+    " For a while, De:code properly passes the arguments"
+    " in plotcoords() to plot_tcoords()."
+)
 def plotcoords(array, ax, coords, scantypes=None, **kwargs):
     plot_tcoords(array, coords, scantypes=scantypes, ax=ax, **kwargs)
 
 
-@deprecation_warning('Use plot_timestream() instead. plottimestream() has been removed.'\
-                     'The arguments has been changed in plot_timestream().', DeprecationWarning)
-def plottimestream(array, ax=None, xtick='time', **kwargs):
+@deprecation_warning(
+    "Use plot_timestream() instead. plottimestream() has been removed."
+    "The arguments has been changed in plot_timestream().",
+    DeprecationWarning,
+)
+def plottimestream(array, ax=None, xtick="time", **kwargs):
     pass
 
 
-@deprecation_warning('Use plot_spectrum() instead. plotspectrum() will be removed in the future.'\
-                     'The order of the arguments has been changed in plot_spectrum().'\
-                     'For a while, De:code properly passes the arguments in plotspectrum() to plot_spectrum().')
+@deprecation_warning(
+    "Use plot_spectrum() instead. plotspectrum() will be removed in the future."
+    " The order of the arguments has been changed in plot_spectrum()."
+    " For a while, De:code properly passes the arguments"
+    " in plotspectrum() to plot_spectrum()."
+)
 def plotspectrum(cube, ax, xtick, ytick, aperture, **kwargs):
     plot_spectrum(cube, xtick, ytick, aperture, ax=ax, **kwargs)
