@@ -36,7 +36,6 @@ flake8 = "^3.8"
 ipython = "^7.14"
 jupyterlab = "^2.2"
 pytest = "^6.0"
-pytest-cov = "^2.10"
 sphinx = "^3.1"
 sphinx-rtd-theme = "^0.5"
 
