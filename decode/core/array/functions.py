@@ -1,62 +1,69 @@
 # coding: utf-8
 
+
 # public items
 __all__ = [
-    'array',
-    'ones',
-    'zeros',
-    'full',
-    'empty',
-    'ones_like',
-    'zeros_like',
-    'full_like',
-    'empty_like',
-    'concat'
+    "array",
+    "ones",
+    "zeros",
+    "full",
+    "empty",
+    "ones_like",
+    "zeros_like",
+    "full_like",
+    "empty_like",
+    "concat",
 ]
 
-# standard library
-from uuid import uuid4
 
 # dependent packages
 import decode as dc
 import numpy as np
 import xarray as xr
-from astropy import units as u
-from astropy.io import fits
 
 
 # functions
-def array(data, tcoords=None, chcoords=None, scalarcoords=None, datacoords=None, attrs=None, name=None):
+def array(
+    data,
+    tcoords=None,
+    chcoords=None,
+    scalarcoords=None,
+    datacoords=None,
+    attrs=None,
+    name=None,
+):
     """Create an array as an instance of xarray.DataArray with Decode accessor.
 
     Args:
         data (numpy.ndarray): 2D (time x channel) array.
         tcoords (dict, optional): Dictionary of arrays that label time axis.
         chcoords (dict, optional): Dictionary of arrays that label channel axis.
-        scalarcoords (dict, optional): Dictionary of values that don't label any axes (point-like).
-        datacoords (dict, optional): Dictionary of arrays that label time and channel axes.
+        scalarcoords (dict, optional): Dictionary of values
+            that don't label any axes (point-like).
+        datacoords (dict, optional): Dictionary of arrays
+            that label time and channel axes.
         attrs (dict, optional): Dictionary of attributes to add to the instance.
         name (str, optional): String that names the instance.
 
     Returns:
-        array (decode.array): Deode array.
+        array (decode.array): Decode array.
     """
     # initialize coords with default values
-    array = xr.DataArray(data, dims=('t', 'ch'), attrs=attrs, name=name)
+    array = xr.DataArray(data, dims=("t", "ch"), attrs=attrs, name=name)
     array.dca._initcoords()
 
     # update coords with input values (if any)
     if tcoords is not None:
-        array.coords.update({key: ('t', tcoords[key]) for key in tcoords})
+        array.coords.update({key: ("t", tcoords[key]) for key in tcoords})
 
     if chcoords is not None:
-        array.coords.update({key: ('ch', chcoords[key]) for key in chcoords})
+        array.coords.update({key: ("ch", chcoords[key]) for key in chcoords})
 
     if scalarcoords is not None:
         array.coords.update(scalarcoords)
 
     if datacoords is not None:
-        array.coords.update({key: (('t', 'ch'), datacoords[key]) for key in datacoords})
+        array.coords.update({key: (("t", "ch"), datacoords[key]) for key in datacoords})
 
     return array
 
@@ -197,9 +204,14 @@ def empty_like(array, dtype=None, keepmeta=True):
         array (decode.array): Decode array without initializing entries.
     """
     if keepmeta:
-        return dc.empty(array.shape, dtype,
-            tcoords=array.dca.tcoords, chcoords=array.dca.chcoords,
-            scalarcoords=array.dca.scalarcoords, attrs=array.attrs, name=array.name
+        return dc.empty(
+            array.shape,
+            dtype,
+            tcoords=array.dca.tcoords,
+            chcoords=array.dca.chcoords,
+            scalarcoords=array.dca.scalarcoords,
+            attrs=array.attrs,
+            name=array.name,
         )
     else:
         return dc.empty(array.shape, dtype)
@@ -209,5 +221,5 @@ def concat(objs, dim=None, **kwargs):
     xref = objs[0].xref.values
     yref = objs[0].yref.values
     for obj in objs:
-        obj.coords.update({'xref': xref, 'yref': yref})
+        obj.coords.update({"xref": xref, "yref": yref})
     return xr.concat(objs, dim=dim, **kwargs)
