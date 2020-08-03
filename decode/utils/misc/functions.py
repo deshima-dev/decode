@@ -2,11 +2,11 @@
 
 # public items
 __all__ = [
-    'OrderedLoader',
-    'deprecation_warning',
-    'copy_function',
-    'one_thread_per_process',
-    'slicewhere',
+    "OrderedLoader",
+    "deprecation_warning",
+    "copy_function",
+    "one_thread_per_process",
+    "slicewhere",
 ]
 
 # standard library
@@ -30,6 +30,7 @@ class OrderedLoader(yaml.Loader):
         >>> ... yaml.load(f, Loader=OrderedLoader)
 
     """
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -44,10 +45,10 @@ class OrderedLoader(yaml.Loader):
 # function
 def deprecation_warning(message, cls=PendingDeprecationWarning):
     import warnings
-    warnings.filterwarnings('always', category=PendingDeprecationWarning)
+
+    warnings.filterwarnings("always", category=PendingDeprecationWarning)
 
     def decorator(func):
-
         @wraps(func)
         def wrapper(*args, **kwargs):
             warnings.warn(message, cls, stacklevel=2)
@@ -90,11 +91,7 @@ def copy_function(func, name=None):
         code.co_cellvars,
     )
     newfunc = FunctionType(
-        newcode,
-        func.__globals__,
-        newname,
-        func.__defaults__,
-        func.__closure__,
+        newcode, func.__globals__, newname, func.__defaults__, func.__closure__,
     )
     newfunc.__dict__.update(func.__dict__)
     return newfunc
@@ -117,6 +114,7 @@ def one_thread_per_process():
     """
     try:
         import mkl
+
         is_mkl = True
     except ImportError:
         is_mkl = False

@@ -1,20 +1,18 @@
 # coding: utf-8
 
 # public items
-__all__ = [
-    'psd',
-    'allan_variance'
-]
+__all__ = ["psd", "allan_variance"]
+
 
 # standard library
-import sys
 from logging import getLogger
+
 
 # dependent packages
 import numpy as np
-import matplotlib.pyplot as plt
 from scipy.fftpack import fftfreq, fft
 from scipy.signal import hanning
+
 
 # functions
 def psd(data, dt, ndivide=1, window=hanning, overlap_half=False):
@@ -23,7 +21,8 @@ def psd(data, dt, ndivide=1, window=hanning, overlap_half=False):
     Args:
         data (np.ndarray): Input data.
         dt (float): Time between each data.
-        ndivide (int): Do averaging (split data into ndivide, get psd of each, and average them).
+        ndivide (int): Do averaging (split data into ndivide,
+            get psd of each, and average them).
         ax (matplotlib.axes): Axis you want to plot on.
         doplot (bool): Plot how averaging works.
         overlap_half (bool): Split data to half-overlapped regions.
@@ -32,7 +31,7 @@ def psd(data, dt, ndivide=1, window=hanning, overlap_half=False):
         vk (np.ndarray): Frequency.
         psd (np.ndarray): PSD
     """
-    logger = getLogger('decode.utils.ndarray.psd')
+    logger = getLogger("decode.utils.ndarray.psd")
 
     if overlap_half:
         step = int(len(data) / (ndivide + 1))
@@ -41,31 +40,36 @@ def psd(data, dt, ndivide=1, window=hanning, overlap_half=False):
         step = int(len(data) / ndivide)
         size = step
 
-    if bin(len(data)).count('1') != 1:
-        logger.warning('warning: length of data is not power of 2: {}'.format(len(data)))
+    if bin(len(data)).count("1") != 1:
+        logger.warning(
+            "warning: length of data is not power of 2: {}".format(len(data))
+        )
     size = int(len(data) / ndivide)
-    if bin(size).count('1') != 1.:
+    if bin(size).count("1") != 1.0:
         if overlap_half:
-            logger.warning('warning: ((length of data) / (ndivide+1)) * 2 is not power of 2: {}'.format(size))
+            logger.warning(
+                "warning: ((length of data) / (ndivide+1)) * 2"
+                " is not power of 2: {}".format(size)
+            )
         else:
-            logger.warning('warning: (length of data) / ndivide is not power of 2: {}'.format(size))
+            logger.warning(
+                "warning: (length of data) / ndivide is not power of 2: {}".format(size)
+            )
     psd = np.zeros(size)
-    T   = (size - 1) * dt
-    vs  = 1 / dt
     vk_ = fftfreq(size, dt)
-    vk  = vk_[np.where(vk_ >= 0)]
+    vk = vk_[np.where(vk_ >= 0)]
 
     for i in range(ndivide):
-        d = data[i * step:i * step + size]
+        d = data[i * step : i * step + size]
         if window is None:
-            w    = np.ones(size)
+            w = np.ones(size)
             corr = 1.0
         else:
-            w    = window(size)
-            corr = np.mean(w**2)
-        psd = psd + 2 * (np.abs(fft(d * w)))**2 / size * dt / corr
+            w = window(size)
+            corr = np.mean(w ** 2)
+        psd = psd + 2 * (np.abs(fft(d * w))) ** 2 / size * dt / corr
 
-    return vk, psd[:len(vk)] / ndivide
+    return vk, psd[: len(vk)] / ndivide
 
 
 def allan_variance(data, dt, tmax=10):
@@ -82,8 +86,8 @@ def allan_variance(data, dt, tmax=10):
     """
     allanvar = []
     nmax = len(data) if len(data) < tmax / dt else int(tmax / dt)
-    for i in range(1, nmax+1):
-        databis = data[len(data) % i:]
-        y = databis.reshape(len(data)//i, i).mean(axis=1)
-        allanvar.append(((y[1:] - y[:-1])**2).mean() / 2)
-    return dt * np.arange(1, nmax+1), np.array(allanvar)
+    for i in range(1, nmax + 1):
+        databis = data[len(data) % i :]
+        y = databis.reshape(len(data) // i, i).mean(axis=1)
+        allanvar.append(((y[1:] - y[:-1]) ** 2).mean() / 2)
+    return dt * np.arange(1, nmax + 1), np.array(allanvar)
