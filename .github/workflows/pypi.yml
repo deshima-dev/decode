@@ -1,0 +1,24 @@
+name: PyPI
+
+on:
+  release:
+    types:
+      - created
+
+jobs:
+  job:
+    runs-on: ubuntu-latest
+    env:
+      USERNAME: ${{ secrets.PYPI_USERNAME }}
+      PASSWORD: ${{ secrets.PYPI_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.7'
+      - name: Publish package
+        run: |
+          pip install poetry
+          poetry build
+          poetry publish --username $USERNAME --password $PASSWORD
