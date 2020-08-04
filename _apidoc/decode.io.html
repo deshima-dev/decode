@@ -1,0 +1,325 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>decode.io package &mdash; De:code 0.5.9 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+
+  
+  
+  
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+        <script src="../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home" alt="Documentation Home"> De:code
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <!-- Local TOC -->
+              <div class="local-toc"><ul>
+<li><a class="reference internal" href="#">decode.io package</a><ul>
+<li><a class="reference internal" href="#submodules">Submodules</a></li>
+<li><a class="reference internal" href="#module-decode.io.functions">decode.io.functions module</a></li>
+<li><a class="reference internal" href="#module-decode.io">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</div>
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">De:code</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+      <li>decode.io package</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/_apidoc/decode.io.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="decode-io-package">
+<h1>decode.io package<a class="headerlink" href="#decode-io-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-decode.io.functions">
+<span id="decode-io-functions-module"></span><h2>decode.io.functions module<a class="headerlink" href="#module-decode.io.functions" title="Permalink to this headline">¶</a></h2>
+<dl class="py function">
+<dt id="decode.io.functions.loaddfits">
+<code class="sig-prename descclassname">decode.io.functions.</code><code class="sig-name descname">loaddfits</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">fitsname</span></em>, <em class="sig-param"><span class="n">coordtype</span><span class="o">=</span><span class="default_value">'azel'</span></em>, <em class="sig-param"><span class="n">loadtype</span><span class="o">=</span><span class="default_value">'temperature'</span></em>, <em class="sig-param"><span class="n">starttime</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">endtime</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">pixelids</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">scantypes</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">mode</span><span class="o">=</span><span class="default_value">0</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/decode/io/functions.html#loaddfits"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#decode.io.functions.loaddfits" title="Permalink to this definition">¶</a></dt>
+<dd><p>Load a decode array from a DFITS file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>fitsname</strong> (<em>str</em>) – Name of DFITS file.</p></li>
+<li><p><strong>coordtype</strong> (<em>str</em>) – Coordinate type included into a decode array.
+‘azel’: Azimuth / elevation.
+‘radec’: Right ascension / declination.</p></li>
+<li><p><strong>loadtype</strong> (<em>str</em>) – Data unit of xarray.
+‘Tsignal’: Temperature [K].
+‘Psignal’: Power [W].
+‘amplitude’: Amplitude.
+‘phase’: Phase.
+‘linphase’: Linear phase.</p></li>
+<li><p><strong>starttime</strong> (<em>int</em><em>, </em><em>str</em><em> or </em><em>numpy.datetime64</em>) – Start time of loaded data.
+It can be specified by the start index (int),
+the time compatible with numpy.datetime64 (str),
+or numpy.datetime64 (numpy.datetime64).
+Default is None and it means the data will be loaded from the first record.</p></li>
+<li><p><strong>endtime</strong> (<em>int</em><em>, </em><em>str</em><em> or </em><em>numpy.datetime64</em>) – End time of loaded data.
+It can be specified by the end index (int),
+the time compatible with numpy.datetime64 (str),
+or numpy.datetime64 (numpy.datetime64).
+Default is None and it means the data will be loaded until the last record.</p></li>
+<li><p><strong>pixelids</strong> (<em>int</em><em> or </em><em>list</em>) – Under development.</p></li>
+<li><p><strong>scantypes</strong> (<em>list</em><em>(</em><em>str</em><em>)</em>) – Scan types, such as ‘GRAD’, ‘SCAN’, ‘OFF’, ‘R’.</p></li>
+<li><p><strong>mode</strong> (<em>int</em>) – Loading mode.
+0: Relative coordinates with cosine projection (RECOMMENDED).
+1: Relative coordinates without cosine projection.
+2: Absolute coordinates.</p></li>
+<li><p><strong>kwargs</strong> (<em>optional</em>) – <dl class="simple">
+<dt>findR (bool): Automatically find R positions.</dt><dd><p>ch (int): Representative channel id used for finding R.
+Rth (float): Threshold of R.
+skyth (flaot): Threshold of sky.
+cutnum (int): The number of points of unused data at the edge.</p>
+</dd>
+<dt>still (bool): When it is true, scantypes of on/off are manually assigned.</dt><dd><p>period (float): On/off period in second for still data.</p>
+</dd>
+</dl>
+<p>shuttle (bool): For shuttle observations.
+xmin_off (float): Minimum x of off-point data.
+xmax_off (float): Maximum x of off-point data.
+xmin_on (float): Minimum x of on-point data.
+xmax_on (float): Maximum x of on-point data.</p>
+</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Loaded decode array.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>decode array (decode.array)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="decode.io.functions.loadnetcdf">
+<code class="sig-prename descclassname">decode.io.functions.</code><code class="sig-name descname">loadnetcdf</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">filename</span></em>, <em class="sig-param"><span class="n">copy</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/decode/io/functions.html#loadnetcdf"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#decode.io.functions.loadnetcdf" title="Permalink to this definition">¶</a></dt>
+<dd><p>Load a dataarray from a NetCDF file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>filename</strong> (<em>str</em>) – Filename (<a href="#id1"><span class="problematic" id="id2">*</span></a>.nc).</p></li>
+<li><p><strong>copy</strong> (<em>bool</em>) – If True, dataarray is copied in memory. Default is True.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Loaded dataarray.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>dataarray (xarray.DataArray)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="decode.io.functions.savefits">
+<code class="sig-prename descclassname">decode.io.functions.</code><code class="sig-name descname">savefits</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">cube</span></em>, <em class="sig-param"><span class="n">fitsname</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/decode/io/functions.html#savefits"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#decode.io.functions.savefits" title="Permalink to this definition">¶</a></dt>
+<dd><p>Save a cube to a 3D-cube FITS file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>cube</strong> (<em>xarray.DataArray</em>) – Cube to be saved.</p></li>
+<li><p><strong>fitsname</strong> (<em>str</em>) – Name of output FITS file.</p></li>
+<li><p><strong>kwargs</strong> (<em>optional</em>) – Other arguments common with astropy.io.fits.writeto().</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="decode.io.functions.savenetcdf">
+<code class="sig-prename descclassname">decode.io.functions.</code><code class="sig-name descname">savenetcdf</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">dataarray</span></em>, <em class="sig-param"><span class="n">filename</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/decode/io/functions.html#savenetcdf"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#decode.io.functions.savenetcdf" title="Permalink to this definition">¶</a></dt>
+<dd><p>Save a dataarray to a NetCDF file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dataarray</strong> (<em>xarray.DataArray</em>) – Dataarray to be saved.</p></li>
+<li><p><strong>filename</strong> (<em>str</em>) – Filename (used as &lt;filename&gt;.nc).
+If not spacified, random 8-character name will be used.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="module-decode.io">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-decode.io" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        
+        &copy; Copyright 2018-2020 DESHIMA software team
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>
