@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "decode"
-version = "0.5.8"
+version = "0.5.9"
 description = "DESHIMA code for data analysis"
 keywords = [
     "astronomy",
