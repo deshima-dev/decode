@@ -1,5 +1,5 @@
 # flake8: noqa
-__version__ = "0.5.9"
+__version__ = "0.6.0"
 __author__ = "DESHIMA software team"
 
 
