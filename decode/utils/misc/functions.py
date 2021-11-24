@@ -91,7 +91,11 @@ def copy_function(func, name=None):
         code.co_cellvars,
     )
     newfunc = FunctionType(
-        newcode, func.__globals__, newname, func.__defaults__, func.__closure__,
+        newcode,
+        func.__globals__,
+        newname,
+        func.__defaults__,
+        func.__closure__,
     )
     newfunc.__dict__.update(func.__dict__)
     return newfunc
