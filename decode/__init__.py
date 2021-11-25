@@ -5,7 +5,6 @@ __author__ = "DESHIMA software team"
 
 # subpackages
 from . import core
-from . import utils
 
 
 # submodules
@@ -13,6 +12,7 @@ from . import io
 from . import models
 from . import logging
 from . import plot
+from . import utils
 
 
 # aliases
