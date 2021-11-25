@@ -23,8 +23,8 @@ from logging import getLogger
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.signal import hanning
-from ..utils.ndarray.functions import psd, allan_variance
-from ..utils.misc.functions import deprecation_warning
+from .utils.ndarray.functions import psd, allan_variance
+from .utils.misc.functions import deprecation_warning
 
 
 # module logger
