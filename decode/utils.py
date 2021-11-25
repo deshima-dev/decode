@@ -2,25 +2,24 @@
 
 # public items
 __all__ = [
-    "deprecation_warning",
-    "copy_function",
-    "one_thread_per_process",
-    "slicewhere",
-    "psd",
     "allan_variance",
+    "copy_function",
+    "deprecation_warning",
+    "one_thread_per_process",
+    "psd",
+    "slicewhere",
 ]
 
 
 # standard library
 from collections import OrderedDict
 from contextlib import contextmanager
-from types import CodeType, FunctionType
 from functools import wraps
 from logging import getLogger
+from types import CodeType, FunctionType
 
 
 # dependent packages
-import yaml
 import numpy as np
 from scipy import ndimage
 from scipy.fftpack import fftfreq, fft
@@ -28,20 +27,25 @@ from scipy.signal import hanning
 
 
 # function
-def deprecation_warning(message, cls=PendingDeprecationWarning):
-    import warnings
+def allan_variance(data, dt, tmax=10):
+    """Calculate Allan variance.
 
-    warnings.filterwarnings("always", category=PendingDeprecationWarning)
+    Args:
+        data (np.ndarray): Input data.
+        dt (float): Time between each data.
+        tmax (float): Maximum time.
 
-    def decorator(func):
-        @wraps(func)
-        def wrapper(*args, **kwargs):
-            warnings.warn(message, cls, stacklevel=2)
-            func(*args, **kwargs)
-
-        return wrapper
-
-    return decorator
+    Returns:
+        vk (np.ndarray): Frequency.
+        allanvar (np.ndarray): Allan variance.
+    """
+    allanvar = []
+    nmax = len(data) if len(data) < tmax / dt else int(tmax / dt)
+    for i in range(1, nmax + 1):
+        databis = data[len(data) % i :]
+        y = databis.reshape(len(data) // i, i).mean(axis=1)
+        allanvar.append(((y[1:] - y[:-1]) ** 2).mean() / 2)
+    return dt * np.arange(1, nmax + 1), np.array(allanvar)
 
 
 def copy_function(func, name=None):
@@ -86,6 +90,22 @@ def copy_function(func, name=None):
     return newfunc
 
 
+def deprecation_warning(message, cls=PendingDeprecationWarning):
+    import warnings
+
+    warnings.filterwarnings("always", category=PendingDeprecationWarning)
+
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            warnings.warn(message, cls, stacklevel=2)
+            func(*args, **kwargs)
+
+        return wrapper
+
+    return decorator
+
+
 @contextmanager
 def one_thread_per_process():
     """Return a context manager where only one thread is allocated to a process.
@@ -119,23 +139,6 @@ def one_thread_per_process():
             mkl.set_num_threads(n_threads)
     else:
         yield
-
-
-def slicewhere(condition):
-    """Return slices of regions that fulfill condition.
-
-    Example:
-        >>> cond = [False, True, True, False, False, True, False]
-        >>> fm.utils.slicewhere(cond)
-        [slice(1L, 3L, None), slice(5L, 6L, None)]
-
-    Args:
-        condition (numpy.ndarray): Array of booleans.
-
-    Returns:
-        slices (list of slice): List of slice objects.
-    """
-    return [region[0] for region in ndimage.find_objects(ndimage.label(condition)[0])]
 
 
 def psd(data, dt, ndivide=1, window=hanning, overlap_half=False):
@@ -195,22 +198,18 @@ def psd(data, dt, ndivide=1, window=hanning, overlap_half=False):
     return vk, psd[: len(vk)] / ndivide
 
 
-def allan_variance(data, dt, tmax=10):
-    """Calculate Allan variance.
+def slicewhere(condition):
+    """Return slices of regions that fulfill condition.
+
+    Example:
+        >>> cond = [False, True, True, False, False, True, False]
+        >>> fm.utils.slicewhere(cond)
+        [slice(1L, 3L, None), slice(5L, 6L, None)]
 
     Args:
-        data (np.ndarray): Input data.
-        dt (float): Time between each data.
-        tmax (float): Maximum time.
+        condition (numpy.ndarray): Array of booleans.
 
     Returns:
-        vk (np.ndarray): Frequency.
-        allanvar (np.ndarray): Allan variance.
+        slices (list of slice): List of slice objects.
     """
-    allanvar = []
-    nmax = len(data) if len(data) < tmax / dt else int(tmax / dt)
-    for i in range(1, nmax + 1):
-        databis = data[len(data) % i :]
-        y = databis.reshape(len(data) // i, i).mean(axis=1)
-        allanvar.append(((y[1:] - y[:-1]) ** 2).mean() / 2)
-    return dt * np.arange(1, nmax + 1), np.array(allanvar)
+    return [region[0] for region in ndimage.find_objects(ndimage.label(condition)[0])]
