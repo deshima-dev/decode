@@ -15,7 +15,7 @@ from pkgutil import get_data
 
 
 # dependent packages
-import yaml
+import tomli
 import decode as dc
 import numpy as np
 import xarray as xr
@@ -325,8 +325,8 @@ def savefits(cube, fitsname, **kwargs):
     ndim = len(cube.dims)
 
     # load yaml
-    FITSINFO = get_data("decode", "data/fitsinfo.yaml")
-    hdrdata = yaml.load(FITSINFO, dc.utils.OrderedLoader)
+    fitsinfo = get_data("decode", "data/fitsinfo.toml")
+    hdrdata = tomli.loads(fitsinfo.decode("utf-8"))
 
     # default header
     if ndim == 2:
