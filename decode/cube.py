@@ -1,28 +1,99 @@
-# coding: utf-8
-
-
-# public items
 __all__ = ["cube", "fromcube", "tocube", "makecontinuum"]
 
 
 # standard library
+from dataclasses import dataclass
 from logging import getLogger
+from typing import Any, Tuple
 
 
-# dependent packages
+# dependencies
 import numpy as np
-import decode as dc
 import xarray as xr
 from astropy import units as u
 from scipy.interpolate import interp1d
 from scipy.ndimage.interpolation import map_coordinates
+from typing_extensions import Literal
+from xarray_dataclasses import AsDataArray, Coord, Data
+
+
+# type hints
+_ = Tuple[()]
+X = Literal["x"]
+Y = Literal["y"]
+Ch = Literal["ch"]
 
 
 # module logger
 logger = getLogger(__name__)
 
 
-# functions
+# runtime classes
+@dataclass(frozen=True)
+class Cube(AsDataArray):
+    """Specification for de:code cubes."""
+
+    data: Data[Tuple[X, Y, Ch], Any]
+    x: Coord[X, float] = 0.0
+    y: Coord[Y, float] = 0.0
+    masterid: Coord[Ch, int] = 0
+    kidid: Coord[Ch, int] = 0
+    kidfq: Coord[Ch, float] = 0.0
+    kidtp: Coord[Ch, int] = 0
+    noise: Coord[Tuple[X, Y, Ch], float] = 1.0
+    coordsys: Coord[_, str] = "RADEC"
+    datatype: Coord[_, str] = "temperature"
+    xref: Coord[_, float] = 0.0
+    yref: Coord[_, float] = 0.0
+    type: Coord[_, str] = "dcc"
+
+
+@xr.register_dataarray_accessor("dcc")
+@dataclass(frozen=True)
+class CubeAccessor:
+    """Accessor for de:code cubes."""
+
+    cube: xr.DataArray
+
+    @property
+    def xcoords(self):
+        """Dictionary of arrays that label x axis."""
+        return {k: v.values for k, v in self.cube.coords.items() if v.dims == ("x",)}
+
+    @property
+    def ycoords(self):
+        """Dictionary of arrays that label y axis."""
+        return {k: v.values for k, v in self.cube.coords.items() if v.dims == ("y",)}
+
+    @property
+    def chcoords(self):
+        """Dictionary of arrays that label channel axis."""
+        return {k: v.values for k, v in self.cube.coords.items() if v.dims == ("ch",)}
+
+    @property
+    def datacoords(self):
+        """Dictionary of arrays that label x, y, and channel axis."""
+        return {
+            k: v.values
+            for k, v in self.cube.coords.items()
+            if v.dims == ("x", "y", "ch")
+        }
+
+    @property
+    def scalarcoords(self):
+        """Dictionary of values that don't label any axes (point-like)."""
+        return {k: v.values for k, v in self.cube.coords.items() if v.dims == ()}
+
+    def __setstate__(self, state):
+        """A method used for pickling."""
+        self.__dict__ = state
+
+    def __getstate__(self):
+        """A method used for unpickling."""
+        return self.__dict__
+
+
+# runtime functions
 def cube(
     data,
     xcoords=None,
@@ -51,26 +122,29 @@ def cube(
         decode cube (decode.cube): Decode cube.
     """
     # initialize coords with default values
-    cube = xr.DataArray(data, dims=("x", "y", "ch"), attrs=attrs, name=name)
-    cube.dcc._initcoords()
+    cube = Cube.new(data)
 
     # update coords with input values (if any)
     if xcoords is not None:
-        cube.coords.update({key: ("x", xcoords[key]) for key in xcoords})
+        cube.coords.update({k: ("x", v) for k, v in xcoords.items()})
 
     if ycoords is not None:
-        cube.coords.update({key: ("y", ycoords[key]) for key in ycoords})
+        cube.coords.update({k: ("y", v) for k, v in ycoords.items()})
 
     if chcoords is not None:
-        cube.coords.update({key: ("ch", chcoords[key]) for key in chcoords})
+        cube.coords.update({k: ("ch", v) for k, v in chcoords.items()})
 
     if datacoords is not None:
-        cube.coords.update(
-            {key: (("x", "y", "ch"), datacoords[key]) for key in datacoords}
-        )
+        cube.coords.update({k: (("x", "y", "ch"), v) for k, v in datacoords.items()})
 
     if scalarcoords is not None:
-        cube.coords.update(scalarcoords)
+        cube.coords.update({k: ((), v) for k, v in scalarcoords.items()})
+
+    if attrs is not None:
+        cube.attrs.update(attrs)
+
+    if name is not None:
+        cube.name = name
 
     return cube
 
@@ -88,7 +162,7 @@ def fromcube(cube, template):
     Notes:
         This functions is under development.
     """
-    array = dc.zeros_like(template)
+    array = xr.zeros_like(template)
 
     y, x = array.y.values, array.x.values
     gy, gx = cube.y.values, cube.x.values
@@ -207,7 +281,7 @@ def tocube(array, **kwargs):
 
     array.coords.update({"index": index})
     groupedarray = array.groupby("index")
-    groupedones = dc.ones_like(array).groupby("index")
+    groupedones = xr.ones_like(array).groupby("index")
 
     gridarray = groupedarray.mean("t")
     stdarray = groupedarray.std("t")
@@ -215,7 +289,7 @@ def tocube(array, **kwargs):
 
     logger.info("Gridding started.")
     gridarray = gridarray.compute()
-    noisearray = (stdarray / numarray ** 0.5).compute()
+    noisearray = (stdarray / numarray**0.5).compute()
     logger.info("Gridding finished.")
 
     # create cube
@@ -245,7 +319,7 @@ def tocube(array, **kwargs):
     }
     datacoords = {"noise": noise}
 
-    return dc.cube(
+    return cube(
         data,
         xcoords=xcoords,
         ycoords=ycoords,
@@ -293,7 +367,7 @@ def makecontinuum(cube, **kwargs):
     # cont = (subcube * (1 / subcube.noise**2)).sum(dim='ch') \
     #        / (1 / subcube.noise**2).sum(dim='ch')
     # cont = cont.expand_dims(dim='ch', axis=2)
-    cont = (cube * (1 / weight ** 2)).sum(dim="ch") / (1 / weight ** 2).sum(dim="ch")
+    cont = (cube * (1 / weight**2)).sum(dim="ch") / (1 / weight**2).sum(dim="ch")
 
     # define coordinates
     xcoords = {"x": cube.x.values}
@@ -311,7 +385,7 @@ def makecontinuum(cube, **kwargs):
         "yref": cube.yref.values,
     }
 
-    return dc.cube(
+    return cube(
         cont.values,
         xcoords=xcoords,
         ycoords=ycoords,

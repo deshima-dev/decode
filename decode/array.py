@@ -1,7 +1,3 @@
-# coding: utf-8
-
-
-# public items
 __all__ = [
     "array",
     "ones",
@@ -16,13 +12,97 @@ __all__ = [
 ]
 
 
-# dependent packages
-import decode as dc
+# standard library
+from dataclasses import dataclass
+from logging import getLogger
+from typing import Any, Tuple
+
+
+# dependencies
 import numpy as np
 import xarray as xr
+from typing_extensions import Literal
+from xarray_dataclasses import AsDataArray, Coord, Data
 
 
-# functions
+# type hints
+_ = Tuple[()]
+Ti = Literal["t"]
+Ch = Literal["ch"]
+
+
+# module logger
+logger = getLogger(__name__)
+
+
+# runtime classes
+@dataclass(frozen=True)
+class Array(AsDataArray):
+    """Specification for de:code arrays."""
+
+    data: Data[Tuple[Ti, Ch], Any]
+    vrad: Coord[Ti, float] = 0.0
+    x: Coord[Ti, float] = 0.0
+    y: Coord[Ti, float] = 0.0
+    time: Coord[Ti, float] = 0.0
+    temp: Coord[Ti, float] = 0.0
+    pressure: Coord[Ti, float] = 0.0
+    vapor_pressure: Coord[Ti, float] = 0.0
+    windspd: Coord[Ti, float] = 0.0
+    winddir: Coord[Ti, float] = 0.0
+    scantype: Coord[Ti, str] = "GRAD"
+    scanid: Coord[Ti, int] = 0
+    masterid: Coord[Ch, int] = 0
+    kidid: Coord[Ch, int] = 0
+    kidfq: Coord[Ch, float] = 0.0
+    kidtp: Coord[Ch, int] = 0
+    weight: Coord[Tuple[Ti, Ch], float] = 1.0
+    coordsys: Coord[_, str] = "RADEC"
+    datatype: Coord[_, str] = "Temperature"
+    xref: Coord[_, float] = 0.0
+    yref: Coord[_, float] = 0.0
+    type: Coord[_, str] = "dca"
+
+
+@xr.register_dataarray_accessor("dca")
+@dataclass(frozen=True)
+class ArrayAccessor:
+    """Accessor for de:code arrays."""
+
+    array: xr.DataArray
+
+    @property
+    def tcoords(self):
+        """Dictionary of arrays that label time axis."""
+        return {k: v.values for k, v in self.array.coords.items() if v.dims == ("t",)}
+
+    @property
+    def chcoords(self):
+        """Dictionary of arrays that label channel axis."""
+        return {k: v.values for k, v in self.array.coords.items() if v.dims == ("ch",)}
+
+    @property
+    def datacoords(self):
+        """Dictionary of arrays that label time and channel axis."""
+        return {
+            k: v.values for k, v in self.array.coords.items() if v.dims == ("t", "ch")
+        }
+
+    @property
+    def scalarcoords(self):
+        """Dictionary of values that don't label any axes (point-like)."""
+        return {k: v.values for k, v in self.array.coords.items() if v.dims == ()}
+
+    def __setstate__(self, state):
+        """A method used for pickling."""
+        self.__dict__ = state
+
+    def __getstate__(self):
+        """A method used for unpickling."""
+        return self.__dict__
+
+
+# runtime functions
 def array(
     data,
     tcoords=None,
@@ -49,21 +129,26 @@ def array(
         array (decode.array): Decode array.
     """
     # initialize coords with default values
-    array = xr.DataArray(data, dims=("t", "ch"), attrs=attrs, name=name)
-    array.dca._initcoords()
+    array = Array.new(data)
 
     # update coords with input values (if any)
     if tcoords is not None:
-        array.coords.update({key: ("t", tcoords[key]) for key in tcoords})
+        array.coords.update({k: ("t", v) for k, v in tcoords.items()})
 
     if chcoords is not None:
-        array.coords.update({key: ("ch", chcoords[key]) for key in chcoords})
-
-    if scalarcoords is not None:
-        array.coords.update(scalarcoords)
+        array.coords.update({k: ("ch", v) for k, v in chcoords.items()})
 
     if datacoords is not None:
-        array.coords.update({key: (("t", "ch"), datacoords[key]) for key in datacoords})
+        array.coords.update({k: (("t", "ch"), v) for k, v in datacoords.items()})
+
+    if scalarcoords is not None:
+        array.coords.update({k: ((), v) for k, v in scalarcoords.items()})
+
+    if attrs is not None:
+        array.attrs.update(attrs)
+
+    if name is not None:
+        array.name = name
 
     return array
 
@@ -80,7 +165,7 @@ def zeros(shape, dtype=None, **kwargs):
         array (decode.array): Decode array filled with zeros.
     """
     data = np.zeros(shape, dtype)
-    return dc.array(data, **kwargs)
+    return array(data, **kwargs)
 
 
 def ones(shape, dtype=None, **kwargs):
@@ -95,7 +180,7 @@ def ones(shape, dtype=None, **kwargs):
         array (decode.array): Decode array filled with ones.
     """
     data = np.ones(shape, dtype)
-    return dc.array(data, **kwargs)
+    return array(data, **kwargs)
 
 
 def full(shape, fill_value, dtype=None, **kwargs):
@@ -110,7 +195,7 @@ def full(shape, fill_value, dtype=None, **kwargs):
     Returns:
         array (decode.array): Decode array filled with `fill_value`.
     """
-    return (dc.zeros(shape, **kwargs) + fill_value).astype(dtype)
+    return (zeros(shape, **kwargs) + fill_value).astype(dtype)
 
 
 def empty(shape, dtype=None, **kwargs):
@@ -125,7 +210,7 @@ def empty(shape, dtype=None, **kwargs):
         array (decode.array): Decode array without initializing entries.
     """
     data = np.empty(shape, dtype)
-    return dc.array(data, **kwargs)
+    return array(data, **kwargs)
 
 
 def zeros_like(array, dtype=None, keepmeta=True):
@@ -145,7 +230,7 @@ def zeros_like(array, dtype=None, keepmeta=True):
     if keepmeta:
         return xr.zeros_like(array, dtype)
     else:
-        return dc.zeros(array.shape, dtype)
+        return zeros(array.shape, dtype)
 
 
 def ones_like(array, dtype=None, keepmeta=True):
@@ -165,7 +250,7 @@ def ones_like(array, dtype=None, keepmeta=True):
     if keepmeta:
         return xr.ones_like(array, dtype)
     else:
-        return dc.ones(array.shape, dtype)
+        return ones(array.shape, dtype)
 
 
 def full_like(array, fill_value, reverse=False, dtype=None, keepmeta=True):
@@ -184,9 +269,9 @@ def full_like(array, fill_value, reverse=False, dtype=None, keepmeta=True):
         array (decode.array): Decode array filled with `fill_value`.
     """
     if keepmeta:
-        return (dc.zeros_like(array) + fill_value).astype(dtype)
+        return (zeros_like(array) + fill_value).astype(dtype)
     else:
-        return dc.full(array.shape, fill_value, dtype)
+        return full(array.shape, fill_value, dtype)
 
 
 def empty_like(array, dtype=None, keepmeta=True):
@@ -204,7 +289,7 @@ def empty_like(array, dtype=None, keepmeta=True):
         array (decode.array): Decode array without initializing entries.
     """
     if keepmeta:
-        return dc.empty(
+        return empty(
             array.shape,
             dtype,
             tcoords=array.dca.tcoords,
@@ -214,7 +299,7 @@ def empty_like(array, dtype=None, keepmeta=True):
             name=array.name,
         )
     else:
-        return dc.empty(array.shape, dtype)
+        return empty(array.shape, dtype)
 
 
 def concat(objs, dim=None, **kwargs):
