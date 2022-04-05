@@ -31,6 +31,7 @@ scikit-learn = "^1.0"
 scipy = "^1.4"
 tomli = "^2.0"
 tqdm = "^4.63"
+typing-extensions = "^3.10"
 xarray = "^0.18"
 xarray-dataclasses = "^1.0"
 
