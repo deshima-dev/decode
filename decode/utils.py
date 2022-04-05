@@ -1,7 +1,6 @@
 __all__ = [
     "allan_variance",
     "chunk",
-    "copy_function",
     "deprecation_warning",
     "one_thread_per_process",
     "psd",
@@ -11,20 +10,19 @@ __all__ = [
 
 
 # standard library
-from collections import OrderedDict
 from concurrent.futures import ProcessPoolExecutor as Pool
 from contextlib import contextmanager
 from functools import wraps
 from inspect import Parameter, signature, stack
 from logging import getLogger
 from multiprocessing import cpu_count
-from types import CodeType, FunctionType
 from sys import _getframe as getframe
 
 
 # dependencies
 import numpy as np
 import xarray as xr
+from morecopy import copy
 from scipy import ndimage
 from scipy.fftpack import fftfreq, fft
 from scipy.signal import hanning
@@ -83,9 +81,9 @@ def chunk(*argnames, concatfunc=None):
         f_globals = getframe(depth).f_globals
 
         # original (unwrapped) function
-        orgname = "_original_" + func.__name__
-        orgfunc = copy_function(func, orgname)
-        f_globals[orgname] = orgfunc
+        orgfunc = copy(func)
+        orgfunc.__name__ += "_org"
+        f_globals[orgfunc.__name__] = orgfunc
 
         @wraps(func)
         def wrapper(*args, **kwargs):
@@ -156,48 +154,6 @@ def chunk(*argnames, concatfunc=None):
         return wrapper
 
     return _chunk
-
-
-def copy_function(func, name=None):
-    """Copy a function object with different name.
-
-    Args:
-        func (function): Function to be copied.
-        name (string, optional): Name of the new function.
-            If not spacified, the same name of `func` will be used.
-
-    Returns:
-        newfunc (function): New function with different name.
-
-    """
-    code = func.__code__
-    newname = name or func.__name__
-    newcode = CodeType(
-        code.co_argcount,
-        code.co_kwonlyargcount,
-        code.co_nlocals,
-        code.co_stacksize,
-        code.co_flags,
-        code.co_code,
-        code.co_consts,
-        code.co_names,
-        code.co_varnames,
-        code.co_filename,
-        newname,
-        code.co_firstlineno,
-        code.co_lnotab,
-        code.co_freevars,
-        code.co_cellvars,
-    )
-    newfunc = FunctionType(
-        newcode,
-        func.__globals__,
-        newname,
-        func.__defaults__,
-        func.__closure__,
-    )
-    newfunc.__dict__.update(func.__dict__)
-    return newfunc
 
 
 def deprecation_warning(message, cls=PendingDeprecationWarning):
