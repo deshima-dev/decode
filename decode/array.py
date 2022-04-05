@@ -64,6 +64,44 @@ class Array(AsDataArray):
     type: Coord[_, str] = "dca"
 
 
+@xr.register_dataarray_accessor("dca")
+@dataclass(frozen=True)
+class ArrayAccessor:
+    """Accessor for de:code arrays."""
+
+    array: xr.DataArray
+
+    @property
+    def tcoords(self):
+        """Dictionary of arrays that label time axis."""
+        return {k: v.values for k, v in self.array.coords.items() if v.dims == ("t",)}
+
+    @property
+    def chcoords(self):
+        """Dictionary of arrays that label channel axis."""
+        return {k: v.values for k, v in self.array.coords.items() if v.dims == ("ch",)}
+
+    @property
+    def datacoords(self):
+        """Dictionary of arrays that label time and channel axis."""
+        return {
+            k: v.values for k, v in self.array.coords.items() if v.dims == ("t", "ch")
+        }
+
+    @property
+    def scalarcoords(self):
+        """Dictionary of values that don't label any axes (point-like)."""
+        return {k: v.values for k, v in self.array.coords.items() if v.dims == ()}
+
+    def __setstate__(self, state):
+        """A method used for pickling."""
+        self.__dict__ = state
+
+    def __getstate__(self):
+        """A method used for unpickling."""
+        return self.__dict__
+
+
 # runtime functions
 def array(
     data,
