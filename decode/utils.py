@@ -302,7 +302,7 @@ def psd(data, dt, ndivide=1, window=hanning, overlap_half=False):
             corr = 1.0
         else:
             w = window(size)
-            corr = np.mean(w ** 2)
+            corr = np.mean(w**2)
         psd = psd + 2 * (np.abs(fft(d * w))) ** 2 / size * dt / corr
 
     return vk, psd[: len(vk)] / ndivide

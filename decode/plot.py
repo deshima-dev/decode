@@ -188,7 +188,7 @@ def plot_spectrum(cube, xtick, ytick, aperture, ax=None, **kwargs):
         else:
             raise KeyError("Invalid arguments.")
         x, y = np.ogrid[0 : len(cube.x), 0 : len(cube.y)]
-        mask = (x - xc) ** 2 + (y - yc) ** 2 < radius ** 2
+        mask = (x - xc) ** 2 + (y - yc) ** 2 < radius**2
         mask = np.broadcast_to(mask[:, :, np.newaxis], cube.shape)
         masked = np.ma.array(cube.values, mask=~mask)
         value = getattr(np, "nan" + ytick)(masked, axis=(0, 1))
