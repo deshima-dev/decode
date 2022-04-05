@@ -50,6 +50,51 @@ class Cube(AsDataArray):
     type: Coord[_, str] = "dcc"
 
 
+@xr.register_dataarray_accessor("dcc")
+@dataclass(frozen=True)
+class CubeAccessor:
+    """Accessor for de:code cubes."""
+
+    cube: xr.DataArray
+
+    @property
+    def xcoords(self):
+        """Dictionary of arrays that label x axis."""
+        return {k: v.values for k, v in self.cube.coords.items() if v.dims == ("x",)}
+
+    @property
+    def ycoords(self):
+        """Dictionary of arrays that label y axis."""
+        return {k: v.values for k, v in self.cube.coords.items() if v.dims == ("y",)}
+
+    @property
+    def chcoords(self):
+        """Dictionary of arrays that label channel axis."""
+        return {k: v.values for k, v in self.cube.coords.items() if v.dims == ("ch",)}
+
+    @property
+    def datacoords(self):
+        """Dictionary of arrays that label x, y, and channel axis."""
+        return {
+            k: v.values
+            for k, v in self.cube.coords.items()
+            if v.dims == ("x", "y", "ch")
+        }
+
+    @property
+    def scalarcoords(self):
+        """Dictionary of values that don't label any axes (point-like)."""
+        return {k: v.values for k, v in self.cube.coords.items() if v.dims == ()}
+
+    def __setstate__(self, state):
+        """A method used for pickling."""
+        self.__dict__ = state
+
+    def __getstate__(self):
+        """A method used for unpickling."""
+        return self.__dict__
+
+
 # runtime functions
 def cube(
     data,
