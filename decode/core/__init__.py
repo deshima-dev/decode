@@ -31,4 +31,3 @@ from .array.classes import *
 from .array.decorators import *
 from .array.functions import *
 from .cube.classes import *
-from .cube.functions import *

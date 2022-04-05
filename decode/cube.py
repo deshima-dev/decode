@@ -215,7 +215,7 @@ def tocube(array, **kwargs):
 
     logger.info("Gridding started.")
     gridarray = gridarray.compute()
-    noisearray = (stdarray / numarray ** 0.5).compute()
+    noisearray = (stdarray / numarray**0.5).compute()
     logger.info("Gridding finished.")
 
     # create cube
@@ -293,7 +293,7 @@ def makecontinuum(cube, **kwargs):
     # cont = (subcube * (1 / subcube.noise**2)).sum(dim='ch') \
     #        / (1 / subcube.noise**2).sum(dim='ch')
     # cont = cont.expand_dims(dim='ch', axis=2)
-    cont = (cube * (1 / weight ** 2)).sum(dim="ch") / (1 / weight ** 2).sum(dim="ch")
+    cont = (cube * (1 / weight**2)).sum(dim="ch") / (1 / weight**2).sum(dim="ch")
 
     # define coordinates
     xcoords = {"x": cube.x.values}
