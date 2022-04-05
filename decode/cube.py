@@ -46,7 +46,6 @@ class Cube(AsDataArray):
     datatype: Coord[_, str] = "temperature"
     xref: Coord[_, float] = 0.0
     yref: Coord[_, float] = 0.0
-    yref: Coord[_, float] = 0.0
     type: Coord[_, str] = "dcc"
 
 
