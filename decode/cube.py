@@ -9,7 +9,6 @@ from typing import Any, Tuple
 
 # dependencies
 import numpy as np
-import decode as dc
 import xarray as xr
 from astropy import units as u
 from scipy.interpolate import interp1d
@@ -163,7 +162,7 @@ def fromcube(cube, template):
     Notes:
         This functions is under development.
     """
-    array = dc.zeros_like(template)
+    array = xr.zeros_like(template)
 
     y, x = array.y.values, array.x.values
     gy, gx = cube.y.values, cube.x.values
@@ -282,7 +281,7 @@ def tocube(array, **kwargs):
 
     array.coords.update({"index": index})
     groupedarray = array.groupby("index")
-    groupedones = dc.ones_like(array).groupby("index")
+    groupedones = xr.ones_like(array).groupby("index")
 
     gridarray = groupedarray.mean("t")
     stdarray = groupedarray.std("t")
