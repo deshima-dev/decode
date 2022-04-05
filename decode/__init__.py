@@ -8,6 +8,7 @@ from . import core
 
 
 # submodules
+from . import cube
 from . import io
 from . import models
 from . import logging
@@ -16,6 +17,7 @@ from . import utils
 
 
 # aliases
+from .cube import *
 from .core import *
 from .logging import *
 
