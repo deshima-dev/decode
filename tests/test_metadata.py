@@ -3,7 +3,7 @@ import decode as dc
 
 def test_version():
     """Make sure the version is valid."""
-    assert dc.__version__ == "0.6.1"
+    assert dc.__version__ == "0.7.0"
 
 
 def test_author():
