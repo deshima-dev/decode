@@ -1,6 +1,6 @@
 # Project information
 author = "DESHIMA software team"
-copyright = "2018-2021 DESHIMA software team"
+copyright = "2018-2022 DESHIMA software team"
 
 
 # General configuration
