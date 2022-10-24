@@ -24,7 +24,7 @@ astropy = [
     { version = "^4.3", python = ">=3.7.1, <3.8" },
     { version = "^5.1", python = ">=3.8, <3.10" },
 ]
-matplotlib = "^3.5"
+matplotlib = "^3.2"
 morecopy = "^0.2"
 netcdf4 = "^1.5"
 numpy = "^1.21"
