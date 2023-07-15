@@ -1,4 +1,3 @@
-# coding: utf-8
 __all__ = ["setlogger"]
 
 
@@ -7,13 +6,15 @@ import logging
 from copy import copy
 from pathlib import Path
 
-logger = logging.getLogger(__name__)
 
-
-# module constants
+# constants
 DATEFORMAT = "%Y-%m-%d %H:%M:%S"
 LOGFORMAT = "{asctime} | {levelname:8} | {funcName}: {message}"
 DEFAULTLEVEL = "INFO"
+
+
+# module logger
+logger = logging.getLogger(__name__)
 
 
 # classes

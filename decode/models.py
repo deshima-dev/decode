@@ -1,15 +1,16 @@
-# coding: utf-8
-
-
-# public items
-__all__ = ["pca", "chopper_calibration", "r_division", "gauss_fit"]
+__all__ = [
+    "pca",
+    "chopper_calibration",
+    "r_division",
+    "gauss_fit",
+]
 
 
 # standard library
 from logging import getLogger
 
 
-# dependent packages
+# dependencies
 import decode as dc
 import numpy as np
 from astropy.modeling import fitting, models

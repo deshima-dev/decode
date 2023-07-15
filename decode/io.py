@@ -1,8 +1,9 @@
-# coding: utf-8
-
-
-# public items
-__all__ = ["loaddfits", "savefits", "loadnetcdf", "savenetcdf"]
+__all__ = [
+    "loaddfits",
+    "savefits",
+    "loadnetcdf",
+    "savenetcdf",
+]
 
 
 # standard library
@@ -14,7 +15,7 @@ from pathlib import Path
 from pkgutil import get_data
 
 
-# dependent packages
+# dependencies
 import tomli
 import decode as dc
 import numpy as np

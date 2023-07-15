@@ -1,4 +1,9 @@
-__all__ = ["cube", "fromcube", "tocube", "makecontinuum"]
+__all__ = [
+    "cube",
+    "fromcube",
+    "tocube",
+    "makecontinuum",
+]
 
 
 # standard library

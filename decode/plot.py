@@ -1,7 +1,3 @@
-# coding: utf-8
-
-
-# public items
 __all__ = [
     "plotcoords",
     "plot_tcoords",
@@ -19,7 +15,7 @@ __all__ = [
 from logging import getLogger
 
 
-# dependent packages
+# dependencies
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.signal.windows import hann
