@@ -8,4 +8,4 @@ def test_version():
 
 def test_author():
     """Make sure the author is valid."""
-    assert dc.__author__ == "DESHIMA software team"
+    assert dc.__author__ == "Akio Taniguchi"
