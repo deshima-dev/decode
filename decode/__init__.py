@@ -21,7 +21,7 @@ __all__ = [
     "setlogger",
 ]
 __version__ = "1.0.0"
-__author__ = "DESHIMA software team"
+__author__ = "Akio Taniguchi"
 
 
 # submodules
