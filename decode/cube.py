@@ -1,10 +1,15 @@
-__all__ = ["cube", "fromcube", "tocube", "makecontinuum"]
+__all__ = [
+    "cube",
+    "fromcube",
+    "tocube",
+    "makecontinuum",
+]
 
 
 # standard library
 from dataclasses import dataclass
 from logging import getLogger
-from typing import Any, Tuple
+from typing import Any, Literal, Tuple
 
 
 # dependencies
@@ -12,8 +17,7 @@ import numpy as np
 import xarray as xr
 from astropy import units as u
 from scipy.interpolate import interp1d
-from scipy.ndimage.interpolation import map_coordinates
-from typing_extensions import Literal
+from scipy.ndimage import map_coordinates
 from xarray_dataclasses import AsDataArray, Coord, Data
 
 

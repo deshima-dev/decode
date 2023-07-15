@@ -25,7 +25,7 @@ import xarray as xr
 from morecopy import copy
 from scipy import ndimage
 from scipy.fftpack import fftfreq, fft
-from scipy.signal import hanning
+from scipy.signal.windows import hann
 
 
 # constants
@@ -207,7 +207,7 @@ def one_thread_per_process():
         yield
 
 
-def psd(data, dt, ndivide=1, window=hanning, overlap_half=False):
+def psd(data, dt, ndivide=1, window=hann, overlap_half=False):
     """Calculate power spectrum density of data.
 
     Args:

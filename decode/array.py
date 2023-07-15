@@ -15,13 +15,12 @@ __all__ = [
 # standard library
 from dataclasses import dataclass
 from logging import getLogger
-from typing import Any, Tuple
+from typing import Any, Literal, Tuple
 
 
 # dependencies
 import numpy as np
 import xarray as xr
-from typing_extensions import Literal
 from xarray_dataclasses import AsDataArray, Coord, Data
 
 
