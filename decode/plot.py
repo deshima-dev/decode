@@ -22,7 +22,7 @@ from logging import getLogger
 # dependent packages
 import numpy as np
 import matplotlib.pyplot as plt
-from scipy.signal import hanning
+from scipy.signal.windows import hann
 from .utils import allan_variance, deprecation_warning, psd
 
 
@@ -236,7 +236,7 @@ def plot_chmap(cube, kidid, ax=None, **kwargs):
     return im
 
 
-def plotpsd(data, dt, ndivide=1, window=hanning, overlap_half=False, ax=None, **kwargs):
+def plotpsd(data, dt, ndivide=1, window=hann, overlap_half=False, ax=None, **kwargs):
     """Plot PSD (Power Spectral Density).
 
     Args:
