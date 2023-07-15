@@ -1,6 +1,6 @@
 # project information
-author = "DESHIMA software team"
-copyright = "2018-2022 DESHIMA software team"
+author = "Akio Taniguchi"
+copyright = "2018-2023 Akio Taniguchi"
 
 
 # general configuration

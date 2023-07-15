@@ -20,8 +20,8 @@ __all__ = [
     "makecontinuum",
     "setlogger",
 ]
-__version__ = "0.7.1"
-__author__ = "DESHIMA software team"
+__version__ = "1.0.0"
+__author__ = "Akio Taniguchi"
 
 
 # submodules

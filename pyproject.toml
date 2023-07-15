@@ -1,11 +1,8 @@
 [tool.poetry]
 name = "decode"
-version = "0.7.1"
+version = "1.0.0"
 description = "DESHIMA code for data analysis"
-authors = [
-    "Akio Taniguchi <taniguchi@a.phys.nagoya-u.ac.jp>",
-    "Tsuyoshi Ishida <tishida@ioa.s.u-tokyo.ac.jp>",
-]
+authors = ["Akio Taniguchi <taniguchi@a.phys.nagoya-u.ac.jp>"]
 keywords = [
     "astronomy",
     "data-analysis",
