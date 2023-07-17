@@ -17,17 +17,6 @@ documentation = "https://deshima-dev.github.io/decode/"
 
 [tool.poetry.dependencies]
 python = ">=3.8, <3.12"
-astropy = "^5.2"
-matplotlib = "^3.6"
-morecopy = "^0.3"
-netcdf4 = "^1.6"
-numpy = "^1.22"
-scikit-learn = "^1.2"
-scipy = "^1.9"
-tomli = "^2.0"
-tqdm = "^4.65"
-xarray = "^2022.3"
-xarray-dataclasses = "^1.6"
 
 [tool.poetry.group.dev.dependencies]
 black = "^23.7"
