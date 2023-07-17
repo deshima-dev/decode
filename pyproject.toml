@@ -17,14 +17,21 @@ documentation = "https://deshima-dev.github.io/decode/"
 
 [tool.poetry.dependencies]
 python = ">=3.8, <3.12"
+dems = "^0.3"
+semver = "^3.0"
+xarray = "^2022.3"
 
 [tool.poetry.group.dev.dependencies]
 black = "^23.7"
 ipython = "^8.12"
 myst-parser = "^2.0"
 pydata-sphinx-theme = "^0.13"
+pyright = "^1.1"
 pytest = "^7.4"
 sphinx = "^7.0"
+
+[tool.pyright]
+typeCheckingMode = "basic"
 
 [build-system]
 requires = ["poetry-core"]
