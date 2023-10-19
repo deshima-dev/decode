@@ -4,9 +4,11 @@ on:
   push:
     branches:
       - main
+      - deshima2.0
   pull_request:
     branches:
       - main
+      - deshima2.0
 
 jobs:
   job:
@@ -17,7 +19,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python: ["3.8", "3.9", "3.10", "3.11"]
+        python: ["3.9", "3.10", "3.11", "3.12"]
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-python@v4
@@ -30,5 +32,4 @@ jobs:
       - name: Test code's execution (pytest)
         run: pytest -v tests
       - name: Test docs' building (Sphinx)
-        if: ${{ contains('3.10, 3.11', matrix.python) }}
         run: docs/build

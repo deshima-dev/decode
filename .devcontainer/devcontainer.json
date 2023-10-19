@@ -1,10 +1,11 @@
 {
     "name": "decode",
-    "build": {
-        "context": "..",
-        "dockerfile": "Dockerfile"
-    },
+    "image":"python:3.11",
+    "onCreateCommand": "pip install poetry==1.6.1",
     "postCreateCommand": "poetry install",
+    "containerEnv": {
+        "POETRY_VIRTUALENVS_CREATE": "false"
+    },
     "customizations": {
         "vscode": {
             "extensions": [
@@ -17,10 +18,8 @@
             "settings": {
                 "files.insertFinalNewline": true,
                 "files.trimTrailingWhitespace": true,
-                "python.formatting.provider": "black",
                 "python.languageServer": "Pylance",
                 "[python]": {
-                    "editor.formatOnSave": true,
                     "editor.insertSpaces": true,
                     "editor.tabSize": 4
                 }
