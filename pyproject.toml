@@ -16,26 +16,25 @@ homepage = "https://github.com/deshima-dev/decode/"
 documentation = "https://deshima-dev.github.io/decode/"
 
 [tool.poetry.dependencies]
-python = ">=3.8, <3.12"
+python = ">=3.9, <3.13"
 astropy = "^5.2"
-matplotlib = "^3.6"
-morecopy = "^0.3"
-netcdf4 = "^1.6"
-numpy = "^1.22"
+matplotlib = "^3.7"
+morecopy = "^0.4"
+numpy = "^1.23"
 scikit-learn = "^1.2"
-scipy = "^1.9"
+scipy = "^1.10"
 tomli = "^2.0"
 tqdm = "^4.65"
-xarray = "^2022.3"
-xarray-dataclasses = "^1.6"
+xarray = "^2023.1"
+xarray-dataclasses = "^1.7"
 
 [tool.poetry.group.dev.dependencies]
-black = "^23.7"
-ipython = "^8.12"
+black = "^23.10"
+ipython = "^8.16"
 myst-parser = "^2.0"
-pydata-sphinx-theme = "^0.13"
+pydata-sphinx-theme = "^0.14"
 pytest = "^7.4"
-sphinx = "^7.0"
+sphinx = "^7.2"
 
 [build-system]
 requires = ["poetry-core"]
