@@ -28,6 +28,7 @@ jobs:
         with:
           python-version: ${{ matrix.python }}
       - run: pip install poetry && poetry install
-      - run: black --check docs tests decode
+      - run: black --check decode docs tests
+      - run: pyright decode docs tests
       - run: pytest -v tests
       - run: docs/build
