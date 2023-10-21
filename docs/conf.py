@@ -19,13 +19,13 @@ extensions = [
     "sphinx.ext.napoleon",
     "sphinx.ext.viewcode",
 ]
+myst_heading_anchors = 3
 templates_path = ["_templates"]
 
 
 # options for HTML output
-html_logo = "_static/logo.svg"
-html_static_path = ["_static"]
 html_theme = "pydata_sphinx_theme"
 html_theme_options = {
     "github_url": "https://github.com/deshima-dev/decode/",
+    "logo": {"text": "de:code"},
 }
