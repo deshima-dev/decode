@@ -18,8 +18,10 @@
             "settings": {
                 "files.insertFinalNewline": true,
                 "files.trimTrailingWhitespace": true,
+                "python.formatting.provider": "black",
                 "python.languageServer": "Pylance",
                 "[python]": {
+                    "editor.formatOnSave": true,
                     "editor.insertSpaces": true,
                     "editor.tabSize": 4
                 }
