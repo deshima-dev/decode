@@ -22,10 +22,12 @@ jobs:
         python: ["3.9", "3.10", "3.11", "3.12"]
     steps:
       - uses: actions/checkout@v3
+        with:
+          submodules: true
       - uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python }}
       - run: pip install poetry && poetry install
       - run: black --check docs tests decode
-      - run: pytest -v test
+      - run: pytest -v tests
       - run: docs/build

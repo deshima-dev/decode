@@ -29,6 +29,9 @@ pydata-sphinx-theme = "^0.14"
 pytest = "^7.4"
 sphinx = "^7.2"
 
+[tool.pyright]
+typeCheckingMode = "basic"
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
