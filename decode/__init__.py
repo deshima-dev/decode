@@ -1,5 +1,5 @@
 __all__ = ["io", "plot", "select"]
-__version__ = "2.0.0"
+__version__ = "2.1.0"
 
 
 # submodules
