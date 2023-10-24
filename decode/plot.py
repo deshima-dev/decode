@@ -16,6 +16,7 @@ DEMS_DIMS = "time", "chan"
 
 def state(
     dems: xr.DataArray,
+    /,
     *,
     on: Literal["time", "sky"] = "time",
     **options: Any,
@@ -58,6 +59,7 @@ def state(
 
 def data(
     data: xr.DataArray,
+    /,
     *,
     squeeze: bool = True,
     **options: Any,
