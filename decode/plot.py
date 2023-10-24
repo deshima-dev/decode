@@ -85,7 +85,7 @@ def data(
             "edgecolors": "none",
             "hue": "state",
             "s": 3,
-            "x": "time",
+            "x": DEMS_DIMS[0],
             **options,
         }
         return data.plot.scatter(**options)  # type: ignore
@@ -95,7 +95,7 @@ def data(
             "edgecolors": "none",
             "hue": "state",
             "s": 3,
-            "x": "d2_mkid_frequency",
+            "x": DEMS_DIMS[1],
             **options,
         }
         return data.plot.scatter(**options)  # type: ignore
