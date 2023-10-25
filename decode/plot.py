@@ -14,49 +14,6 @@ from matplotlib.artist import Artist
 DEMS_DIMS = "time", "chan"
 
 
-def state(
-    dems: xr.DataArray,
-    /,
-    *,
-    on: Literal["time", "sky"] = "time",
-    **options: Any,
-) -> Artist:
-    """Plot the state coordinate of DEMS.
-
-    Args:
-        dems: DEMS DataArray to be plotted.
-        on: On which plane the state coordinate is plotted.
-
-    Keyword Args:
-        options: Plotting options to be passed to Matplotlib.
-
-    Returns:
-        Matplotlib artist object of the plotted data.
-
-    """
-    if on == "time":
-        options = {
-            "edgecolors": "none",
-            "hue": "state",
-            "s": 3,
-            "x": "time",
-            **options,
-        }
-        return dems.state.sortby("state").plot.scatter(**options)
-
-    if on == "sky":
-        options = {
-            "edgecolors": "none",
-            "hue": "state",
-            "s": 3,
-            "x": "lon",
-            **options,
-        }
-        return dems.lat.plot.scatter(**options)
-
-    raise ValueError("On must be either time or sky.")
-
-
 def data(
     data: xr.DataArray,
     /,
@@ -104,3 +61,46 @@ def data(
         return data.plot.pcolormesh(**options)  # type: ignore
 
     raise ValueError(f"Dimensions must be subset of {DEMS_DIMS}.")
+
+
+def state(
+    dems: xr.DataArray,
+    /,
+    *,
+    on: Literal["time", "sky"] = "time",
+    **options: Any,
+) -> Artist:
+    """Plot the state coordinate of DEMS.
+
+    Args:
+        dems: DEMS DataArray to be plotted.
+        on: On which plane the state coordinate is plotted.
+
+    Keyword Args:
+        options: Plotting options to be passed to Matplotlib.
+
+    Returns:
+        Matplotlib artist object of the plotted data.
+
+    """
+    if on == "time":
+        options = {
+            "edgecolors": "none",
+            "hue": "state",
+            "s": 3,
+            "x": "time",
+            **options,
+        }
+        return dems.state.sortby("state").plot.scatter(**options)
+
+    if on == "sky":
+        options = {
+            "edgecolors": "none",
+            "hue": "state",
+            "s": 3,
+            "x": "lon",
+            **options,
+        }
+        return dems.lat.plot.scatter(**options)
+
+    raise ValueError("On must be either time or sky.")
