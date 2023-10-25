@@ -1,8 +1,8 @@
-__all__ = ["io", "plot", "select"]
+__all__ = ["load", "plot", "select"]
 __version__ = "2.1.0"
 
 
 # submodules
-from . import io
+from . import load
 from . import plot
 from . import select
