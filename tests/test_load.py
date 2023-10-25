@@ -3,7 +3,7 @@ from pathlib import Path
 
 
 # dependencies
-from decode import io
+from decode import load
 from pytest import mark
 
 
@@ -14,5 +14,5 @@ DEMS_ALL = map(Path, DEMS_DIR.glob("*.nc.gz"))
 
 # test functions
 @mark.parametrize("dems", DEMS_ALL)
-def test_open_dems(dems: Path) -> None:
-    io.open_dems(dems)
+def test_load_dems(dems: Path) -> None:
+    load.dems(dems)
