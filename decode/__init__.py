@@ -3,6 +3,7 @@ __all__ = [
     "correct",
     "fit",
     "load",
+    "make",
     "plot",
     "select",
 ]
@@ -14,5 +15,6 @@ from . import assign
 from . import correct
 from . import fit
 from . import load
+from . import make
 from . import plot
 from . import select
