@@ -23,6 +23,12 @@ def test_by_max() -> None:
     assert (sel.lon < max).all()
 
 
+def test_by_range() -> None:
+    min, max = -0.5, +0.5
+    sel = select.by(DEMS[::100], "lon", min=min, max=max)
+    assert ((sel.lon >= min) & (sel.lon < max)).all()
+
+
 def test_by_include() -> None:
     include = ["SCAN", "TRAN"]
     sel = select.by(DEMS[::100], "state", include=include)
