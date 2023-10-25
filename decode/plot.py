@@ -25,9 +25,9 @@ def state(
 
     Args:
         dems: DEMS DataArray to be plotted.
+        on: On which plane the state coordinate is plotted.
 
     Keyword Args:
-        on: On which plane the state coordinate is plotted.
         options: Plotting options to be passed to Matplotlib.
 
     Returns:
@@ -68,9 +68,9 @@ def data(
 
     Args:
         data: DEMS DataArray or coordinate DataArray.
+        squeeze: Whether to squeeze the data before plotting.
 
     Keyword Args:
-        squeeze: Whether to squeeze the data before plotting.
         options: Plotting options to be passed to Matplotlib.
 
     Returns:
