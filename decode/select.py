@@ -33,8 +33,6 @@ def by(
     Args:
         dems: DEMS DataArray to be selected.
         coord_name: Name of the coordinate for the selection.
-
-    Keyword Args:
         min: Minimum selection bound (inclusive).
             If not specified, no bound is set.
         max: Maximum selection bound (exclusive).
@@ -50,27 +48,27 @@ def by(
         Selected DEMS.
 
     """
-    coord = getattr(dems, coord_name)
+    coord = dems[coord_name]
 
     if not isinstance(coord, xr.DataArray):
         raise TypeError("Coordinate must be DataArray.")
 
-    if not len(coord.dims) == 1:
+    if not coord.ndim == 1:
         raise ValueError("Coordinate must be one-dimensional.")
 
     coord_dim = coord.dims[0]
 
     if min is not None:
-        dems = dems.sel({coord_dim: coord >= min})
+        dems = dems.sel({coord_dim: dems[coord_name] >= min})
 
     if max is not None:
-        dems = dems.sel({coord_dim: coord < max})
+        dems = dems.sel({coord_dim: dems[coord_name] < max})
 
     if include is not None:
-        dems = dems.sel({coord_dim: coord.isin(include)})
+        dems = dems.sel({coord_dim: dems[coord_name].isin(include)})
 
     if exclude is not None:
-        dems = dems.sel({coord_dim: ~coord.isin(exclude)})
+        dems = dems.sel({coord_dim: ~dems[coord_name].isin(exclude)})
 
     if sort:
         dems = dems.sortby(coord_name)
