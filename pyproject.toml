@@ -19,10 +19,12 @@ documentation = "https://deshima-dev.github.io/decode/"
 python = ">=3.9, <3.13"
 astropy = "^5.2"
 matplotlib = "^3.7"
+morecopy = { version = "^0.4", extras = ["ql"] }
 numpy = "^1.23"
 pandas = ">=1.5, <3.0"
 scikit-learn = "^1.2"
 scipy = "^1.10"
+tomli = { version = "^2.0", extras = ["ql"] }
 xarray = "^2023.1"
 xarray-dataclasses = "^1.7"
 zarr = "^2.14"
