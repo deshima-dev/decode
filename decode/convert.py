@@ -57,7 +57,6 @@ def frame(
     lon_origin[:] = 0.0
     lat_origin[:] = 0.0
 
-    dems["frame"] = "relative-" + dems["frame"]
     return dems
 
 
