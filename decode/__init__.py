@@ -1,5 +1,6 @@
 __all__ = [
     "assign",
+    "convert",
     "correct",
     "fit",
     "load",
@@ -12,6 +13,7 @@ __version__ = "2.4.0"
 
 # submodules
 from . import assign
+from . import convert
 from . import correct
 from . import fit
 from . import load
