@@ -10,28 +10,80 @@ from typing import Any, Literal, Tuple, Union
 import numpy as np
 import xarray as xr
 from astropy.units import Quantity
-from xarray_dataclasses import AsDataArray, Coord, Data
+from xarray_dataclasses import AsDataArray, Attr, Coordof, Data
 
 
 # type hints
 Angle = Union[Quantity, str]
-Chan = Literal["chan"]
-Lat = Literal["lat"]
-Lon = Literal["lon"]
-_ = Tuple[()]
+Ch = Literal["chan"]
+Lt = Literal["lat"]
+Ln = Literal["lon"]
+
+
+@dataclass
+class Weight:
+    data: Data[Tuple[Ch, Lt, Ln], float]
+    long_name: Attr[str] = "Data weights"
+
+
+@dataclass
+class Lon:
+    data: Data[Ln, float]
+    long_name: Attr[str] = "Sky longitude"
+    units: Attr[str] = "deg"
+
+
+@dataclass
+class Lat:
+    data: Data[Lt, float]
+    long_name: Attr[str] = "Sky latitude"
+    units: Attr[str] = "deg"
+
+
+@dataclass
+class Chan:
+    data: Data[Ch, int]
+    long_name: Attr[str] = "Channel ID"
+
+
+@dataclass
+class Frame:
+    data: Data[Tuple[()], str]
+    long_name: Attr[str] = "Sky coordinate frame"
+
+
+@dataclass
+class D2MkidID:
+    data: Data[Ch, int]
+    long_name: Attr[str] = "[DESHIMA 2.0] MKID ID"
+
+
+@dataclass
+class D2MkidType:
+    data: Data[Ch, str]
+    long_name: Attr[str] = "[DESHIMA 2.0] MKID type"
+
+
+@dataclass
+class D2MkidFrequency:
+    data: Data[Ch, float]
+    long_name: Attr[str] = "[DESHIMA 2.0] MKID center frequency"
+    units: Attr[str] = "Hz"
 
 
 @dataclass
 class Cube(AsDataArray):
     """Cube of DESHIMA 2.0."""
 
-    data: Data[Tuple[Lon, Lat, Chan], Any]
-    lon: Coord[Lon, float] = 0.0
-    lat: Coord[Lat, float] = 0.0
-    frame: Coord[_, str] = "altaz"
-    d2_mkid_frequency: Coord[Chan, float] = 0.0
-    d2_mkid_id: Coord[Chan, int] = 0
-    d2_mkid_type: Coord[Chan, str] = ""
+    data: Data[Tuple[Ch, Lt, Ln], Any]
+    weight: Coordof[Weight] = 1.0
+    lon: Coordof[Lon] = 0.0
+    lat: Coordof[Lat] = 0.0
+    chan: Coordof[Chan] = 0
+    frame: Coordof[Frame] = "altaz"
+    d2_mkid_frequency: Coordof[D2MkidFrequency] = 0.0
+    d2_mkid_id: Coordof[D2MkidID] = 0.0
+    d2_mkid_type: Coordof[D2MkidType] = ""
 
 
 def cube(
