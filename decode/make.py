@@ -104,12 +104,6 @@ def cube(
         Cube DataArray.
 
     """
-    dems = dems.copy()
-    cos = np.cos(np.deg2rad(dems["lat"]))
-    dems["lon"] -= dems["lon_origin"]
-    dems["lat"] -= dems["lat_origin"]
-    dems["lon"] *= cos
-
     dlon = Quantity(gridsize_lon).to("deg").value
     dlat = Quantity(gridsize_lat).to("deg").value
     lon_min = np.floor(dems.lon.min() / dlon) * dlon
