@@ -9,20 +9,22 @@ from typing import Any, Literal, Tuple, Union
 # dependencies
 import numpy as np
 import xarray as xr
-from astropy.units import Quantity
+from astropy.units import Quantity, Unit
 from xarray_dataclasses import AsDataArray, Attr, Coordof, Data
+from . import convert
 
 
 # type hints
-Angle = Union[Quantity, str]
-Ch = Literal["chan"]
-Lt = Literal["lat"]
+QuantityLike = Union[Quantity, str]
+UnitLike = Union[Unit, str]
 Ln = Literal["lon"]
+Lt = Literal["lat"]
+Ch = Literal["chan"]
 
 
 @dataclass
 class Weight:
-    data: Data[Tuple[Ch, Lt, Ln], float]
+    data: Data[Tuple[Ln, Lt, Ch], float]
     long_name: Attr[str] = "Data weights"
 
 
@@ -75,7 +77,7 @@ class D2MkidFrequency:
 class Cube(AsDataArray):
     """Cube of DESHIMA 2.0."""
 
-    data: Data[Tuple[Ch, Lt, Ln], Any]
+    data: Data[Tuple[Ln, Lt, Ch], Any]
     weight: Coordof[Weight] = 1.0
     lon: Coordof[Lon] = 0.0
     lat: Coordof[Lat] = 0.0
@@ -90,22 +92,22 @@ def cube(
     dems: xr.DataArray,
     /,
     *,
-    gridsize_lon: Angle = "3 arcsec",
-    gridsize_lat: Angle = "3 arcsec",
+    skycoord_grid: QuantityLike = "6 arcsec",
+    skycoord_units: UnitLike = "arcsec",
 ) -> xr.DataArray:
     """Make a cube from DEMS.
 
     Args:
-        dems: Input DEMS DataArray.
-        gridsize_lon: Grid size of the longitude axis.
-        gridsize_lat: Grid size of the latitude axis.
+        dems: Input DEMS DataArray to be converted.
+        skycoord_grid: Grid size of the sky coordinate axes.
+        skycoord_units: Units of the sky coordinate axes.
 
     Returns:
         Cube DataArray.
 
     """
-    dlon = Quantity(gridsize_lon).to("deg").value
-    dlat = Quantity(gridsize_lat).to("deg").value
+    dlon = Quantity(skycoord_grid).to(dems.lon.attrs["units"]).values
+    dlat = Quantity(skycoord_grid).to(dems.lat.attrs["units"]).values
     lon_min = np.floor(dems.lon.min() / dlon) * dlon
     lon_max = np.ceil(dems.lon.max() / dlon) * dlon
     lat_min = np.floor(dems.lat.min() / dlat) * dlat
@@ -119,7 +121,7 @@ def cube(
     j = np.abs(dems.lat - lat).argmin("grid")
     index = (i + n_lon * j).compute()
 
-    dems = dems.copy()
+    dems = dems.copy(data=dems.data)
     dems.coords.update({"index": index})
     grid = dems.groupby("index").mean("time")
 
@@ -127,7 +129,7 @@ def cube(
     temp[grid.index.values] = grid.values
     data = temp.reshape((n_lat, n_lon, n_chan)).swapaxes(0, 1)
 
-    return Cube.new(
+    cube = Cube.new(
         data=data,
         lon=lon.values,
         lat=lat.values,
@@ -136,3 +138,6 @@ def cube(
         d2_mkid_frequency=dems.d2_mkid_frequency.values,
         d2_mkid_type=dems.d2_mkid_type.values,
     )
+    cube = convert.units(cube, "lon", skycoord_units)
+    cube = convert.units(cube, "lat", skycoord_units)
+    return cube
