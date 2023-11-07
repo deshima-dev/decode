@@ -7,11 +7,8 @@ from typing import Any, Literal
 
 # dependencies
 import xarray as xr
+from dems.d2 import MS_DIMS as DEMS_DIMS
 from matplotlib.artist import Artist
-
-
-# constants
-DEMS_DIMS = "time", "chan"
 
 
 def data(
