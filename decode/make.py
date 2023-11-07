@@ -106,8 +106,8 @@ def cube(
         Cube DataArray.
 
     """
-    dlon = Quantity(skycoord_grid).to(dems.lon.attrs["units"]).values
-    dlat = Quantity(skycoord_grid).to(dems.lat.attrs["units"]).values
+    dlon = Quantity(skycoord_grid).to(dems.lon.attrs["units"]).value
+    dlat = Quantity(skycoord_grid).to(dems.lat.attrs["units"]).value
     lon_min = np.floor(dems.lon.min() / dlon) * dlon
     lon_max = np.ceil(dems.lon.max() / dlon) * dlon
     lat_min = np.floor(dems.lat.min() / dlat) * dlat
