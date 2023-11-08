@@ -126,7 +126,7 @@ def zscan(
     da = load.dems(dems, chunks=None)
 
     if data_type == "df/f":
-        da.attrs.update(long_name=data_type, units="dimensionless")
+        da.attrs.update(long_name="df/f", units="dimensionless")
 
     # select DEMS
     da = select.by(da, "d2_mkid_type", include="filter")
@@ -146,12 +146,12 @@ def zscan(
     fig, axes = plt.subplots(1, 2, figsize=(12, 4))
 
     ax = axes[0]
-    plot.data(np.abs(series), hue="aste_subref_z", ax=ax)
+    plot.data(series, hue="aste_subref_z", ax=ax)
     ax.set_title(Path(dems).name)
     ax.grid(True)
 
     ax = axes[1]
-    plot.data(np.abs(series), x="aste_subref_z", ax=ax)
+    plot.data(series, x="aste_subref_z", ax=ax)
     ax.set_title(Path(dems).name)
     ax.grid(True)
 
