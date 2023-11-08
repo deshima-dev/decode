@@ -17,6 +17,6 @@ def test_convert_frame() -> None:
     assert (converted.lat_origin == 0.0).all()
 
 
-def test_convert_units() -> None:
-    converted = convert.units(DEMS, "interval", "hr")
+def test_convert_coord_units() -> None:
+    converted = convert.coord_units(DEMS, "interval", "hr")
     assert (DEMS.interval / 3600 == converted.interval).all()

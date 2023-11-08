@@ -1,4 +1,4 @@
-__all__ = ["frame", "units"]
+__all__ = ["coord_units", "frame", "units"]
 
 
 # standard library
@@ -13,6 +13,30 @@ from astropy.units import Equivalency, Quantity, Unit
 
 # type hints
 UnitLike = Union[Unit, str]
+
+
+def coord_units(
+    da: xr.DataArray,
+    coord_name: str,
+    new_units: UnitLike,
+    /,
+    *,
+    equivalencies: Optional[Equivalency] = None,
+) -> xr.DataArray:
+    """Convert units of a coordinate of a DataArray.
+
+    Args:
+        da: Input DataArray.
+        coord_name: Name of the coordinate to be converted.
+        new_units: Units to be converted from the current ones.
+        equivalencies: Optional Astropy equivalencies.
+
+    Returns:
+        DataArray with the units of the coordinate converted.
+
+    """
+    new_coord = units(da[coord_name], new_units, equivalencies=equivalencies)
+    return da.assign_coords({coord_name: new_coord})
 
 
 def frame(
@@ -57,40 +81,29 @@ def frame(
     lon_origin[:] = 0.0
     lat_origin[:] = 0.0
 
-    return dems
+    return dems.assign_coords(frame=dems.frame.copy(False, new_frame))
 
 
 def units(
-    dems: xr.DataArray,
-    coord_name: str,
+    da: xr.DataArray,
     new_units: UnitLike,
     /,
     *,
     equivalencies: Optional[Equivalency] = None,
-    inplace: bool = False,
 ) -> xr.DataArray:
-    """Convert units of a coordinate of DEMS.
+    """Convert units of a DataArray.
 
     Args:
-        dems: Target DEMS DataArray.
-        coord_name: Name of the coordinate for the conversion.
+        da: Input DataArray.
         new_units: Units to be converted from the current ones.
         equivalencies: Optional Astropy equivalencies.
-        inplace: Whether the units are converted in-place.
 
     Returns:
-        DEMS DataArray with the coordinate units converted.
+        DataArray with the units converted.
 
     """
-    if not inplace:
-        # deepcopy except for data
-        dems = dems.copy(data=dems.data)
+    if (units := da.attrs.get("units")) is None:
+        raise ValueError("Units must exist in DataArray attrs.")
 
-    coord = dems[coord_name]
-
-    if (units := coord.attrs.get("units")) is None:
-        return dems
-
-    coord.values = Quantity(coord, units).to(new_units, equivalencies)
-    coord.attrs["units"] = new_units
-    return dems
+    new_data = Quantity(da, units).to(new_units, equivalencies)
+    return da.copy(False, new_data).assign_attrs(units=str(new_units))
