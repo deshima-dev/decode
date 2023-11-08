@@ -37,6 +37,9 @@ pyright = "^1.1"
 pytest = "^7.4"
 sphinx = "^7.2"
 
+[tool.poetry.scripts]
+decode-qlook = "decode.qlook:main"
+
 [tool.pyright]
 typeCheckingMode = "basic"
 
