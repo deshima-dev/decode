@@ -6,6 +6,7 @@ __all__ = [
     "load",
     "make",
     "plot",
+    "qlook",
     "select",
 ]
 __version__ = "2.6.0"
@@ -19,4 +20,5 @@ from . import fit
 from . import load
 from . import make
 from . import plot
+from . import qlook
 from . import select
