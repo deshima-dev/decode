@@ -36,8 +36,11 @@ def cube(
         Cube DataArray.
 
     """
-    dlon = Quantity(skycoord_grid).to(dems.lon.attrs["units"]).value
-    dlat = Quantity(skycoord_grid).to(dems.lat.attrs["units"]).value
+    dems = convert.coord_units(dems, "lon", "deg")
+    dems = convert.coord_units(dems, "lat", "deg")
+    dlon = Quantity(skycoord_grid).to("deg").value
+    dlat = Quantity(skycoord_grid).to("deg").value
+
     lon_min = np.floor(dems.lon.min() / dlon) * dlon
     lon_max = np.ceil(dems.lon.max() / dlon) * dlon
     lat_min = np.floor(dems.lat.min() / dlat) * dlat
@@ -61,14 +64,14 @@ def cube(
 
     cube = Cube.new(
         data=data,
-        lat=lat.values,
-        lon=lon.values,
-        chan=dems.chan.values,
-        frame=dems.frame.values,
-        d2_mkid_id=dems.d2_mkid_id.values,
-        d2_mkid_frequency=dems.d2_mkid_frequency.values,
-        d2_mkid_type=dems.d2_mkid_type.values,
+        lat=lat,
+        lon=lon,
+        chan=dems.chan,
+        frame=dems.frame,
+        d2_mkid_id=dems.d2_mkid_id,
+        d2_mkid_frequency=dems.d2_mkid_frequency,
+        d2_mkid_type=dems.d2_mkid_type,
     )
-    cube = convert.units(cube, "lon", skycoord_units)
-    cube = convert.units(cube, "lat", skycoord_units)
+    cube = convert.coord_units(cube, "lon", skycoord_units)
+    cube = convert.coord_units(cube, "lat", skycoord_units)
     return cube
