@@ -54,7 +54,8 @@ def skydip(
     da = load.dems(dems, chunks=None)
 
     if data_type == "df/f":
-        da.attrs.update(long_name=data_type, units="dimensionless")
+        da: xr.DataArray = np.abs(da)
+        da.attrs.update(long_name="|df/f|", units="dimensionless")
 
     # add sec(Z) coordinate
     secz = 1 / np.cos(np.deg2rad(90.0 - da.lat))
@@ -79,12 +80,12 @@ def skydip(
     fig, axes = plt.subplots(1, 2, figsize=(12, 4))
 
     ax = axes[0]
-    plot.data(np.abs(series), hue="secz", ax=ax)
+    plot.data(series, hue="secz", ax=ax)
     ax.set_title(Path(dems).name)
     ax.grid(True)
 
     ax = axes[1]
-    plot.data(np.abs(series), x="secz", ax=ax)
+    plot.data(series, x="secz", ax=ax)
     ax.set_title(Path(dems).name)
     ax.set_xscale("log")
     ax.set_yscale("log")
