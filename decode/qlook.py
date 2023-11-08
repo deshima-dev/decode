@@ -3,7 +3,7 @@ __all__ = []
 
 # standard library
 from pathlib import Path
-from typing import Literal, Optional, Sequence
+from typing import Literal, Optional, Sequence, cast
 
 
 # dependencies
@@ -159,7 +159,7 @@ def skydip(
     da = load.dems(dems, chunks=None)
 
     if data_type == "df/f":
-        da: xr.DataArray = np.abs(da)
+        da = cast(xr.DataArray, np.abs(da))
         da.attrs.update(long_name="|df/f|", units="dimensionless")
 
     # add sec(Z) coordinate
