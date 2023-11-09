@@ -71,7 +71,7 @@ def contmap(
         exclude=exclude_mkid_ids,
     )
     da_on = select.by(da, "state", include="SCAN")
-    da_off = select.by(da, "state", exclude="TRAN")
+    da_off = select.by(da, "state", exclude="SCAN")
 
     # subtract temporal baseline
     da_base = (
@@ -176,7 +176,7 @@ def skydip(
         exclude=exclude_mkid_ids,
     )
     da_on = select.by(da, "state", include="SCAN")
-    da_off = select.by(da, "state", exclude="GRAD")
+    da_off = select.by(da, "state", exclude="SCAN")
 
     # plotting
     weight = da_off.std("time") ** -2
@@ -242,7 +242,7 @@ def zscan(
         exclude=exclude_mkid_ids,
     )
     da_on = select.by(da, "state", include="ON")
-    da_off = select.by(da, "state", exclude="GRAD")
+    da_off = select.by(da, "state", exclude="ON")
 
     # plotting
     weight = da_off.std("time") ** -2
