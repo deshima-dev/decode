@@ -1,4 +1,4 @@
-__all__ = ["contmap", "skydip", "zscan"]
+__all__ = ["raster", "skydip", "zscan"]
 
 
 # standard library
@@ -24,7 +24,7 @@ BAD_MKID_IDS = (
 # fmt: on
 
 
-def contmap(
+def raster(
     dems: Path,
     /,
     *,
@@ -38,7 +38,7 @@ def contmap(
     outdir: Path = Path(),
     format: str = "png",
 ) -> None:
-    """Quick-look at a continuum mapping observation.
+    """Quick-look at a raster scan observation.
 
     Args:
         dems: Input DEMS file (netCDF or Zarr).
@@ -61,7 +61,7 @@ def contmap(
 
     """
     dems = Path(dems)
-    result = Path(outdir) / dems.with_suffix(f".contmap.{format}").name
+    result = Path(outdir) / dems.with_suffix(f".raster.{format}").name
 
     # load DEMS
     da = load.dems(dems, chunks=None)
@@ -346,7 +346,7 @@ def main() -> None:
     with xr.set_options(keep_attrs=True):
         Fire(
             {
-                "contmap": contmap,
+                "raster": raster,
                 "skydip": skydip,
                 "zscan": zscan,
             }
