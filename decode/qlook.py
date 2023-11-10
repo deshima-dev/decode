@@ -1,4 +1,4 @@
-__all__ = []
+__all__ = ["contmap", "skydip", "zscan"]
 
 
 # standard library
@@ -31,6 +31,8 @@ def contmap(
     include_mkid_ids: Optional[Sequence[int]] = None,
     exclude_mkid_ids: Optional[Sequence[int]] = BAD_MKID_IDS,
     data_type: Literal["df/f", "brightness"] = "brightness",
+    chan_weight: Literal["uniform", "std", "std/tx"] = "std/tx",
+    pwv: Literal["0.5", "1.0", "2.0", "3.0", "4.0", "5.0"] = "5.0",
     skycoord_grid: str = "6 arcsec",
     skycoord_units: str = "arcsec",
     outdir: Path = Path(),
@@ -45,6 +47,13 @@ def contmap(
         exclude_mkid_ids: MKID IDs to be excluded in analysis.
             Defaults to bad MKID IDs found on 2023-11-07.
         data_type: Data type of the input DEMS file.
+        chan_weight: Weighting method along the channel axis.
+            uniform: Uniform weight (i.e. no channel dependence).
+            std: Inverse square of temporal standard deviation of sky.
+            std/tx: Same as std but std is divided by the atmospheric
+            transmission calculated by the ATM model.
+        pwv: PWV in units of mm. Only used for the calculation of
+            the atmospheric transmission when chan_weight is std/tx.
         skycoord_grid: Grid size of the sky coordinate axes.
         skycoord_units: Units of the sky coordinate axes.
         outdir: Output directory for analysis results.
@@ -86,7 +95,7 @@ def contmap(
     da_sub = da_on - da_base.values
 
     # make continuum series
-    weight = da_off.std("time") ** -2
+    weight = get_weight(da_off, method=chan_weight, pwv=pwv)
     series = (da_sub * weight).sum("chan") / weight.sum("chan")
 
     # make continuum map
@@ -136,6 +145,8 @@ def skydip(
     include_mkid_ids: Optional[Sequence[int]] = None,
     exclude_mkid_ids: Optional[Sequence[int]] = BAD_MKID_IDS,
     data_type: Literal["df/f", "brightness"] = "brightness",
+    chan_weight: Literal["uniform", "std", "std/tx"] = "std/tx",
+    pwv: Literal["0.5", "1.0", "2.0", "3.0", "4.0", "5.0"] = "5.0",
     outdir: Path = Path(),
     format: str = "png",
 ) -> None:
@@ -148,6 +159,13 @@ def skydip(
         exclude_mkid_ids: MKID IDs to be excluded in analysis.
             Defaults to bad MKID IDs found on 2023-11-07.
         data_type: Data type of the input DEMS file.
+        chan_weight: Weighting method along the channel axis.
+            uniform: Uniform weight (i.e. no channel dependence).
+            std: Inverse square of temporal standard deviation of sky.
+            std/tx: Same as std but std is divided by the atmospheric
+            transmission calculated by the ATM model.
+        pwv: PWV in units of mm. Only used for the calculation of
+            the atmospheric transmission when chan_weight is std/tx.
         outdir: Output directory for analysis results.
         format: Output image format of analysis results.
 
@@ -179,7 +197,7 @@ def skydip(
     da_off = select.by(da, "state", exclude="SCAN")
 
     # plotting
-    weight = da_off.std("time") ** -2
+    weight = get_weight(da_off, method=chan_weight, pwv=pwv)
     series = (da_on * weight).sum("chan") / weight.sum("chan")
 
     fig, axes = plt.subplots(1, 2, figsize=(12, 4))
@@ -208,6 +226,8 @@ def zscan(
     include_mkid_ids: Optional[Sequence[int]] = None,
     exclude_mkid_ids: Optional[Sequence[int]] = BAD_MKID_IDS,
     data_type: Literal["df/f", "brightness"] = "brightness",
+    chan_weight: Literal["uniform", "std", "std/tx"] = "std/tx",
+    pwv: Literal["0.5", "1.0", "2.0", "3.0", "4.0", "5.0"] = "5.0",
     outdir: Path = Path(),
     format: str = "png",
 ) -> None:
@@ -220,6 +240,13 @@ def zscan(
         exclude_mkid_ids: MKID IDs to be excluded in analysis.
             Defaults to bad MKID IDs found on 2023-11-07.
         data_type: Data type of the input DEMS file.
+        chan_weight: Weighting method along the channel axis.
+            uniform: Uniform weight (i.e. no channel dependence).
+            std: Inverse square of temporal standard deviation of sky.
+            std/tx: Same as std but std is divided by the atmospheric
+            transmission calculated by the ATM model.
+        pwv: PWV in units of mm. Only used for the calculation of
+            the atmospheric transmission when chan_weight is std/tx.
         outdir: Output directory for analysis results.
         format: Output image format of analysis results.
 
@@ -245,7 +272,7 @@ def zscan(
     da_off = select.by(da, "state", exclude="ON")
 
     # plotting
-    weight = da_off.std("time") ** -2
+    weight = get_weight(da_off, method=chan_weight, pwv=pwv)
     series = (da_on * weight).sum("chan") / weight.sum("chan")
 
     fig, axes = plt.subplots(1, 2, figsize=(12, 4))
@@ -263,6 +290,49 @@ def zscan(
     fig.tight_layout()
     fig.savefig(result)
     print(str(result))
+
+
+def get_weight(
+    dems: xr.DataArray,
+    /,
+    *,
+    method: Literal["uniform", "std", "std/tx"] = "std/tx",
+    pwv: Literal["0.5", "1.0", "2.0", "3.0", "4.0", "5.0"] = "3.0",
+) -> xr.DataArray:
+    """Calculate weight for the channel axis.
+
+    Args:
+        dems: Input DEMS DataArray to be considered.
+        method: Method for calculating the weight.
+            uniform: Uniform weight (i.e. no channel dependence).
+            std: Inverse square of temporal standard deviation of sky.
+            std/tx: Same as std but std is divided by the atmospheric
+            transmission calculated by the ATM model.
+        pwv: PWV in units of mm. Only used for the calculation of
+            the atmospheric transmission when chan_weight is std/tx.
+
+    Returns:
+        The weight DataArray for the channel axis.
+
+    """
+    if method == "uniform":
+        return xr.ones_like(dems.mean("time"))
+
+    if method == "std":
+        return dems.std("time") ** -2
+
+    if method == "std/tx":
+        tx = (
+            load.atm(type="eta")
+            .sel(pwv=float(pwv))
+            .interp(
+                freq=dems.d2_mkid_frequency,
+                method="linear",
+            )
+        )
+        return (dems.std("time") / tx) ** -2
+
+    raise ValueError("Method must be either uniform, std, or std/tx.")
 
 
 def mean_in_time(dems: xr.DataArray) -> xr.DataArray:
