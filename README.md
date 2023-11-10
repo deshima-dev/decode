@@ -11,5 +11,5 @@ DESHIMA code for data analysis
 ## Installation
 
 ```shell
-pip install decode==2.7.1
+pip install decode==2.7.2
 ```
