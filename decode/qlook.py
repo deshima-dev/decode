@@ -22,8 +22,8 @@ BAD_MKID_IDS = (
     283, 296, 297, 299, 301, 313,
 )
 # fmt: on
-DFOF_TO_TSKY = -(300 - 77) / 3e-5
-TSKY_TO_DFOF = -3e-5 / (300 - 77)
+DFOF_TO_TSKY = (300 - 77) / 3e-5
+TSKY_TO_DFOF = 3e-5 / (300 - 77)
 
 
 def pswsc(
@@ -104,8 +104,8 @@ def pswsc(
             ax = ax.secondary_yaxis(
                 "right",
                 functions=(
-                    lambda x: -DFOF_TO_TSKY * x,
-                    lambda x: -TSKY_TO_DFOF * x,
+                    lambda x: DFOF_TO_TSKY * x,
+                    lambda x: TSKY_TO_DFOF * x,
                 ),
             )
             ax.set_ylabel("Approx. brightness [K]")
