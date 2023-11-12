@@ -2,7 +2,7 @@ __all__ = ["mad"]
 
 
 # dependencies
-from typing import Any, Optional
+from typing import Any, Optional, cast
 import numpy as np
 import xarray as xr
 from xarray.core.types import Dims
@@ -37,4 +37,4 @@ def mad(
             **kwargs,
         )
 
-    return median(np.abs(da - median(da)))
+    return median(cast(xr.DataArray, np.abs(da - median(da))))
