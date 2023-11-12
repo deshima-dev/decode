@@ -8,6 +8,7 @@ __all__ = [
     "plot",
     "qlook",
     "select",
+    "utils",
 ]
 __version__ = "2.7.2"
 
@@ -22,3 +23,4 @@ from . import make
 from . import plot
 from . import qlook
 from . import select
+from . import utils
