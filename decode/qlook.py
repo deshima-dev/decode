@@ -1,4 +1,4 @@
-__all__ = ["raster", "skydip", "zscan"]
+__all__ = ["pswsc", "raster", "skydip", "zscan"]
 
 
 # standard library
@@ -11,7 +11,7 @@ import numpy as np
 import xarray as xr
 import matplotlib.pyplot as plt
 from fire import Fire
-from . import assign, convert, load, make, plot, select
+from . import assign, convert, load, make, plot, select, utils
 
 
 # constants
@@ -22,6 +22,98 @@ BAD_MKID_IDS = (
     283, 296, 297, 299, 301, 313,
 )
 # fmt: on
+DFOF_TO_TSKY = -(300 - 77) / 3e-5
+TSKY_TO_DFOF = -3e-5 / (300 - 77)
+
+
+def pswsc(
+    dems: Path,
+    /,
+    *,
+    include_mkid_ids: Optional[Sequence[int]] = None,
+    exclude_mkid_ids: Optional[Sequence[int]] = BAD_MKID_IDS,
+    data_type: Literal["df/f", "brightness"] = "brightness",
+    frequency_units: str = "GHz",
+    outdir: Path = Path(),
+    format: str = "png",
+) -> None:
+    """Quick-look at a PSW observation with sky chopper.
+
+    Args:
+        dems: Input DEMS file (netCDF or Zarr).
+        include_mkid_ids: MKID IDs to be included in analysis.
+            Defaults to all MKID IDs.
+        exclude_mkid_ids: MKID IDs to be excluded in analysis.
+            Defaults to bad MKID IDs found on 2023-11-07.
+        data_type: Data type of the input DEMS file.
+        frequency_units: Units of the frequency axis.
+        outdir: Output directory for the analysis result.
+        format: Output data format of the analysis result.
+
+    """
+    dems = Path(dems)
+    out = Path(outdir) / dems.with_suffix(f".pswsc.{format}").name
+
+    # load DEMS
+    da = load.dems(dems, chunks=None)
+    da = assign.scan(da)
+    da = convert.frame(da, "relative")
+    da = convert.coord_units(da, "frequency", frequency_units)
+    da = convert.coord_units(da, "d2_mkid_frequency", frequency_units)
+
+    if data_type == "df/f":
+        da = cast(xr.DataArray, np.abs(da))
+        da.attrs.update(long_name="|df/f|", units="dimensionless")
+
+    # select DEMS
+    da = select.by(da, "d2_mkid_type", include="filter")
+    da = select.by(
+        da,
+        "d2_mkid_id",
+        include=include_mkid_ids,
+        exclude=exclude_mkid_ids,
+    )
+    da = select.by(da, "state", include=["ON", "OFF"])
+    da_sub = da.groupby("scan").map(subtract_per_scan)
+
+    # export output
+    spec = da_sub.mean("scan")
+    mad = utils.mad(spec)
+
+    if format == "csv":
+        spec.to_dataset(name=data_type).to_pandas().to_csv(out)
+    elif format == "nc":
+        spec.to_netcdf(out)
+    elif format.startswith("zarr"):
+        spec.to_zarr(out)
+    else:
+        fig, axes = plt.subplots(1, 2, figsize=(12, 4))
+
+        ax = axes[0]
+        plot.data(da.scan, ax=ax)
+        ax.set_title(Path(dems).name)
+        ax.grid(True)
+
+        ax = axes[1]
+        plot.data(spec, x="frequency", s=5, hue=None, ax=ax)
+        ax.set_ylim(-mad, spec.max() + mad)
+        ax.set_title(Path(dems).name)
+        ax.grid(True)
+
+        if data_type == "df/f":
+            ax = ax.secondary_yaxis(
+                "right",
+                functions=(
+                    lambda x: -DFOF_TO_TSKY * x,
+                    lambda x: -TSKY_TO_DFOF * x,
+                ),
+            )
+            ax.set_ylabel("Approx. brightness [K]")
+
+        fig.tight_layout()
+        fig.savefig(out)
+
+    print(str(out))
 
 
 def raster(
@@ -341,11 +433,30 @@ def mean_in_time(dems: xr.DataArray) -> xr.DataArray:
     return xr.zeros_like(middle) + dems.mean("time")
 
 
+def subtract_per_scan(dems: xr.DataArray) -> xr.DataArray:
+    """Apply source-sky subtraction to a single-scan DEMS."""
+    if len(states := np.unique(dems.state)) != 1:
+        raise ValueError("State must be unique.")
+
+    if (state := states[0]) == "ON":
+        src = select.by(dems, "beam", include="B")
+        sky = select.by(dems, "beam", include="A")
+        return src.mean("time") - sky.mean("time").data
+
+    if state == "OFF":
+        src = select.by(dems, "beam", include="A")
+        sky = select.by(dems, "beam", include="B")
+        return src.mean("time") - sky.mean("time").data
+
+    raise ValueError("State must be either ON or OFF.")
+
+
 def main() -> None:
     """Entry point of the decode-qlook command."""
     with xr.set_options(keep_attrs=True):
         Fire(
             {
+                "pswsc": pswsc,
                 "raster": raster,
                 "skydip": skydip,
                 "zscan": zscan,
