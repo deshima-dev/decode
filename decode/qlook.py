@@ -1,4 +1,4 @@
-__all__ = ["pswsc", "raster", "skydip", "zscan"]
+__all__ = ["still", "pswsc", "raster", "skydip", "zscan"]
 
 
 # standard library
@@ -24,6 +24,102 @@ BAD_MKID_IDS = (
 # fmt: on
 DFOF_TO_TSKY = (300 - 77) / 3e-5
 TSKY_TO_DFOF = 3e-5 / (300 - 77)
+
+
+def still(
+    dems: Path,
+    /,
+    *,
+    include_mkid_ids: Optional[Sequence[int]] = None,
+    exclude_mkid_ids: Optional[Sequence[int]] = BAD_MKID_IDS,
+    data_type: Literal["df/f", "brightness"] = "brightness",
+    chan_weight: Literal["uniform", "std", "std/tx"] = "std/tx",
+    pwv: Literal["0.5", "1.0", "2.0", "3.0", "4.0", "5.0"] = "5.0",
+    cabin_temperature: float = 273.0,
+    outdir: Path = Path(),
+    format: str = "png",
+) -> None:
+    """Quick-look at a still observation.
+
+    Args:
+        dems: Input DEMS file (netCDF or Zarr).
+        include_mkid_ids: MKID IDs to be included in analysis.
+            Defaults to all MKID IDs.
+        exclude_mkid_ids: MKID IDs to be excluded in analysis.
+            Defaults to bad MKID IDs found on 2023-11-07.
+        data_type: Data type of the input DEMS file.
+        chan_weight: Weighting method along the channel axis.
+            uniform: Uniform weight (i.e. no channel dependence).
+            std: Inverse square of temporal standard deviation of sky.
+            std/tx: Same as std but std is divided by the atmospheric
+            transmission calculated by the ATM model.
+        pwv: PWV in units of mm. Only used for the calculation of
+            the atmospheric transmission when chan_weight is std/tx.
+        cabin_temperature: Temperature at the ASTE cabin.
+            Only used for the df/f-to-Tsky conversion.
+        outdir: Output directory for the analysis result.
+        format: Output data format of the analysis result.
+
+    """
+    dems = Path(dems)
+    out = Path(outdir) / dems.with_suffix(f".still.{format}").name
+
+    # load DEMS
+    da = load.dems(dems, chunks=None)
+    da = assign.scan(da)
+    da = convert.frame(da, "relative")
+
+    if data_type == "df/f":
+        da.attrs.update(long_name="df/f", units="dimensionless")
+
+    # select DEMS
+    da = select.by(da, "d2_mkid_type", include="filter")
+    da = select.by(
+        da,
+        "d2_mkid_id",
+        include=include_mkid_ids,
+        exclude=exclude_mkid_ids,
+    )
+    da_off = select.by(da, "state", exclude=["ON", "SCAN"])
+
+    # make continuum series
+    weight = get_weight(da_off, method=chan_weight, pwv=pwv)
+    series = (da * weight).sum("chan") / weight.sum("chan")
+
+    # export output
+    if format == "csv":
+        series.to_dataset(name=data_type).to_pandas().to_csv(out)
+    elif format == "nc":
+        series.to_netcdf(out)
+    elif format.startswith("zarr"):
+        series.to_zarr(out)
+    else:
+        fig, axes = plt.subplots(1, 2, figsize=(12, 4))
+
+        ax = axes[0]
+        plot.state(da, add_colorbar=False, add_legend=False, ax=ax)
+        ax.set_title(Path(dems).name)
+        ax.grid(True)
+
+        ax = axes[1]
+        plot.data(series, add_colorbar=False, ax=ax)
+        ax.set_title(Path(dems).name)
+        ax.grid(True)
+
+        if data_type == "df/f":
+            ax = ax.secondary_yaxis(
+                "right",
+                functions=(
+                    lambda x: DFOF_TO_TSKY * x + cabin_temperature,
+                    lambda x: TSKY_TO_DFOF * (x - cabin_temperature),
+                ),
+            )
+            ax.set_ylabel("Approx. brightness [K]")
+
+        fig.tight_layout()
+        fig.savefig(out)
+
+    print(str(out))
 
 
 def pswsc(
@@ -456,6 +552,8 @@ def main() -> None:
     with xr.set_options(keep_attrs=True):
         Fire(
             {
+                "default": still,
+                "still": still,
                 "pswsc": pswsc,
                 "raster": raster,
                 "skydip": skydip,
