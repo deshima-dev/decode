@@ -535,13 +535,13 @@ def subtract_per_scan(dems: xr.DataArray) -> xr.DataArray:
         raise ValueError("State must be unique.")
 
     if (state := states[0]) == "ON":
-        src = select.by(dems, "beam", include="B")
-        sky = select.by(dems, "beam", include="A")
+        src = select.by(dems, "beam", include="A")
+        sky = select.by(dems, "beam", include="B")
         return src.mean("time") - sky.mean("time").data
 
     if state == "OFF":
-        src = select.by(dems, "beam", include="A")
-        sky = select.by(dems, "beam", include="B")
+        src = select.by(dems, "beam", include="B")
+        sky = select.by(dems, "beam", include="A")
         return src.mean("time") - sky.mean("time").data
 
     raise ValueError("State must be either ON or OFF.")
