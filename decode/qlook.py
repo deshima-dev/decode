@@ -80,8 +80,8 @@ def still(
     da_off = select.by(da, "state", exclude=["ON", "SCAN"])
 
     # make continuum series
-    weight = get_weight(da_off, method=chan_weight, pwv=pwv)
-    series = (da * weight).sum("chan") / weight.sum("chan")
+    weight = calc_chan_weight(da_off, method=chan_weight, pwv=pwv)
+    series = da.weighted(weight).mean("chan")
 
     # export output
     if format == "csv":
@@ -263,8 +263,8 @@ def raster(
     da_sub = da_on - da_base.values
 
     # make continuum series
-    weight = get_weight(da_off, method=chan_weight, pwv=pwv)
-    series = (da_sub * weight).sum("chan") / weight.sum("chan")
+    weight = calc_chan_weight(da_off, method=chan_weight, pwv=pwv)
+    series = da_sub.weighted(weight).mean("chan")
 
     # make continuum map
     cube = make.cube(
@@ -361,8 +361,8 @@ def skydip(
     da_off = select.by(da, "state", exclude="SCAN")
 
     # plotting
-    weight = get_weight(da_off, method=chan_weight, pwv=pwv)
-    series = (da_on * weight).sum("chan") / weight.sum("chan")
+    weight = calc_chan_weight(da_off, method=chan_weight, pwv=pwv)
+    series = da_on.weighted(weight).mean("chan")
 
     fig, axes = plt.subplots(1, 2, figsize=(12, 4))
 
@@ -430,8 +430,8 @@ def zscan(
     da_off = select.by(da, "state", exclude="ON")
 
     # plotting
-    weight = get_weight(da_off, method=chan_weight, pwv=pwv)
-    series = (da_on * weight).sum("chan") / weight.sum("chan")
+    weight = calc_chan_weight(da_off, method=chan_weight, pwv=pwv)
+    series = da_on.weighted(weight).mean("chan")
 
     fig, axes = plt.subplots(1, 2, figsize=(12, 4))
 
@@ -450,7 +450,7 @@ def zscan(
     print(str(result))
 
 
-def get_weight(
+def calc_chan_weight(
     dems: xr.DataArray,
     /,
     *,
@@ -480,15 +480,9 @@ def get_weight(
         return dems.std("time") ** -2
 
     if method == "std/tx":
-        tx = (
-            load.atm(type="eta")
-            .sel(pwv=float(pwv))
-            .interp(
-                freq=dems.d2_mkid_frequency,
-                method="linear",
-            )
-        )
-        return (dems.std("time") / tx) ** -2
+        tx = load.atm(type="eta").sel(pwv=float(pwv))
+        freq = convert.units(dems.d2_mkid_frequency, tx.freq.attrs["units"])
+        return (dems.std("time") / tx.interp(freq=freq)) ** -2
 
     raise ValueError("Method must be either uniform, std, or std/tx.")
 
