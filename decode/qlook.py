@@ -15,13 +15,18 @@ from . import assign, convert, load, make, plot, select, utils
 
 
 # constants
+DEFAULT_DATA_TYPE = "brightness"
 # fmt: off
-BAD_MKID_IDS = (
+DEFAULT_EXCL_MKID_IDS = (
     18, 77, 117, 118, 140, 141, 161, 182, 183, 184,
     201, 209, 211, 232, 233, 239, 258, 259, 278, 282,
     283, 296, 297, 299, 301, 313,
 )
 # fmt: on
+DEFAULT_FREQUENCY_UNITS = "GHz"
+DEFAULT_INCL_MKID_IDS = None
+DEFAULT_SKYCOORD_GRID = "6 arcsec"
+DEFAULT_SKYCOORD_UNITS = "arcsec"
 DFOF_TO_TSKY = (300 - 77) / 3e-5
 TSKY_TO_DFOF = 3e-5 / (300 - 77)
 
@@ -30,9 +35,9 @@ def still(
     dems: Path,
     /,
     *,
-    include_mkid_ids: Optional[Sequence[int]] = None,
-    exclude_mkid_ids: Optional[Sequence[int]] = BAD_MKID_IDS,
-    data_type: Literal["df/f", "brightness"] = "brightness",
+    include_mkid_ids: Optional[Sequence[int]] = DEFAULT_INCL_MKID_IDS,
+    exclude_mkid_ids: Optional[Sequence[int]] = DEFAULT_EXCL_MKID_IDS,
+    data_type: Literal["df/f", "brightness"] = DEFAULT_DATA_TYPE,
     chan_weight: Literal["uniform", "std", "std/tx"] = "std/tx",
     pwv: Literal["0.5", "1.0", "2.0", "3.0", "4.0", "5.0"] = "5.0",
     cabin_temperature: float = 273.0,
@@ -65,20 +70,11 @@ def still(
     out = Path(outdir) / dems.with_suffix(f".still.{format}").name
 
     # load DEMS
-    da = load.dems(dems, chunks=None)
-    da = assign.scan(da)
-    da = convert.frame(da, "relative")
-
-    if data_type == "df/f":
-        da.attrs.update(long_name="df/f", units="dimensionless")
-
-    # select DEMS
-    da = select.by(da, "d2_mkid_type", include="filter")
-    da = select.by(
-        da,
-        "d2_mkid_id",
-        include=include_mkid_ids,
-        exclude=exclude_mkid_ids,
+    da = load_dems(
+        dems,
+        include_mkid_ids=include_mkid_ids,
+        exclude_mkid_ids=exclude_mkid_ids,
+        data_type=data_type,
     )
     da_off = select.by(da, "state", exclude=["ON", "SCAN"])
 
@@ -126,9 +122,9 @@ def pswsc(
     dems: Path,
     /,
     *,
-    include_mkid_ids: Optional[Sequence[int]] = None,
-    exclude_mkid_ids: Optional[Sequence[int]] = BAD_MKID_IDS,
-    data_type: Literal["df/f", "brightness"] = "brightness",
+    include_mkid_ids: Optional[Sequence[int]] = DEFAULT_INCL_MKID_IDS,
+    exclude_mkid_ids: Optional[Sequence[int]] = DEFAULT_EXCL_MKID_IDS,
+    data_type: Literal["df/f", "brightness"] = DEFAULT_DATA_TYPE,
     frequency_units: str = "GHz",
     outdir: Path = Path(),
     format: str = "png",
@@ -151,26 +147,15 @@ def pswsc(
     out = Path(outdir) / dems.with_suffix(f".pswsc.{format}").name
 
     # load DEMS
-    da = load.dems(dems, chunks=None)
-    da = assign.scan(da)
-    da = convert.frame(da, "relative")
-    da = convert.coord_units(da, "frequency", frequency_units)
-    da = convert.coord_units(da, "d2_mkid_frequency", frequency_units)
-
-    if data_type == "df/f":
-        da = cast(xr.DataArray, np.abs(da))
-        da.attrs.update(long_name="|df/f|", units="dimensionless")
-
-    # select DEMS
-    da = select.by(da, "d2_mkid_type", include="filter")
-    da = select.by(
-        da,
-        "d2_mkid_id",
-        include=include_mkid_ids,
-        exclude=exclude_mkid_ids,
+    da = load_dems(
+        dems,
+        include_mkid_ids=include_mkid_ids,
+        exclude_mkid_ids=exclude_mkid_ids,
+        data_type=data_type,
+        frequency_units=frequency_units,
     )
-    da = select.by(da, "state", include=["ON", "OFF"])
-    da_sub = da.groupby("scan").map(subtract_per_scan)
+    da_scan = select.by(da, "state", ["ON", "OFF"])
+    da_sub = da_scan.groupby("scan").map(subtract_per_scan)
 
     # export output
     spec = da_sub.mean("scan")
@@ -216,13 +201,13 @@ def raster(
     dems: Path,
     /,
     *,
-    include_mkid_ids: Optional[Sequence[int]] = None,
-    exclude_mkid_ids: Optional[Sequence[int]] = BAD_MKID_IDS,
-    data_type: Literal["df/f", "brightness"] = "brightness",
+    include_mkid_ids: Optional[Sequence[int]] = DEFAULT_INCL_MKID_IDS,
+    exclude_mkid_ids: Optional[Sequence[int]] = DEFAULT_EXCL_MKID_IDS,
+    data_type: Literal["df/f", "brightness"] = DEFAULT_DATA_TYPE,
     chan_weight: Literal["uniform", "std", "std/tx"] = "std/tx",
     pwv: Literal["0.5", "1.0", "2.0", "3.0", "4.0", "5.0"] = "5.0",
-    skycoord_grid: str = "6 arcsec",
-    skycoord_units: str = "arcsec",
+    skycoord_grid: str = DEFAULT_SKYCOORD_GRID,
+    skycoord_units: str = DEFAULT_SKYCOORD_UNITS,
     outdir: Path = Path(),
     format: str = "png",
 ) -> None:
@@ -252,20 +237,12 @@ def raster(
     result = Path(outdir) / dems.with_suffix(f".raster.{format}").name
 
     # load DEMS
-    da = load.dems(dems, chunks=None)
-    da = assign.scan(da)
-    da = convert.frame(da, "relative")
-
-    if data_type == "df/f":
-        da.attrs.update(long_name="df/f", units="dimensionless")
-
-    # select DEMS
-    da = select.by(da, "d2_mkid_type", include="filter")
-    da = select.by(
-        da,
-        "d2_mkid_id",
-        include=include_mkid_ids,
-        exclude=exclude_mkid_ids,
+    da = load_dems(
+        dems,
+        include_mkid_ids=include_mkid_ids,
+        exclude_mkid_ids=exclude_mkid_ids,
+        data_type=data_type,
+        skycoord_units=skycoord_units,
     )
     da_on = select.by(da, "state", include="SCAN")
     da_off = select.by(da, "state", exclude="SCAN")
@@ -330,9 +307,9 @@ def skydip(
     dems: Path,
     /,
     *,
-    include_mkid_ids: Optional[Sequence[int]] = None,
-    exclude_mkid_ids: Optional[Sequence[int]] = BAD_MKID_IDS,
-    data_type: Literal["df/f", "brightness"] = "brightness",
+    include_mkid_ids: Optional[Sequence[int]] = DEFAULT_INCL_MKID_IDS,
+    exclude_mkid_ids: Optional[Sequence[int]] = DEFAULT_EXCL_MKID_IDS,
+    data_type: Literal["df/f", "brightness"] = DEFAULT_DATA_TYPE,
     chan_weight: Literal["uniform", "std", "std/tx"] = "std/tx",
     pwv: Literal["0.5", "1.0", "2.0", "3.0", "4.0", "5.0"] = "5.0",
     outdir: Path = Path(),
@@ -362,24 +339,19 @@ def skydip(
     result = Path(outdir) / dems.with_suffix(f".skydip.{format}").name
 
     # load DEMS
-    da = load.dems(dems, chunks=None)
-
-    if data_type == "df/f":
-        da = cast(xr.DataArray, np.abs(da))
-        da.attrs.update(long_name="|df/f|", units="dimensionless")
-
-    # add sec(Z) coordinate
-    secz = 1 / np.cos(np.deg2rad(90.0 - da.lat))
-    secz.attrs.update(long_name="sec(Z)", units="dimensionless")
-    da = da.assign_coords(secz=secz)
-
-    # select DEMS
-    da = select.by(da, "d2_mkid_type", include="filter")
-    da = select.by(
-        da,
-        "d2_mkid_id",
-        include=include_mkid_ids,
-        exclude=exclude_mkid_ids,
+    da = load_dems(
+        dems,
+        include_mkid_ids=include_mkid_ids,
+        exclude_mkid_ids=exclude_mkid_ids,
+        data_type=data_type,
+    )
+    z = np.pi / 2 - convert.units(da.lat, "rad")
+    secz = cast(xr.DataArray, 1 / np.cos(z))
+    da = da.assign_coords(
+        secz=secz.assign_attrs(
+            long_name="sec(Z)",
+            units="dimensionless",
+        )
     )
     da_on = select.by(da, "state", include="SCAN")
     da_off = select.by(da, "state", exclude="SCAN")
@@ -411,9 +383,9 @@ def zscan(
     dems: Path,
     /,
     *,
-    include_mkid_ids: Optional[Sequence[int]] = None,
-    exclude_mkid_ids: Optional[Sequence[int]] = BAD_MKID_IDS,
-    data_type: Literal["df/f", "brightness"] = "brightness",
+    include_mkid_ids: Optional[Sequence[int]] = DEFAULT_INCL_MKID_IDS,
+    exclude_mkid_ids: Optional[Sequence[int]] = DEFAULT_EXCL_MKID_IDS,
+    data_type: Literal["df/f", "brightness"] = DEFAULT_DATA_TYPE,
     chan_weight: Literal["uniform", "std", "std/tx"] = "std/tx",
     pwv: Literal["0.5", "1.0", "2.0", "3.0", "4.0", "5.0"] = "5.0",
     outdir: Path = Path(),
@@ -443,18 +415,11 @@ def zscan(
     result = Path(outdir) / dems.with_suffix(f".zscan.{format}").name
 
     # load DEMS
-    da = load.dems(dems, chunks=None)
-
-    if data_type == "df/f":
-        da.attrs.update(long_name="df/f", units="dimensionless")
-
-    # select DEMS
-    da = select.by(da, "d2_mkid_type", include="filter")
-    da = select.by(
-        da,
-        "d2_mkid_id",
-        include=include_mkid_ids,
-        exclude=exclude_mkid_ids,
+    da = load_dems(
+        dems,
+        include_mkid_ids=include_mkid_ids,
+        exclude_mkid_ids=exclude_mkid_ids,
+        data_type=data_type,
     )
     da_on = select.by(da, "state", include="ON")
     da_off = select.by(da, "state", exclude="ON")
@@ -545,6 +510,61 @@ def subtract_per_scan(dems: xr.DataArray) -> xr.DataArray:
         return src.mean("time") - sky.mean("time").data
 
     raise ValueError("State must be either ON or OFF.")
+
+
+def load_dems(
+    dems: Path,
+    /,
+    *,
+    include_mkid_ids: Optional[Sequence[int]] = DEFAULT_INCL_MKID_IDS,
+    exclude_mkid_ids: Optional[Sequence[int]] = DEFAULT_EXCL_MKID_IDS,
+    data_type: Literal["brightness", "df/f"] = DEFAULT_DATA_TYPE,
+    frequency_units: str = DEFAULT_FREQUENCY_UNITS,
+    skycoord_units: str = DEFAULT_SKYCOORD_UNITS,
+) -> xr.DataArray:
+    """Load a DEMS with given conversions and selections.
+
+    Args:
+        include_mkid_ids: MKID IDs to be included in analysis.
+            Defaults to all MKID IDs.
+        exclude_mkid_ids: MKID IDs to be excluded in analysis.
+            Defaults to bad MKID IDs found on 2023-11-07.
+        data_type: Data type of the input DEMS file.
+        frequency_units: Units of the frequency axis.
+        skycoord_units: Units of the sky coordinate axes.
+
+    Returns:
+        DEMS as a DataArray with given conversion and selections.
+
+    """
+    da = load.dems(dems, chunks=None)
+    da = assign.scan(da, by="state")
+    da = convert.frame(da, "relative")
+    da = select.by(da, "d2_mkid_type", "filter")
+    da = select.by(
+        da,
+        "d2_mkid_id",
+        include=include_mkid_ids,
+        exclude=exclude_mkid_ids,
+    )
+    da = convert.coord_units(
+        da,
+        ["d2_mkid_frequency", "frequency"],
+        frequency_units,
+    )
+    da = convert.coord_units(
+        da,
+        ["lat", "lat_origin", "lon", "lon_origin"],
+        skycoord_units,
+    )
+
+    if data_type == "brightness":
+        return da.assign_attrs(long_name="brightness", units="K")
+
+    if data_type == "df/f":
+        return -da.assign_attrs(long_name="-df/f", units="dimensionless")
+
+    raise ValueError("Data type must be either df/f or brightness.")
 
 
 def main() -> None:
