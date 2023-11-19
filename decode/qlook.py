@@ -15,7 +15,7 @@ from . import assign, convert, load, make, plot, select, utils
 
 
 # constants
-DEFAULT_DATA_TYPE = "brightness"
+DEFAULT_DATA_TYPE = None
 # fmt: off
 DEFAULT_EXCL_MKID_IDS = (
     18, 77, 117, 118, 140, 141, 161, 182, 183, 184,
@@ -37,7 +37,7 @@ def still(
     *,
     include_mkid_ids: Optional[Sequence[int]] = DEFAULT_INCL_MKID_IDS,
     exclude_mkid_ids: Optional[Sequence[int]] = DEFAULT_EXCL_MKID_IDS,
-    data_type: Literal["df/f", "brightness"] = DEFAULT_DATA_TYPE,
+    data_type: Literal["df/f", "brightness", None] = DEFAULT_DATA_TYPE,
     chan_weight: Literal["uniform", "std", "std/tx"] = "std/tx",
     pwv: Literal["0.5", "1.0", "2.0", "3.0", "4.0", "5.0"] = "5.0",
     cabin_temperature: float = 273.0,
@@ -53,6 +53,7 @@ def still(
         exclude_mkid_ids: MKID IDs to be excluded in analysis.
             Defaults to bad MKID IDs found on 2023-11-07.
         data_type: Data type of the input DEMS file.
+            Defaults to the ``long_name`` attribute in it.
         chan_weight: Weighting method along the channel axis.
             uniform: Uniform weight (i.e. no channel dependence).
             std: Inverse square of temporal standard deviation of sky.
@@ -124,7 +125,7 @@ def pswsc(
     *,
     include_mkid_ids: Optional[Sequence[int]] = DEFAULT_INCL_MKID_IDS,
     exclude_mkid_ids: Optional[Sequence[int]] = DEFAULT_EXCL_MKID_IDS,
-    data_type: Literal["df/f", "brightness"] = DEFAULT_DATA_TYPE,
+    data_type: Literal["df/f", "brightness", None] = DEFAULT_DATA_TYPE,
     frequency_units: str = "GHz",
     outdir: Path = Path(),
     format: str = "png",
@@ -138,6 +139,7 @@ def pswsc(
         exclude_mkid_ids: MKID IDs to be excluded in analysis.
             Defaults to bad MKID IDs found on 2023-11-07.
         data_type: Data type of the input DEMS file.
+            Defaults to the ``long_name`` attribute in it.
         frequency_units: Units of the frequency axis.
         outdir: Output directory for the analysis result.
         format: Output data format of the analysis result.
@@ -203,7 +205,7 @@ def raster(
     *,
     include_mkid_ids: Optional[Sequence[int]] = DEFAULT_INCL_MKID_IDS,
     exclude_mkid_ids: Optional[Sequence[int]] = DEFAULT_EXCL_MKID_IDS,
-    data_type: Literal["df/f", "brightness"] = DEFAULT_DATA_TYPE,
+    data_type: Literal["df/f", "brightness", None] = DEFAULT_DATA_TYPE,
     chan_weight: Literal["uniform", "std", "std/tx"] = "std/tx",
     pwv: Literal["0.5", "1.0", "2.0", "3.0", "4.0", "5.0"] = "5.0",
     skycoord_grid: str = DEFAULT_SKYCOORD_GRID,
@@ -220,6 +222,7 @@ def raster(
         exclude_mkid_ids: MKID IDs to be excluded in analysis.
             Defaults to bad MKID IDs found on 2023-11-07.
         data_type: Data type of the input DEMS file.
+            Defaults to the ``long_name`` attribute in it.
         chan_weight: Weighting method along the channel axis.
             uniform: Uniform weight (i.e. no channel dependence).
             std: Inverse square of temporal standard deviation of sky.
@@ -309,7 +312,7 @@ def skydip(
     *,
     include_mkid_ids: Optional[Sequence[int]] = DEFAULT_INCL_MKID_IDS,
     exclude_mkid_ids: Optional[Sequence[int]] = DEFAULT_EXCL_MKID_IDS,
-    data_type: Literal["df/f", "brightness"] = DEFAULT_DATA_TYPE,
+    data_type: Literal["df/f", "brightness", None] = DEFAULT_DATA_TYPE,
     chan_weight: Literal["uniform", "std", "std/tx"] = "std/tx",
     pwv: Literal["0.5", "1.0", "2.0", "3.0", "4.0", "5.0"] = "5.0",
     outdir: Path = Path(),
@@ -324,6 +327,7 @@ def skydip(
         exclude_mkid_ids: MKID IDs to be excluded in analysis.
             Defaults to bad MKID IDs found on 2023-11-07.
         data_type: Data type of the input DEMS file.
+            Defaults to the ``long_name`` attribute in it.
         chan_weight: Weighting method along the channel axis.
             uniform: Uniform weight (i.e. no channel dependence).
             std: Inverse square of temporal standard deviation of sky.
@@ -385,7 +389,7 @@ def zscan(
     *,
     include_mkid_ids: Optional[Sequence[int]] = DEFAULT_INCL_MKID_IDS,
     exclude_mkid_ids: Optional[Sequence[int]] = DEFAULT_EXCL_MKID_IDS,
-    data_type: Literal["df/f", "brightness"] = DEFAULT_DATA_TYPE,
+    data_type: Literal["df/f", "brightness", None] = DEFAULT_DATA_TYPE,
     chan_weight: Literal["uniform", "std", "std/tx"] = "std/tx",
     pwv: Literal["0.5", "1.0", "2.0", "3.0", "4.0", "5.0"] = "5.0",
     outdir: Path = Path(),
@@ -400,6 +404,7 @@ def zscan(
         exclude_mkid_ids: MKID IDs to be excluded in analysis.
             Defaults to bad MKID IDs found on 2023-11-07.
         data_type: Data type of the input DEMS file.
+            Defaults to the ``long_name`` attribute in it.
         chan_weight: Weighting method along the channel axis.
             uniform: Uniform weight (i.e. no channel dependence).
             std: Inverse square of temporal standard deviation of sky.
@@ -518,19 +523,21 @@ def load_dems(
     *,
     include_mkid_ids: Optional[Sequence[int]] = DEFAULT_INCL_MKID_IDS,
     exclude_mkid_ids: Optional[Sequence[int]] = DEFAULT_EXCL_MKID_IDS,
-    data_type: Literal["brightness", "df/f"] = DEFAULT_DATA_TYPE,
+    data_type: Literal["brightness", "df/f", None] = DEFAULT_DATA_TYPE,
     frequency_units: str = DEFAULT_FREQUENCY_UNITS,
     skycoord_units: str = DEFAULT_SKYCOORD_UNITS,
 ) -> xr.DataArray:
     """Load a DEMS with given conversions and selections.
 
     Args:
+        dems: Input DEMS file (netCDF or Zarr).
         include_mkid_ids: MKID IDs to be included in analysis.
             Defaults to all MKID IDs.
         exclude_mkid_ids: MKID IDs to be excluded in analysis.
             Defaults to bad MKID IDs found on 2023-11-07.
         data_type: Data type of the input DEMS file.
-        frequency_units: Units of the frequency axis.
+            Defaults to the ``long_name`` attribute in it.
+        frequency_units: Units of the frequency.
         skycoord_units: Units of the sky coordinate axes.
 
     Returns:
@@ -558,13 +565,16 @@ def load_dems(
         skycoord_units,
     )
 
+    if data_type is None and "units" in da.attrs:
+        return da
+
     if data_type == "brightness":
         return da.assign_attrs(long_name="brightness", units="K")
 
     if data_type == "df/f":
-        return -da.assign_attrs(long_name="-df/f", units="dimensionless")
+        return da.assign_attrs(long_name="df/f", units="dimensionless")
 
-    raise ValueError("Data type must be either df/f or brightness.")
+    raise ValueError("Data type could not be inferred.")
 
 
 def main() -> None:
