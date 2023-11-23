@@ -3,7 +3,7 @@ __all__ = ["still", "pswsc", "raster", "skydip", "zscan"]
 
 # standard library
 from pathlib import Path
-from typing import Literal, Optional, Sequence, cast
+from typing import Literal, Optional, Sequence, Union, cast
 
 
 # dependencies
@@ -11,6 +11,7 @@ import numpy as np
 import xarray as xr
 import matplotlib.pyplot as plt
 from fire import Fire
+from matplotlib.figure import Figure
 from . import assign, convert, load, make, plot, select, utils
 
 
@@ -569,6 +570,30 @@ def load_dems(
         return da.assign_attrs(long_name="df/f", units="dimensionless")
 
     raise ValueError("Data type could not be inferred.")
+
+
+def save_qlook(qlook: Union[Figure, xr.DataArray], filename: Path) -> Path:
+    """Save a quick look result to a file with given format.
+
+    Args:
+        qlook: Matplotlib figure or DataArray to be saved.
+        filename: Path of the saved file.
+
+    Returns:
+        Absolute path of the saved file.
+
+    """
+    if isinstance(qlook, Figure):
+        qlook.savefig(filename)
+    elif (ext := "".join(filename.suffixes)) == ".csv":
+        name = qlook.attrs["data_type"]
+        qlook.to_dataset(name=name).to_pandas().to_csv(filename)
+    elif ext == ".nc":
+        qlook.to_netcdf(filename)
+    elif ext == ".zarr" or format == ".zarr.zip":
+        qlook.to_zarr(filename, mode="w")
+
+    return Path(filename).expanduser().resolve()
 
 
 def main() -> None:
