@@ -359,9 +359,9 @@ def zscan(
     data_type: Literal["df/f", "brightness", None] = DEFAULT_DATA_TYPE,
     chan_weight: Literal["uniform", "std", "std/tx"] = "std/tx",
     pwv: Literal["0.5", "1.0", "2.0", "3.0", "4.0", "5.0"] = "5.0",
+    format: str = DEFAULT_FORMAT,
     outdir: Path = Path(),
-    format: str = "png",
-) -> None:
+) -> Path:
     """Quick-look at an observation of subref axial focus scan.
 
     Args:
@@ -379,42 +379,46 @@ def zscan(
             transmission calculated by the ATM model.
         pwv: PWV in units of mm. Only used for the calculation of
             the atmospheric transmission when chan_weight is std/tx.
-        outdir: Output directory for analysis results.
         format: Output image format of analysis results.
+        outdir: Output directory for analysis results.
+
+    Returns:
+        Absolute path of the saved file.
 
     """
-    dems = Path(dems)
-    result = Path(outdir) / dems.with_suffix(f".zscan.{format}").name
-
-    # load DEMS
     da = load_dems(
         dems,
         include_mkid_ids=include_mkid_ids,
         exclude_mkid_ids=exclude_mkid_ids,
         data_type=data_type,
     )
+
+    # make continuum series
     da_on = select.by(da, "state", include="ON")
     da_off = select.by(da, "state", exclude="ON")
-
-    # plotting
     weight = calc_chan_weight(da_off, method=chan_weight, pwv=pwv)
     series = da_on.weighted(weight).mean("chan")
 
-    fig, axes = plt.subplots(1, 2, figsize=(12, 4))
+    # save output
+    filename = Path(dems).with_suffix(f".zscan.{format}").name
+
+    if format in DATA_FORMATS:
+        return save_qlook(series, Path(outdir) / filename)
+
+    fig, axes = plt.subplots(1, 2, figsize=DEFAULT_FIGSIZE)
 
     ax = axes[0]
     plot.data(series, hue="aste_subref_z", ax=ax)
-    ax.set_title(Path(dems).name)
-    ax.grid(True)
 
     ax = axes[1]
     plot.data(series, x="aste_subref_z", ax=ax)
-    ax.set_title(Path(dems).name)
-    ax.grid(True)
+
+    for ax in axes:
+        ax.set_title(Path(dems).name)
+        ax.grid(True)
 
     fig.tight_layout()
-    fig.savefig(result)
-    print(str(result))
+    return save_qlook(fig, Path(outdir) / filename)
 
 
 def calc_chan_weight(
