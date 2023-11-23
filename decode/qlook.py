@@ -16,6 +16,7 @@ from . import assign, convert, load, make, plot, select, utils
 
 
 # constants
+DATA_FORMATS = "csv", "nc", "zarr", "zarr.zip"
 DEFAULT_DATA_TYPE = None
 # fmt: off
 DEFAULT_EXCL_MKID_IDS = (
@@ -24,6 +25,8 @@ DEFAULT_EXCL_MKID_IDS = (
     283, 296, 297, 299, 301, 313,
 )
 # fmt: on
+DEFAULT_FIGSIZE = 12, 4
+DEFAULT_FORMAT = "png"
 DEFAULT_FREQUENCY_UNITS = "GHz"
 DEFAULT_INCL_MKID_IDS = None
 DEFAULT_SKYCOORD_GRID = "6 arcsec"
@@ -42,10 +45,9 @@ def still(
     data_type: Literal["df/f", "brightness", None] = DEFAULT_DATA_TYPE,
     chan_weight: Literal["uniform", "std", "std/tx"] = "std/tx",
     pwv: Literal["0.5", "1.0", "2.0", "3.0", "4.0", "5.0"] = "5.0",
-    cabin_temperature: float = 273.0,
+    format: str = DEFAULT_FORMAT,
     outdir: Path = Path(),
-    format: str = "png",
-) -> None:
+) -> Path:
     """Quick-look at a still observation.
 
     Args:
@@ -63,62 +65,45 @@ def still(
             transmission calculated by the ATM model.
         pwv: PWV in units of mm. Only used for the calculation of
             the atmospheric transmission when chan_weight is std/tx.
-        cabin_temperature: Temperature at the ASTE cabin.
-            Only used for the df/f-to-Tsky conversion.
-        outdir: Output directory for the analysis result.
-        format: Output data format of the analysis result.
+        format: Output data format of the quick-look result.
+        outdir: Output directory for the quick-look result.
+
+    Returns:
+        Absolute path of the saved file.
 
     """
-    dems = Path(dems)
-    out = Path(outdir) / dems.with_suffix(f".still.{format}").name
-
-    # load DEMS
     da = load_dems(
         dems,
         include_mkid_ids=include_mkid_ids,
         exclude_mkid_ids=exclude_mkid_ids,
         data_type=data_type,
     )
-    da_off = select.by(da, "state", exclude=["ON", "SCAN"])
 
     # make continuum series
+    da_off = select.by(da, "state", exclude=["ON", "SCAN"])
     weight = calc_chan_weight(da_off, method=chan_weight, pwv=pwv)
     series = da.weighted(weight).mean("chan")
 
-    # export output
-    if format == "csv":
-        series.to_dataset(name=data_type).to_pandas().to_csv(out)
-    elif format == "nc":
-        series.to_netcdf(out)
-    elif format.startswith("zarr"):
-        series.to_zarr(out)
-    else:
-        fig, axes = plt.subplots(1, 2, figsize=(12, 4))
+    # save result
+    filename = Path(dems).with_suffix(f".still.{format}").name
 
-        ax = axes[0]
-        plot.state(da, add_colorbar=False, add_legend=False, ax=ax)
+    if format in DATA_FORMATS:
+        return save_qlook(series, Path(outdir) / filename)
+
+    fig, axes = plt.subplots(1, 2, figsize=DEFAULT_FIGSIZE)
+
+    ax = axes[0]
+    plot.state(da, add_colorbar=False, add_legend=False, ax=ax)
+
+    ax = axes[1]
+    plot.data(series, add_colorbar=False, ax=ax)
+
+    for ax in axes:
         ax.set_title(Path(dems).name)
         ax.grid(True)
 
-        ax = axes[1]
-        plot.data(series, add_colorbar=False, ax=ax)
-        ax.set_title(Path(dems).name)
-        ax.grid(True)
-
-        if data_type == "df/f":
-            ax = ax.secondary_yaxis(
-                "right",
-                functions=(
-                    lambda x: DFOF_TO_TSKY * x + cabin_temperature,
-                    lambda x: TSKY_TO_DFOF * (x - cabin_temperature),
-                ),
-            )
-            ax.set_ylabel("Approx. brightness [K]")
-
-        fig.tight_layout()
-        fig.savefig(out)
-
-    print(str(out))
+    fig.tight_layout()
+    return save_qlook(fig, Path(outdir) / filename)
 
 
 def pswsc(
