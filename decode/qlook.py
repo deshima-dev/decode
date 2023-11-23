@@ -113,10 +113,10 @@ def pswsc(
     include_mkid_ids: Optional[Sequence[int]] = DEFAULT_INCL_MKID_IDS,
     exclude_mkid_ids: Optional[Sequence[int]] = DEFAULT_EXCL_MKID_IDS,
     data_type: Literal["df/f", "brightness", None] = DEFAULT_DATA_TYPE,
-    frequency_units: str = "GHz",
+    frequency_units: str = DEFAULT_FREQUENCY_UNITS,
+    format: str = DEFAULT_FORMAT,
     outdir: Path = Path(),
-    format: str = "png",
-) -> None:
+) -> Path:
     """Quick-look at a PSW observation with sky chopper.
 
     Args:
@@ -128,14 +128,13 @@ def pswsc(
         data_type: Data type of the input DEMS file.
             Defaults to the ``long_name`` attribute in it.
         frequency_units: Units of the frequency axis.
-        outdir: Output directory for the analysis result.
-        format: Output data format of the analysis result.
+        format: Output data format of the quick-look result.
+        outdir: Output directory for the quick-look result.
+
+    Returns:
+        Absolute path of the saved file.
 
     """
-    dems = Path(dems)
-    out = Path(outdir) / dems.with_suffix(f".pswsc.{format}").name
-
-    # load DEMS
     da = load_dems(
         dems,
         include_mkid_ids=include_mkid_ids,
@@ -143,47 +142,33 @@ def pswsc(
         data_type=data_type,
         frequency_units=frequency_units,
     )
+
+    # make spectrum
     da_scan = select.by(da, "state", ["ON", "OFF"])
     da_sub = da_scan.groupby("scan").map(subtract_per_scan)
-
-    # export output
     spec = da_sub.mean("scan")
-    mad = utils.mad(spec)
 
-    if format == "csv":
-        spec.to_dataset(name=data_type).to_pandas().to_csv(out)
-    elif format == "nc":
-        spec.to_netcdf(out)
-    elif format.startswith("zarr"):
-        spec.to_zarr(out)
-    else:
-        fig, axes = plt.subplots(1, 2, figsize=(12, 4))
+    # save result
+    filename = Path(dems).with_suffix(f".pswsc.{format}").name
 
-        ax = axes[0]
-        plot.data(da.scan, ax=ax)
+    if format in DATA_FORMATS:
+        return save_qlook(spec, Path(outdir) / filename)
+
+    fig, axes = plt.subplots(1, 2, figsize=DEFAULT_FIGSIZE)
+
+    ax = axes[0]
+    plot.data(da.scan, ax=ax)
+
+    ax = axes[1]
+    plot.data(spec, x="frequency", s=5, hue=None, ax=ax)
+    ax.set_ylim(get_robust_lim(spec))
+
+    for ax in axes:
         ax.set_title(Path(dems).name)
         ax.grid(True)
 
-        ax = axes[1]
-        plot.data(spec, x="frequency", s=5, hue=None, ax=ax)
-        ax.set_ylim(-mad, spec.max() + mad)
-        ax.set_title(Path(dems).name)
-        ax.grid(True)
-
-        if data_type == "df/f":
-            ax = ax.secondary_yaxis(
-                "right",
-                functions=(
-                    lambda x: DFOF_TO_TSKY * x,
-                    lambda x: TSKY_TO_DFOF * x,
-                ),
-            )
-            ax.set_ylabel("Approx. brightness [K]")
-
-        fig.tight_layout()
-        fig.savefig(out)
-
-    print(str(out))
+    fig.tight_layout()
+    return save_qlook(fig, Path(outdir) / filename)
 
 
 def raster(
