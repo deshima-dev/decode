@@ -551,6 +551,18 @@ def load_dems(
 
     """
     da = load.dems(dems, chunks=None)
+
+    if da.frame == "altaz":
+        z = np.pi / 2 - convert.units(da.lat, "rad")
+        secz = cast(xr.DataArray, 1 / np.cos(z))
+
+        da = da.assign_coords(
+            secz=secz.assign_attrs(
+                long_name="sec(Z)",
+                units="dimensionless",
+            )
+        )
+
     da = assign.scan(da, by="state")
     da = convert.frame(da, "relative")
     da = select.by(da, "d2_mkid_type", "filter")
