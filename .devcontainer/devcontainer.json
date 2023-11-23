@@ -1,7 +1,7 @@
 {
     "name": "decode",
     "image":"python:3.11",
-    "onCreateCommand": "pip install poetry==1.6.1",
+    "onCreateCommand": "pip install poetry==1.7.1",
     "postCreateCommand": "poetry install",
     "containerEnv": {
         "POETRY_VIRTUALENVS_CREATE": "false"

@@ -27,7 +27,7 @@ jobs:
       - uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python }}
-      - run: pip install poetry && poetry install
+      - run: pip install poetry==1.7.1 && poetry install
       - run: black --check decode docs tests
       - run: pyright decode docs tests
       - run: pytest -v tests
