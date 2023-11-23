@@ -28,6 +28,7 @@ DEFAULT_FREQUENCY_UNITS = "GHz"
 DEFAULT_INCL_MKID_IDS = None
 DEFAULT_SKYCOORD_GRID = "6 arcsec"
 DEFAULT_SKYCOORD_UNITS = "arcsec"
+SIGMA_OVER_MAD = 1.4826
 DFOF_TO_TSKY = (300 - 77) / 3e-5
 TSKY_TO_DFOF = 3e-5 / (300 - 77)
 
@@ -510,6 +511,16 @@ def subtract_per_scan(dems: xr.DataArray) -> xr.DataArray:
         return src.mean("time") - sky.mean("time").data
 
     raise ValueError("State must be either ON or OFF.")
+
+
+def get_robust_lim(da: xr.DataArray) -> tuple[float, float]:
+    """Calculate a robust limit for plotting."""
+    sigma = SIGMA_OVER_MAD * utils.mad(da)
+
+    return (
+        float(np.percentile(da.data, 1) - sigma),
+        float(np.percentile(da.data, 99) + sigma),
+    )
 
 
 def load_dems(
