@@ -182,9 +182,9 @@ def raster(
     pwv: Literal["0.5", "1.0", "2.0", "3.0", "4.0", "5.0"] = "5.0",
     skycoord_grid: str = DEFAULT_SKYCOORD_GRID,
     skycoord_units: str = DEFAULT_SKYCOORD_UNITS,
+    format: str = DEFAULT_FORMAT,
     outdir: Path = Path(),
-    format: str = "png",
-) -> None:
+) -> Path:
     """Quick-look at a raster scan observation.
 
     Args:
@@ -204,14 +204,13 @@ def raster(
             the atmospheric transmission when chan_weight is std/tx.
         skycoord_grid: Grid size of the sky coordinate axes.
         skycoord_units: Units of the sky coordinate axes.
-        outdir: Output directory for analysis results.
         format: Output image format of analysis results.
+        outdir: Output directory for analysis results.
+
+    Returns:
+        Absolute path of the saved file.
 
     """
-    dems = Path(dems)
-    result = Path(outdir) / dems.with_suffix(f".raster.{format}").name
-
-    # load DEMS
     da = load_dems(
         dems,
         include_mkid_ids=include_mkid_ids,
@@ -219,10 +218,10 @@ def raster(
         data_type=data_type,
         skycoord_units=skycoord_units,
     )
-    da_on = select.by(da, "state", include="SCAN")
-    da_off = select.by(da, "state", exclude="SCAN")
 
     # subtract temporal baseline
+    da_on = select.by(da, "state", include="SCAN")
+    da_off = select.by(da, "state", exclude="SCAN")
     da_base = (
         da_off.groupby("scan")
         .map(mean_in_time)
@@ -244,38 +243,38 @@ def raster(
         skycoord_grid=skycoord_grid,
         skycoord_units=skycoord_units,
     )
-    cont = (cube * weight).sum("chan") / weight.sum("chan")
+    cont = cube.weighted(weight).mean("chan")
 
-    if data_type == "df/f":
-        cont.attrs.update(long_name="df/f", units="dimensionless")
+    # save result
+    filename = Path(dems).with_suffix(f".pswsc.{format}").name
 
-    # plotting
-    map_lim = max(abs(cube.lon).max(), abs(cube.lat).max())
-    max_pix = cont.where(cont == cont.max(), drop=True)
-    max_lon = float(max_pix.lon)
-    max_lat = float(max_pix.lat)
+    if format in DATA_FORMATS:
+        return save_qlook(cont, Path(outdir) / filename)
 
     fig, axes = plt.subplots(1, 2, figsize=(12, 5.5))
 
     ax = axes[0]
     plot.data(series, ax=ax)
     ax.set_title(Path(dems).name)
-    ax.grid(True)
 
     ax = axes[1]
+    map_lim = max(abs(cube.lon).max(), abs(cube.lat).max())
+    max_pix = cont.where(cont == cont.max(), drop=True)
+
     cont.plot(ax=ax)  # type: ignore
-    ax.set_title(
-        "Maxima: "
-        f"dAz = {max_lon:+.1f} {cont.lon.attrs['units']}, "
-        f"dEl = {max_lat:+.1f} {cont.lat.attrs['units']}"
-    )
     ax.set_xlim(-map_lim, map_lim)
     ax.set_ylim(-map_lim, map_lim)
-    ax.grid()
+    ax.set_title(
+        "Maxima: "
+        f"dAz = {max_pix.lon:+.1f} {cont.lon.attrs['units']}, "
+        f"dEl = {max_pix.lat:+.1f} {cont.lat.attrs['units']}"
+    )
+
+    for ax in axes:
+        ax.grid(True)
 
     fig.tight_layout()
-    fig.savefig(result)
-    print(str(result))
+    return save_qlook(fig, Path(outdir) / filename)
 
 
 def skydip(
