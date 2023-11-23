@@ -1,4 +1,4 @@
-__all__ = ["still", "pswsc", "raster", "skydip", "zscan"]
+__all__ = ["pswsc", "raster", "skydip", "still", "zscan"]
 
 
 # standard library
@@ -34,76 +34,6 @@ DEFAULT_SKYCOORD_UNITS = "arcsec"
 SIGMA_OVER_MAD = 1.4826
 DFOF_TO_TSKY = (300 - 77) / 3e-5
 TSKY_TO_DFOF = 3e-5 / (300 - 77)
-
-
-def still(
-    dems: Path,
-    /,
-    *,
-    include_mkid_ids: Optional[Sequence[int]] = DEFAULT_INCL_MKID_IDS,
-    exclude_mkid_ids: Optional[Sequence[int]] = DEFAULT_EXCL_MKID_IDS,
-    data_type: Literal["df/f", "brightness", None] = DEFAULT_DATA_TYPE,
-    chan_weight: Literal["uniform", "std", "std/tx"] = "std/tx",
-    pwv: Literal["0.5", "1.0", "2.0", "3.0", "4.0", "5.0"] = "5.0",
-    format: str = DEFAULT_FORMAT,
-    outdir: Path = Path(),
-) -> Path:
-    """Quick-look at a still observation.
-
-    Args:
-        dems: Input DEMS file (netCDF or Zarr).
-        include_mkid_ids: MKID IDs to be included in analysis.
-            Defaults to all MKID IDs.
-        exclude_mkid_ids: MKID IDs to be excluded in analysis.
-            Defaults to bad MKID IDs found on 2023-11-07.
-        data_type: Data type of the input DEMS file.
-            Defaults to the ``long_name`` attribute in it.
-        chan_weight: Weighting method along the channel axis.
-            uniform: Uniform weight (i.e. no channel dependence).
-            std: Inverse square of temporal standard deviation of sky.
-            std/tx: Same as std but std is divided by the atmospheric
-            transmission calculated by the ATM model.
-        pwv: PWV in units of mm. Only used for the calculation of
-            the atmospheric transmission when chan_weight is std/tx.
-        format: Output data format of the quick-look result.
-        outdir: Output directory for the quick-look result.
-
-    Returns:
-        Absolute path of the saved file.
-
-    """
-    da = load_dems(
-        dems,
-        include_mkid_ids=include_mkid_ids,
-        exclude_mkid_ids=exclude_mkid_ids,
-        data_type=data_type,
-    )
-
-    # make continuum series
-    da_off = select.by(da, "state", exclude=["ON", "SCAN"])
-    weight = calc_chan_weight(da_off, method=chan_weight, pwv=pwv)
-    series = da.weighted(weight).mean("chan")
-
-    # save result
-    filename = Path(dems).with_suffix(f".still.{format}").name
-
-    if format in DATA_FORMATS:
-        return save_qlook(series, Path(outdir) / filename)
-
-    fig, axes = plt.subplots(1, 2, figsize=DEFAULT_FIGSIZE)
-
-    ax = axes[0]
-    plot.state(da, add_colorbar=False, add_legend=False, ax=ax)
-
-    ax = axes[1]
-    plot.data(series, add_colorbar=False, ax=ax)
-
-    for ax in axes:
-        ax.set_title(Path(dems).name)
-        ax.grid(True)
-
-    fig.tight_layout()
-    return save_qlook(fig, Path(outdir) / filename)
 
 
 def pswsc(
@@ -341,6 +271,76 @@ def skydip(
     plot.data(series, x="secz", ax=ax)
     ax.set_xscale("log")
     ax.set_yscale("log")
+
+    for ax in axes:
+        ax.set_title(Path(dems).name)
+        ax.grid(True)
+
+    fig.tight_layout()
+    return save_qlook(fig, Path(outdir) / filename)
+
+
+def still(
+    dems: Path,
+    /,
+    *,
+    include_mkid_ids: Optional[Sequence[int]] = DEFAULT_INCL_MKID_IDS,
+    exclude_mkid_ids: Optional[Sequence[int]] = DEFAULT_EXCL_MKID_IDS,
+    data_type: Literal["df/f", "brightness", None] = DEFAULT_DATA_TYPE,
+    chan_weight: Literal["uniform", "std", "std/tx"] = "std/tx",
+    pwv: Literal["0.5", "1.0", "2.0", "3.0", "4.0", "5.0"] = "5.0",
+    format: str = DEFAULT_FORMAT,
+    outdir: Path = Path(),
+) -> Path:
+    """Quick-look at a still observation.
+
+    Args:
+        dems: Input DEMS file (netCDF or Zarr).
+        include_mkid_ids: MKID IDs to be included in analysis.
+            Defaults to all MKID IDs.
+        exclude_mkid_ids: MKID IDs to be excluded in analysis.
+            Defaults to bad MKID IDs found on 2023-11-07.
+        data_type: Data type of the input DEMS file.
+            Defaults to the ``long_name`` attribute in it.
+        chan_weight: Weighting method along the channel axis.
+            uniform: Uniform weight (i.e. no channel dependence).
+            std: Inverse square of temporal standard deviation of sky.
+            std/tx: Same as std but std is divided by the atmospheric
+            transmission calculated by the ATM model.
+        pwv: PWV in units of mm. Only used for the calculation of
+            the atmospheric transmission when chan_weight is std/tx.
+        format: Output data format of the quick-look result.
+        outdir: Output directory for the quick-look result.
+
+    Returns:
+        Absolute path of the saved file.
+
+    """
+    da = load_dems(
+        dems,
+        include_mkid_ids=include_mkid_ids,
+        exclude_mkid_ids=exclude_mkid_ids,
+        data_type=data_type,
+    )
+
+    # make continuum series
+    da_off = select.by(da, "state", exclude=["ON", "SCAN"])
+    weight = calc_chan_weight(da_off, method=chan_weight, pwv=pwv)
+    series = da.weighted(weight).mean("chan")
+
+    # save result
+    filename = Path(dems).with_suffix(f".still.{format}").name
+
+    if format in DATA_FORMATS:
+        return save_qlook(series, Path(outdir) / filename)
+
+    fig, axes = plt.subplots(1, 2, figsize=DEFAULT_FIGSIZE)
+
+    ax = axes[0]
+    plot.state(da, add_colorbar=False, add_legend=False, ax=ax)
+
+    ax = axes[1]
+    plot.data(series, add_colorbar=False, ax=ax)
 
     for ax in axes:
         ax.set_title(Path(dems).name)
@@ -594,10 +594,10 @@ def main() -> None:
         Fire(
             {
                 "default": still,
-                "still": still,
                 "pswsc": pswsc,
                 "raster": raster,
                 "skydip": skydip,
+                "still": still,
                 "zscan": zscan,
             }
         )
