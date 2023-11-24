@@ -487,8 +487,8 @@ def get_robust_lim(da: xr.DataArray) -> tuple[float, float]:
     sigma = SIGMA_OVER_MAD * utils.mad(da)
 
     return (
-        float(np.percentile(da.data, 1) - sigma),
-        float(np.percentile(da.data, 99) + sigma),
+        float(np.nanpercentile(da.data, 1) - sigma),
+        float(np.nanpercentile(da.data, 99) + sigma),
     )
 
 
