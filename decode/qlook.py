@@ -4,6 +4,7 @@ __all__ = ["pswsc", "raster", "skydip", "still", "zscan"]
 # standard library
 from pathlib import Path
 from typing import Literal, Optional, Sequence, Union, cast
+from warnings import catch_warnings, simplefilter
 
 
 # dependencies
@@ -448,12 +449,17 @@ def calc_chan_weight(
         return xr.ones_like(dems.mean("time"))
 
     if method == "std":
-        return dems.std("time") ** -2
+        with catch_warnings():
+            simplefilter("ignore")
+            return dems.std("time") ** -2
 
     if method == "std/tx":
         tx = load.atm(type="eta").sel(pwv=float(pwv))
         freq = convert.units(dems.d2_mkid_frequency, tx.freq.attrs["units"])
-        return (dems.std("time") / tx.interp(freq=freq)) ** -2
+
+        with catch_warnings():
+            simplefilter("ignore")
+            return (dems.std("time") / tx.interp(freq=freq)) ** -2
 
     raise ValueError("Method must be either uniform, std, or std/tx.")
 
