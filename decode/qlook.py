@@ -165,7 +165,7 @@ def raster(
 
     # make continuum series
     weight = calc_chan_weight(da_off, method=chan_weight, pwv=pwv)
-    series = da_sub.weighted(weight).mean("chan")
+    series = da_sub.weighted(weight.fillna(0)).mean("chan")
 
     # make continuum map
     cube = make.cube(
@@ -173,7 +173,7 @@ def raster(
         skycoord_grid=skycoord_grid,
         skycoord_units=skycoord_units,
     )
-    cont = cube.weighted(weight).mean("chan")
+    cont = cube.weighted(weight.fillna(0)).mean("chan")
 
     # save result
     filename = Path(dems).with_suffix(f".pswsc.{format}").name
@@ -254,7 +254,7 @@ def skydip(
     da_on = select.by(da, "state", include="SCAN")
     da_off = select.by(da, "state", exclude="SCAN")
     weight = calc_chan_weight(da_off, method=chan_weight, pwv=pwv)
-    series = da_on.weighted(weight).mean("chan")
+    series = da_on.weighted(weight.fillna(0)).mean("chan")
 
     # save result
     filename = Path(dems).with_suffix(f".skydip.{format}").name
@@ -326,7 +326,7 @@ def still(
     # make continuum series
     da_off = select.by(da, "state", exclude=["ON", "SCAN"])
     weight = calc_chan_weight(da_off, method=chan_weight, pwv=pwv)
-    series = da.weighted(weight).mean("chan")
+    series = da.weighted(weight.fillna(0)).mean("chan")
 
     # save result
     filename = Path(dems).with_suffix(f".still.{format}").name
@@ -397,7 +397,7 @@ def zscan(
     da_on = select.by(da, "state", include="ON")
     da_off = select.by(da, "state", exclude="ON")
     weight = calc_chan_weight(da_off, method=chan_weight, pwv=pwv)
-    series = da_on.weighted(weight).mean("chan")
+    series = da_on.weighted(weight.fillna(0)).mean("chan")
 
     # save output
     filename = Path(dems).with_suffix(f".zscan.{format}").name
