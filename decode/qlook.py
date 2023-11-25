@@ -270,8 +270,6 @@ def skydip(
 
     ax = axes[1]
     plot.data(series, x="secz", ax=ax)
-    ax.set_xscale("log")
-    ax.set_yscale("log")
 
     for ax in axes:
         ax.set_title(Path(dems).name)
