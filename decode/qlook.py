@@ -562,7 +562,7 @@ def load_dems(
         return da
 
     if data_type == "brightness":
-        return da.assign_attrs(long_name="brightness", units="K")
+        return da.assign_attrs(long_name="Brightness", units="K")
 
     if data_type == "df/f":
         return da.assign_attrs(long_name="df/f", units="dimensionless")
