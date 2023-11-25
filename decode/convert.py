@@ -14,7 +14,7 @@ from astropy.units import Equivalency, Quantity, Unit
 # type hints
 T = TypeVar("T")
 Multiple = Union[Sequence[T], T]
-UnitLike = Union[Unit, str]
+UnitLike = Union[xr.DataArray, Unit, str]
 
 
 def coord_units(
@@ -30,6 +30,7 @@ def coord_units(
         da: Input DataArray.
         coord_names: Name(s) of the coordinate(s) to be converted.
         new_units: Units to be converted from the current ones.
+            A DataArray that has units attribute is also accepted.
         equivalencies: Optional Astropy equivalencies.
 
     Returns:
@@ -73,9 +74,9 @@ def frame(da: xr.DataArray, new_frame: str, /) -> xr.DataArray:
     lat_origin = da.coords["lat_origin"]
 
     # do not change the order below!
-    lon -= units(lon_origin, lon.attrs["units"])
+    lon -= units(lon_origin, lon)
     lon *= np.cos(units(lat, "rad"))
-    lat -= units(lat_origin, lat.attrs["units"])
+    lat -= units(lat_origin, lat)
     lon_origin *= 0.0
     lat_origin *= 0.0
 
@@ -94,6 +95,7 @@ def units(
     Args:
         da: Input DataArray.
         new_units: Units to be converted from the current ones.
+            A DataArray that has units attribute is also accepted.
         equivalencies: Optional Astropy equivalencies.
 
     Returns:
@@ -102,6 +104,9 @@ def units(
     """
     if (units := da.attrs.get("units")) is None:
         raise ValueError("Units must exist in DataArray attrs.")
+
+    if isinstance(new_units, xr.DataArray):
+        new_units = new_units.attrs["units"]
 
     new_data = Quantity(da, units).to(new_units, equivalencies)
     return da.copy(data=new_data).assign_attrs(units=new_units)

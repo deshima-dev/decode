@@ -450,7 +450,7 @@ def calc_chan_weight(
 
     if method == "std/tx":
         tx = load.atm(type="eta").sel(pwv=float(pwv))
-        freq = convert.units(dems.d2_mkid_frequency, tx.freq.attrs["units"])
+        freq = convert.units(dems.d2_mkid_frequency, tx.freq)
 
         with catch_warnings():
             simplefilter("ignore")
