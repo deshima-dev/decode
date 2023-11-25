@@ -162,7 +162,7 @@ def raster(
     da_sub = da_on - da_base.values
 
     # make continuum series
-    weight = calc_chan_weight(da_off, method=chan_weight, pwv=pwv)
+    weight = get_chan_weight(da_off, method=chan_weight, pwv=pwv)
     series = da_sub.weighted(weight.fillna(0)).mean("chan")
 
     # make continuum map
@@ -251,7 +251,7 @@ def skydip(
     # make continuum series
     da_on = select.by(da, "state", include="SCAN")
     da_off = select.by(da, "state", exclude="SCAN")
-    weight = calc_chan_weight(da_off, method=chan_weight, pwv=pwv)
+    weight = get_chan_weight(da_off, method=chan_weight, pwv=pwv)
     series = da_on.weighted(weight.fillna(0)).mean("chan")
 
     # save result
@@ -321,7 +321,7 @@ def still(
 
     # make continuum series
     da_off = select.by(da, "state", exclude=["ON", "SCAN"])
-    weight = calc_chan_weight(da_off, method=chan_weight, pwv=pwv)
+    weight = get_chan_weight(da_off, method=chan_weight, pwv=pwv)
     series = da.weighted(weight.fillna(0)).mean("chan")
 
     # save result
@@ -392,10 +392,10 @@ def zscan(
     # make continuum series
     da_on = select.by(da, "state", include="ON")
     da_off = select.by(da, "state", exclude="ON")
-    weight = calc_chan_weight(da_off, method=chan_weight, pwv=pwv)
+    weight = get_chan_weight(da_off, method=chan_weight, pwv=pwv)
     series = da_on.weighted(weight.fillna(0)).mean("chan")
 
-    # save output
+    # save result
     filename = Path(dems).with_suffix(f".zscan.{format}").name
 
     if format in DATA_FORMATS:
@@ -417,7 +417,31 @@ def zscan(
     return save_qlook(fig, Path(outdir) / filename)
 
 
-def calc_chan_weight(
+def mean_in_time(dems: xr.DataArray) -> xr.DataArray:
+    """Similar to DataArray.mean but keeps middle time."""
+    middle = dems[len(dems) // 2 : len(dems) // 2 + 1]
+    return xr.zeros_like(middle) + dems.mean("time")
+
+
+def subtract_per_scan(dems: xr.DataArray) -> xr.DataArray:
+    """Apply source-sky subtraction to a single-scan DEMS."""
+    if len(states := np.unique(dems.state)) != 1:
+        raise ValueError("State must be unique.")
+
+    if (state := states[0]) == "ON":
+        src = select.by(dems, "beam", include="A")
+        sky = select.by(dems, "beam", include="B")
+        return src.mean("time") - sky.mean("time").data
+
+    if state == "OFF":
+        src = select.by(dems, "beam", include="B")
+        sky = select.by(dems, "beam", include="A")
+        return src.mean("time") - sky.mean("time").data
+
+    raise ValueError("State must be either ON or OFF.")
+
+
+def get_chan_weight(
     dems: xr.DataArray,
     /,
     *,
@@ -457,30 +481,6 @@ def calc_chan_weight(
             return (dems.std("time") / tx.interp(freq=freq)) ** -2
 
     raise ValueError("Method must be either uniform, std, or std/tx.")
-
-
-def mean_in_time(dems: xr.DataArray) -> xr.DataArray:
-    """Similar to DataArray.mean but keeps middle time."""
-    middle = dems[len(dems) // 2 : len(dems) // 2 + 1]
-    return xr.zeros_like(middle) + dems.mean("time")
-
-
-def subtract_per_scan(dems: xr.DataArray) -> xr.DataArray:
-    """Apply source-sky subtraction to a single-scan DEMS."""
-    if len(states := np.unique(dems.state)) != 1:
-        raise ValueError("State must be unique.")
-
-    if (state := states[0]) == "ON":
-        src = select.by(dems, "beam", include="A")
-        sky = select.by(dems, "beam", include="B")
-        return src.mean("time") - sky.mean("time").data
-
-    if state == "OFF":
-        src = select.by(dems, "beam", include="B")
-        sky = select.by(dems, "beam", include="A")
-        return src.mean("time") - sky.mean("time").data
-
-    raise ValueError("State must be either ON or OFF.")
 
 
 def get_robust_lim(da: xr.DataArray) -> tuple[float, float]:
