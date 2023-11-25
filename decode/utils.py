@@ -15,17 +15,17 @@ def mad(
     keep_attrs: Optional[bool] = None,
     **kwargs: Any,
 ) -> xr.DataArray:
-    """Calculate median absolute deviation (MAD) of a DataArray.
+    """Calculate the median absolute deviation (MAD) of a DataArray.
 
     Args:
         da: Input DataArray.
-        dim: Name of dimension(s) along which MAD is calculated.
+        dim: Name of dimension(s) along which the MAD is calculated.
         skipna: Same-name option to be passed to ``DataArray.median``.
         keep_attrs: Same-name option to be passed to ``DataArray.median``.
         kwargs: Same-name option(s) to be passed to ``DataArray.median``.
 
     Returns:
-        MAD of the input DataArray.
+        The MAD of the input DataArray.
 
     """
 

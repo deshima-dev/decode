@@ -2,7 +2,7 @@ __all__ = ["coord_units", "frame", "units"]
 
 
 # standard library
-from typing import Optional, Union
+from typing import Optional, Sequence, TypeVar, Union
 
 
 # dependencies
@@ -12,90 +12,90 @@ from astropy.units import Equivalency, Quantity, Unit
 
 
 # type hints
-UnitLike = Union[Unit, str]
+T = TypeVar("T")
+Multiple = Union[Sequence[T], T]
+UnitLike = Union[xr.DataArray, Unit, str]
 
 
 def coord_units(
     da: xr.DataArray,
-    coord_name: str,
+    coord_names: Multiple[str],
     new_units: UnitLike,
     /,
-    *,
     equivalencies: Optional[Equivalency] = None,
 ) -> xr.DataArray:
-    """Convert units of a coordinate of a DataArray.
+    """Convert the units of coordinate(s) of a DataArray.
 
     Args:
         da: Input DataArray.
-        coord_name: Name of the coordinate to be converted.
+        coord_names: Name(s) of the coordinate(s) to be converted.
         new_units: Units to be converted from the current ones.
+            A DataArray that has units attribute is also accepted.
         equivalencies: Optional Astropy equivalencies.
 
     Returns:
         DataArray with the units of the coordinate converted.
 
     """
-    new_coord = units(da[coord_name], new_units, equivalencies=equivalencies)
-    return da.assign_coords({coord_name: new_coord})
+    # deepcopy except for data
+    da = da.copy(data=da.data)
+
+    if isinstance(coord_names, str):
+        coord_names = [coord_names]
+
+    for coord_name in coord_names:
+        coord = da.coords[coord_name]
+        new_coord = units(coord, new_units, equivalencies)
+        da = da.assign_coords({coord_name: new_coord})
+
+    return da
 
 
-def frame(
-    dems: xr.DataArray,
-    new_frame: str,
-    /,
-    *,
-    inplace: bool = False,
-) -> xr.DataArray:
-    """Convert skycoord frame of DEMS.
+def frame(da: xr.DataArray, new_frame: str, /) -> xr.DataArray:
+    """Convert the skycoord frame of a DataArray.
 
     Args:
-        dems: Target DEMS DataArray.
-        new_frame: Skycoord frame to be converted from the current ones.
-        inplace: Whether the skycoord frame are converted in-place.
+        da: Input DataArray.
+        new_frame: Frame to be converted from the current one.
 
     Returns:
-        DEMS DataArray with the skycoord frame converted.
+        DataArray with the skycoord frame converted.
 
     """
-    if not inplace:
-        # deepcopy except for data
-        dems = dems.copy(data=dems.data)
+    # deepcopy except for data
+    da = da.copy(data=da.data)
 
     if not new_frame == "relative":
         raise ValueError("Relative is only available.")
 
-    lon, lon_origin = dems["lon"], dems["lon_origin"]
-    lat, lat_origin = dems["lat"], dems["lat_origin"]
-    cos = np.cos(Quantity(lat, lat.attrs["units"]).to("rad"))
-
-    if lon.attrs["units"] != lon_origin.attrs["units"]:
-        raise ValueError("Units of lon and lon_origin must be same.")
-
-    if lat.attrs["units"] != lat_origin.attrs["units"]:
-        raise ValueError("Units of lat and lat_origin must be same.")
+    lon = da.coords["lon"]
+    lat = da.coords["lat"]
+    lon_origin = da.coords["lon_origin"]
+    lat_origin = da.coords["lat_origin"]
 
     # do not change the order below!
-    lon -= lon_origin
-    lon *= cos
-    lat -= lat_origin
-    lon_origin[:] = 0.0
-    lat_origin[:] = 0.0
+    lon -= units(lon_origin, lon)
+    lon *= np.cos(units(lat, "rad"))
+    lat -= units(lat_origin, lat)
+    lon_origin *= 0.0
+    lat_origin *= 0.0
 
-    return dems.assign_coords(frame=dems.frame.copy(False, new_frame))
+    new_frame = da.frame.copy(data=new_frame)
+    return da.assign_coords(frame=new_frame)
 
 
 def units(
     da: xr.DataArray,
     new_units: UnitLike,
     /,
-    *,
     equivalencies: Optional[Equivalency] = None,
 ) -> xr.DataArray:
-    """Convert units of a DataArray.
+    """Convert the units of a DataArray.
 
     Args:
         da: Input DataArray.
         new_units: Units to be converted from the current ones.
+            A DataArray that has units attribute is also accepted.
         equivalencies: Optional Astropy equivalencies.
 
     Returns:
@@ -105,5 +105,8 @@ def units(
     if (units := da.attrs.get("units")) is None:
         raise ValueError("Units must exist in DataArray attrs.")
 
+    if isinstance(new_units, xr.DataArray):
+        new_units = new_units.attrs["units"]
+
     new_data = Quantity(da, units).to(new_units, equivalencies)
-    return da.copy(False, new_data).assign_attrs(units=str(new_units))
+    return da.copy(data=new_data).assign_attrs(units=new_units)

@@ -20,11 +20,11 @@ def by(
     dems: xr.DataArray,
     coord_name: str,
     /,
+    include: Optional[Multiple[T]] = None,
     *,
+    exclude: Optional[Multiple[T]] = None,
     min: Optional[T] = None,
     max: Optional[T] = None,
-    include: Optional[Multiple[T]] = None,
-    exclude: Optional[Multiple[T]] = None,
     sort: bool = False,
     as_dim: bool = False,
 ) -> xr.DataArray:
@@ -33,14 +33,14 @@ def by(
     Args:
         dems: DEMS DataArray to be selected.
         coord_name: Name of the coordinate for the selection.
-        min: Minimum selection bound (inclusive).
-            If not specified, no bound is set.
-        max: Maximum selection bound (exclusive).
-            If not specified, no bound is set.
         include: Coordinate values to be included.
             If not specified, all values are included.
         exclude: Coordinate values to be excluded.
             If not specified, any values are not excluded.
+        min: Minimum selection bound (inclusive).
+            If not specified, no bound is set.
+        max: Maximum selection bound (exclusive).
+            If not specified, no bound is set.
         sort: Whether to sort by the coordinate after selection.
         as_dim: Whether to use the coordinate as a dimension.
 
@@ -58,17 +58,17 @@ def by(
 
     coord_dim = coord.dims[0]
 
-    if min is not None:
-        dems = dems.sel({coord_dim: dems[coord_name] >= min})
-
-    if max is not None:
-        dems = dems.sel({coord_dim: dems[coord_name] < max})
-
     if include is not None:
         dems = dems.sel({coord_dim: dems[coord_name].isin(include)})
 
     if exclude is not None:
         dems = dems.sel({coord_dim: ~dems[coord_name].isin(exclude)})
+
+    if min is not None:
+        dems = dems.sel({coord_dim: dems[coord_name] >= min})
+
+    if max is not None:
+        dems = dems.sel({coord_dim: dems[coord_name] < max})
 
     if sort:
         dems = dems.sortby(coord_name)

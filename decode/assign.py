@@ -14,7 +14,7 @@ def scan(
     dems: xr.DataArray,
     /,
     *,
-    by: Literal["state"] = "state",
+    by: Literal["beam", "scan", "state"] = "state",
     dt: Optional[np.timedelta64] = None,
     inplace: bool = False,
 ) -> xr.DataArray:
@@ -33,16 +33,16 @@ def scan(
 
     """
     if not inplace:
-        dems = dems.copy()
+        # deepcopy except for data
+        dems = dems.copy(data=dems.data)
 
-    is_cut = np.zeros_like(dems.scan, dtype=bool)
+    is_div = xr.zeros_like(dems.scan, dtype=bool)
 
-    if by == "state":
-        state = dems.state.values
-        is_cut |= np.hstack([False, state[1:] != state[:-1]])
+    ref = dems.coords[by].data
+    is_div[1:] |= ref[1:] != ref[:-1]
 
     if dt is not None:
-        is_cut |= np.hstack([False, np.diff(dems.time) >= dt])
+        is_div[1:] |= np.diff(dems.time) >= dt
 
-    dems.scan.values[:] = np.cumsum(is_cut)
-    return dems
+    new_scan = is_div.cumsum().astype(dems.scan.dtype)
+    return dems.assign_coords(scan=new_scan)
