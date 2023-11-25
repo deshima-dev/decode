@@ -193,7 +193,7 @@ def raster(
     ax.set_xlim(-map_lim, map_lim)
     ax.set_ylim(-map_lim, map_lim)
     ax.set_title(
-        "Maxima: "
+        "Maximum: "
         f"dAz = {float(max_pix.lon):+.1f} {cont.lon.attrs['units']}, "
         f"dEl = {float(max_pix.lat):+.1f} {cont.lat.attrs['units']}"
     )
