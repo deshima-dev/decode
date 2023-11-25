@@ -135,8 +135,8 @@ def raster(
             the atmospheric transmission when chan_weight is std/tx.
         skycoord_grid: Grid size of the sky coordinate axes.
         skycoord_units: Units of the sky coordinate axes.
-        format: Output image format of analysis results.
-        outdir: Output directory for analysis results.
+        format: Output image format of quick-look result.
+        outdir: Output directory for the quick-look result.
 
     Returns:
         Absolute path of the saved file.
@@ -237,8 +237,8 @@ def skydip(
             transmission calculated by the ATM model.
         pwv: PWV in units of mm. Only used for the calculation of
             the atmospheric transmission when chan_weight is std/tx.
-        format: Output image format of analysis results.
-        outdir: Output directory for analysis results.
+        format: Output image format of quick-look result.
+        outdir: Output directory for the quick-look result.
 
     Returns:
         Absolute path of the saved file.
@@ -378,8 +378,8 @@ def zscan(
             transmission calculated by the ATM model.
         pwv: PWV in units of mm. Only used for the calculation of
             the atmospheric transmission when chan_weight is std/tx.
-        format: Output image format of analysis results.
-        outdir: Output directory for analysis results.
+        format: Output image format of quick-look result.
+        outdir: Output directory for the quick-look result.
 
     Returns:
         Absolute path of the saved file.
