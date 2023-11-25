@@ -174,7 +174,7 @@ def raster(
     cont = cube.weighted(weight.fillna(0)).mean("chan")
 
     # save result
-    filename = Path(dems).with_suffix(f".pswsc.{format}").name
+    filename = Path(dems).with_suffix(f".raster.{format}").name
 
     if format in DATA_FORMATS:
         return save_qlook(cont, Path(outdir) / filename)
