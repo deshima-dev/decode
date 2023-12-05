@@ -40,13 +40,16 @@ def pswsc(
     dems: Path,
     /,
     *,
+    # options for loading
     include_mkid_ids: Optional[Sequence[int]] = DEFAULT_INCL_MKID_IDS,
     exclude_mkid_ids: Optional[Sequence[int]] = DEFAULT_EXCL_MKID_IDS,
     data_type: Literal["df/f", "brightness", None] = DEFAULT_DATA_TYPE,
     frequency_units: str = DEFAULT_FREQUENCY_UNITS,
+    # options for saving
     format: str = DEFAULT_FORMAT,
     outdir: Path = DEFAULT_OUTDIR,
     overwrite: bool = DEFAULT_OVERWRITE,
+    suffix: str = "pswsc",
     **options: Any,
 ) -> Path:
     """Quick-look at a PSW observation with sky chopper.
@@ -63,6 +66,7 @@ def pswsc(
         format: Output data format of the quick-look result.
         outdir: Output directory for the quick-look result.
         overwrite: Whether to overwrite the output if it exists.
+        suffix: Suffix that precedes the file extension.
 
     Keyword Args:
         options: Other options for saving the output (e.g. dpi).
@@ -85,11 +89,11 @@ def pswsc(
     spec = da_sub.mean("scan")
 
     # save result
-    file_name = Path(dems).with_suffix(f".pswsc.{format}").name
-    file_path = Path(outdir) / file_name
+    suffixes = f".{suffix}.{format}"
+    file = Path(outdir) / Path(dems).with_suffix(suffixes).name
 
     if format in DATA_FORMATS:
-        return save_qlook(spec, file_path, overwrite=overwrite, **options)
+        return save_qlook(spec, file, overwrite=overwrite, **options)
 
     fig, axes = plt.subplots(1, 2, figsize=DEFAULT_FIGSIZE)
 
@@ -105,23 +109,27 @@ def pswsc(
         ax.grid(True)
 
     fig.tight_layout()
-    return save_qlook(fig, file_path, overwrite=overwrite, **options)
+    return save_qlook(fig, file, overwrite=overwrite, **options)
 
 
 def raster(
     dems: Path,
     /,
     *,
+    # options for loading
     include_mkid_ids: Optional[Sequence[int]] = DEFAULT_INCL_MKID_IDS,
     exclude_mkid_ids: Optional[Sequence[int]] = DEFAULT_EXCL_MKID_IDS,
     data_type: Literal["df/f", "brightness", None] = DEFAULT_DATA_TYPE,
+    # options for analysis
     chan_weight: Literal["uniform", "std", "std/tx"] = "std/tx",
     pwv: Literal["0.5", "1.0", "2.0", "3.0", "4.0", "5.0"] = "5.0",
     skycoord_grid: str = DEFAULT_SKYCOORD_GRID,
     skycoord_units: str = DEFAULT_SKYCOORD_UNITS,
+    # options for saving
     format: str = DEFAULT_FORMAT,
     outdir: Path = DEFAULT_OUTDIR,
     overwrite: bool = DEFAULT_OVERWRITE,
+    suffix: str = "raster",
     **options: Any,
 ) -> Path:
     """Quick-look at a raster scan observation.
@@ -145,6 +153,7 @@ def raster(
         skycoord_units: Units of the sky coordinate axes.
         format: Output image format of quick-look result.
         outdir: Output directory for the quick-look result.
+        suffix: Suffix that precedes the file extension.
         overwrite: Whether to overwrite the output if it exists.
 
     Keyword Args:
@@ -189,11 +198,11 @@ def raster(
     cont = cube.weighted(weight.fillna(0)).mean("chan")
 
     # save result
-    file_name = Path(dems).with_suffix(f".raster.{format}").name
-    file_path = Path(outdir) / file_name
+    suffixes = f".{suffix}.{format}"
+    file = Path(outdir) / Path(dems).with_suffix(suffixes).name
 
     if format in DATA_FORMATS:
-        return save_qlook(cont, file_path, overwrite=overwrite, **options)
+        return save_qlook(cont, file, overwrite=overwrite, **options)
 
     fig, axes = plt.subplots(1, 2, figsize=(12, 5.5))
 
@@ -218,21 +227,25 @@ def raster(
         ax.grid(True)
 
     fig.tight_layout()
-    return save_qlook(fig, file_path, overwrite=overwrite, **options)
+    return save_qlook(fig, file, overwrite=overwrite, **options)
 
 
 def skydip(
     dems: Path,
     /,
     *,
+    # options for loading
     include_mkid_ids: Optional[Sequence[int]] = DEFAULT_INCL_MKID_IDS,
     exclude_mkid_ids: Optional[Sequence[int]] = DEFAULT_EXCL_MKID_IDS,
     data_type: Literal["df/f", "brightness", None] = DEFAULT_DATA_TYPE,
+    # options for analysis
     chan_weight: Literal["uniform", "std", "std/tx"] = "std/tx",
     pwv: Literal["0.5", "1.0", "2.0", "3.0", "4.0", "5.0"] = "5.0",
+    # options for saving
     format: str = DEFAULT_FORMAT,
     outdir: Path = DEFAULT_OUTDIR,
     overwrite: bool = DEFAULT_OVERWRITE,
+    suffix: str = "skydip",
     **options: Any,
 ) -> Path:
     """Quick-look at a skydip observation.
@@ -254,6 +267,7 @@ def skydip(
             the atmospheric transmission when chan_weight is std/tx.
         format: Output image format of quick-look result.
         outdir: Output directory for the quick-look result.
+        suffix: Suffix that precedes the file extension.
         overwrite: Whether to overwrite the output if it exists.
 
     Keyword Args:
@@ -277,11 +291,11 @@ def skydip(
     series = da_on.weighted(weight.fillna(0)).mean("chan")
 
     # save result
-    file_name = Path(dems).with_suffix(f".raster.{format}").name
-    file_path = Path(outdir) / file_name
+    suffixes = f".{suffix}.{format}"
+    file = Path(outdir) / Path(dems).with_suffix(suffixes).name
 
     if format in DATA_FORMATS:
-        return save_qlook(series, file_path, overwrite=overwrite, **options)
+        return save_qlook(series, file, overwrite=overwrite, **options)
 
     fig, axes = plt.subplots(1, 2, figsize=DEFAULT_FIGSIZE)
 
@@ -296,21 +310,25 @@ def skydip(
         ax.grid(True)
 
     fig.tight_layout()
-    return save_qlook(fig, file_path, overwrite=overwrite, **options)
+    return save_qlook(fig, file, overwrite=overwrite, **options)
 
 
 def still(
     dems: Path,
     /,
     *,
+    # options for loading
     include_mkid_ids: Optional[Sequence[int]] = DEFAULT_INCL_MKID_IDS,
     exclude_mkid_ids: Optional[Sequence[int]] = DEFAULT_EXCL_MKID_IDS,
     data_type: Literal["df/f", "brightness", None] = DEFAULT_DATA_TYPE,
+    # options for analysis
     chan_weight: Literal["uniform", "std", "std/tx"] = "std/tx",
     pwv: Literal["0.5", "1.0", "2.0", "3.0", "4.0", "5.0"] = "5.0",
+    # options for saving
     format: str = DEFAULT_FORMAT,
     outdir: Path = DEFAULT_OUTDIR,
     overwrite: bool = DEFAULT_OVERWRITE,
+    suffix: str = "still",
     **options: Any,
 ) -> Path:
     """Quick-look at a still observation.
@@ -332,6 +350,7 @@ def still(
             the atmospheric transmission when chan_weight is std/tx.
         format: Output data format of the quick-look result.
         outdir: Output directory for the quick-look result.
+        suffix: Suffix that precedes the file extension.
         overwrite: Whether to overwrite the output if it exists.
 
     Keyword Args:
@@ -354,11 +373,11 @@ def still(
     series = da.weighted(weight.fillna(0)).mean("chan")
 
     # save result
-    file_name = Path(dems).with_suffix(f".still.{format}").name
-    file_path = Path(outdir) / file_name
+    suffixes = f".{suffix}.{format}"
+    file = Path(outdir) / Path(dems).with_suffix(suffixes).name
 
     if format in DATA_FORMATS:
-        return save_qlook(series, file_path, overwrite=overwrite, **options)
+        return save_qlook(series, file, overwrite=overwrite, **options)
 
     fig, axes = plt.subplots(1, 2, figsize=DEFAULT_FIGSIZE)
 
@@ -373,21 +392,25 @@ def still(
         ax.grid(True)
 
     fig.tight_layout()
-    return save_qlook(fig, file_path, overwrite=overwrite, **options)
+    return save_qlook(fig, file, overwrite=overwrite, **options)
 
 
 def zscan(
     dems: Path,
     /,
     *,
+    # options for loading
     include_mkid_ids: Optional[Sequence[int]] = DEFAULT_INCL_MKID_IDS,
     exclude_mkid_ids: Optional[Sequence[int]] = DEFAULT_EXCL_MKID_IDS,
     data_type: Literal["df/f", "brightness", None] = DEFAULT_DATA_TYPE,
+    # options for analysis
     chan_weight: Literal["uniform", "std", "std/tx"] = "std/tx",
     pwv: Literal["0.5", "1.0", "2.0", "3.0", "4.0", "5.0"] = "5.0",
+    # options for saving
     format: str = DEFAULT_FORMAT,
     outdir: Path = DEFAULT_OUTDIR,
     overwrite: bool = DEFAULT_OVERWRITE,
+    suffix: str = "zscan",
     **options: Any,
 ) -> Path:
     """Quick-look at an observation of subref axial focus scan.
@@ -409,6 +432,7 @@ def zscan(
             the atmospheric transmission when chan_weight is std/tx.
         format: Output image format of quick-look result.
         outdir: Output directory for the quick-look result.
+        suffix: Suffix that precedes the file extension.
         overwrite: Whether to overwrite the output if it exists.
 
     Keyword Args:
@@ -432,11 +456,11 @@ def zscan(
     series = da_on.weighted(weight.fillna(0)).mean("chan")
 
     # save result
-    file_name = Path(dems).with_suffix(f".zscan.{format}").name
-    file_path = Path(outdir) / file_name
+    suffixes = f".{suffix}.{format}"
+    file = Path(outdir) / Path(dems).with_suffix(suffixes).name
 
     if format in DATA_FORMATS:
-        return save_qlook(series, file_path, overwrite=overwrite, **options)
+        return save_qlook(series, file, overwrite=overwrite, **options)
 
     fig, axes = plt.subplots(1, 2, figsize=DEFAULT_FIGSIZE)
 
@@ -451,7 +475,7 @@ def zscan(
         ax.grid(True)
 
     fig.tight_layout()
-    return save_qlook(fig, file_path, overwrite=overwrite, **options)
+    return save_qlook(fig, file, overwrite=overwrite, **options)
 
 
 def mean_in_time(dems: xr.DataArray) -> xr.DataArray:
