@@ -726,7 +726,6 @@ def main() -> None:
         Fire(
             {
                 "auto": auto,
-                "default": still,
                 "pswsc": pswsc,
                 "raster": raster,
                 "skydip": skydip,
