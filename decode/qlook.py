@@ -607,6 +607,7 @@ def save_qlook(
 
     if isinstance(qlook, Figure):
         qlook.savefig(path)
+        plt.close(qlook)
         return path
 
     if path.name.endswith(".csv"):
