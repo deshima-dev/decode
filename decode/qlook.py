@@ -29,6 +29,7 @@ DEFAULT_FIGSIZE = 12, 4
 DEFAULT_FORMAT = "png"
 DEFAULT_FREQUENCY_UNITS = "GHz"
 DEFAULT_INCL_MKID_IDS = None
+DEFAULT_OUTDIR = Path()
 DEFAULT_OVERWRITE = False
 DEFAULT_SKYCOORD_GRID = "6 arcsec"
 DEFAULT_SKYCOORD_UNITS = "arcsec"
@@ -44,7 +45,7 @@ def pswsc(
     data_type: Literal["df/f", "brightness", None] = DEFAULT_DATA_TYPE,
     frequency_units: str = DEFAULT_FREQUENCY_UNITS,
     format: str = DEFAULT_FORMAT,
-    outdir: Path = Path(),
+    outdir: Path = DEFAULT_OUTDIR,
     overwrite: bool = DEFAULT_OVERWRITE,
 ) -> Path:
     """Quick-look at a PSW observation with sky chopper.
@@ -115,7 +116,7 @@ def raster(
     skycoord_grid: str = DEFAULT_SKYCOORD_GRID,
     skycoord_units: str = DEFAULT_SKYCOORD_UNITS,
     format: str = DEFAULT_FORMAT,
-    outdir: Path = Path(),
+    outdir: Path = DEFAULT_OUTDIR,
     overwrite: bool = DEFAULT_OVERWRITE,
 ) -> Path:
     """Quick-look at a raster scan observation.
@@ -222,7 +223,7 @@ def skydip(
     chan_weight: Literal["uniform", "std", "std/tx"] = "std/tx",
     pwv: Literal["0.5", "1.0", "2.0", "3.0", "4.0", "5.0"] = "5.0",
     format: str = DEFAULT_FORMAT,
-    outdir: Path = Path(),
+    outdir: Path = DEFAULT_OUTDIR,
     overwrite: bool = DEFAULT_OVERWRITE,
 ) -> Path:
     """Quick-look at a skydip observation.
@@ -296,7 +297,7 @@ def still(
     chan_weight: Literal["uniform", "std", "std/tx"] = "std/tx",
     pwv: Literal["0.5", "1.0", "2.0", "3.0", "4.0", "5.0"] = "5.0",
     format: str = DEFAULT_FORMAT,
-    outdir: Path = Path(),
+    outdir: Path = DEFAULT_OUTDIR,
     overwrite: bool = DEFAULT_OVERWRITE,
 ) -> Path:
     """Quick-look at a still observation.
@@ -369,7 +370,7 @@ def zscan(
     chan_weight: Literal["uniform", "std", "std/tx"] = "std/tx",
     pwv: Literal["0.5", "1.0", "2.0", "3.0", "4.0", "5.0"] = "5.0",
     format: str = DEFAULT_FORMAT,
-    outdir: Path = Path(),
+    outdir: Path = DEFAULT_OUTDIR,
     overwrite: bool = DEFAULT_OVERWRITE,
 ) -> Path:
     """Quick-look at an observation of subref axial focus scan.
