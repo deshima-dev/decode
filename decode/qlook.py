@@ -3,7 +3,7 @@ __all__ = ["pswsc", "raster", "skydip", "still", "zscan"]
 
 # standard library
 from pathlib import Path
-from typing import Literal, Optional, Sequence, Union, cast
+from typing import Any, Literal, Optional, Sequence, Union, cast
 from warnings import catch_warnings, simplefilter
 
 
@@ -47,6 +47,7 @@ def pswsc(
     format: str = DEFAULT_FORMAT,
     outdir: Path = DEFAULT_OUTDIR,
     overwrite: bool = DEFAULT_OVERWRITE,
+    **options: Any,
 ) -> Path:
     """Quick-look at a PSW observation with sky chopper.
 
@@ -62,6 +63,9 @@ def pswsc(
         format: Output data format of the quick-look result.
         outdir: Output directory for the quick-look result.
         overwrite: Whether to overwrite the output if it exists.
+
+    Keyword Args:
+        options: Other options for saving the output (e.g. dpi).
 
     Returns:
         Absolute path of the saved file.
@@ -85,7 +89,7 @@ def pswsc(
     file_path = Path(outdir) / file_name
 
     if format in DATA_FORMATS:
-        return save_qlook(spec, file_path, overwrite=overwrite)
+        return save_qlook(spec, file_path, overwrite=overwrite, **options)
 
     fig, axes = plt.subplots(1, 2, figsize=DEFAULT_FIGSIZE)
 
@@ -101,7 +105,7 @@ def pswsc(
         ax.grid(True)
 
     fig.tight_layout()
-    return save_qlook(fig, file_path, overwrite=overwrite)
+    return save_qlook(fig, file_path, overwrite=overwrite, **options)
 
 
 def raster(
@@ -118,6 +122,7 @@ def raster(
     format: str = DEFAULT_FORMAT,
     outdir: Path = DEFAULT_OUTDIR,
     overwrite: bool = DEFAULT_OVERWRITE,
+    **options: Any,
 ) -> Path:
     """Quick-look at a raster scan observation.
 
@@ -141,6 +146,9 @@ def raster(
         format: Output image format of quick-look result.
         outdir: Output directory for the quick-look result.
         overwrite: Whether to overwrite the output if it exists.
+
+    Keyword Args:
+        options: Other options for saving the output (e.g. dpi).
 
     Returns:
         Absolute path of the saved file.
@@ -185,7 +193,7 @@ def raster(
     file_path = Path(outdir) / file_name
 
     if format in DATA_FORMATS:
-        return save_qlook(cont, file_path, overwrite=overwrite)
+        return save_qlook(cont, file_path, overwrite=overwrite, **options)
 
     fig, axes = plt.subplots(1, 2, figsize=(12, 5.5))
 
@@ -210,7 +218,7 @@ def raster(
         ax.grid(True)
 
     fig.tight_layout()
-    return save_qlook(fig, file_path, overwrite=overwrite)
+    return save_qlook(fig, file_path, overwrite=overwrite, **options)
 
 
 def skydip(
@@ -225,6 +233,7 @@ def skydip(
     format: str = DEFAULT_FORMAT,
     outdir: Path = DEFAULT_OUTDIR,
     overwrite: bool = DEFAULT_OVERWRITE,
+    **options: Any,
 ) -> Path:
     """Quick-look at a skydip observation.
 
@@ -246,6 +255,9 @@ def skydip(
         format: Output image format of quick-look result.
         outdir: Output directory for the quick-look result.
         overwrite: Whether to overwrite the output if it exists.
+
+    Keyword Args:
+        options: Other options for saving the output (e.g. dpi).
 
     Returns:
         Absolute path of the saved file.
@@ -269,7 +281,7 @@ def skydip(
     file_path = Path(outdir) / file_name
 
     if format in DATA_FORMATS:
-        return save_qlook(series, file_path, overwrite=overwrite)
+        return save_qlook(series, file_path, overwrite=overwrite, **options)
 
     fig, axes = plt.subplots(1, 2, figsize=DEFAULT_FIGSIZE)
 
@@ -284,7 +296,7 @@ def skydip(
         ax.grid(True)
 
     fig.tight_layout()
-    return save_qlook(fig, file_path, overwrite=overwrite)
+    return save_qlook(fig, file_path, overwrite=overwrite, **options)
 
 
 def still(
@@ -299,6 +311,7 @@ def still(
     format: str = DEFAULT_FORMAT,
     outdir: Path = DEFAULT_OUTDIR,
     overwrite: bool = DEFAULT_OVERWRITE,
+    **options: Any,
 ) -> Path:
     """Quick-look at a still observation.
 
@@ -321,6 +334,9 @@ def still(
         outdir: Output directory for the quick-look result.
         overwrite: Whether to overwrite the output if it exists.
 
+    Keyword Args:
+        options: Other options for saving the output (e.g. dpi).
+
     Returns:
         Absolute path of the saved file.
 
@@ -342,7 +358,7 @@ def still(
     file_path = Path(outdir) / file_name
 
     if format in DATA_FORMATS:
-        return save_qlook(series, file_path, overwrite=overwrite)
+        return save_qlook(series, file_path, overwrite=overwrite, **options)
 
     fig, axes = plt.subplots(1, 2, figsize=DEFAULT_FIGSIZE)
 
@@ -357,7 +373,7 @@ def still(
         ax.grid(True)
 
     fig.tight_layout()
-    return save_qlook(fig, file_path, overwrite=overwrite)
+    return save_qlook(fig, file_path, overwrite=overwrite, **options)
 
 
 def zscan(
@@ -372,6 +388,7 @@ def zscan(
     format: str = DEFAULT_FORMAT,
     outdir: Path = DEFAULT_OUTDIR,
     overwrite: bool = DEFAULT_OVERWRITE,
+    **options: Any,
 ) -> Path:
     """Quick-look at an observation of subref axial focus scan.
 
@@ -393,6 +410,9 @@ def zscan(
         format: Output image format of quick-look result.
         outdir: Output directory for the quick-look result.
         overwrite: Whether to overwrite the output if it exists.
+
+    Keyword Args:
+        options: Other options for saving the output (e.g. dpi).
 
     Returns:
         Absolute path of the saved file.
@@ -416,7 +436,7 @@ def zscan(
     file_path = Path(outdir) / file_name
 
     if format in DATA_FORMATS:
-        return save_qlook(series, file_path, overwrite=overwrite)
+        return save_qlook(series, file_path, overwrite=overwrite, **options)
 
     fig, axes = plt.subplots(1, 2, figsize=DEFAULT_FIGSIZE)
 
@@ -431,7 +451,7 @@ def zscan(
         ax.grid(True)
 
     fig.tight_layout()
-    return save_qlook(fig, file_path, overwrite=overwrite)
+    return save_qlook(fig, file_path, overwrite=overwrite, **options)
 
 
 def mean_in_time(dems: xr.DataArray) -> xr.DataArray:
@@ -588,6 +608,7 @@ def save_qlook(
     /,
     *,
     overwrite: bool = False,
+    **options: Any,
 ) -> Path:
     """Save a quick look result to a file with given format.
 
@@ -595,6 +616,9 @@ def save_qlook(
         qlook: Matplotlib figure or DataArray to be saved.
         file: Path of the saved file.
         overwrite: Whether to overwrite the file if it exists.
+
+    Keyword Args:
+        options: Other options to be used when saving the file.
 
     Returns:
         Absolute path of the saved file.
@@ -606,26 +630,26 @@ def save_qlook(
         raise FileExistsError(f"{path} already exists.")
 
     if isinstance(qlook, Figure):
-        qlook.savefig(path)
+        qlook.savefig(path, **options)
         plt.close(qlook)
         return path
 
     if path.name.endswith(".csv"):
         name = qlook.attrs["data_type"]
         ds = qlook.to_dataset(name=name)
-        ds.to_pandas().to_csv(path)
+        ds.to_pandas().to_csv(path, **options)
         return path
 
     if path.name.endswith(".nc"):
-        qlook.to_netcdf(path)
+        qlook.to_netcdf(path, **options)
         return path
 
     if path.name.endswith(".zarr"):
-        qlook.to_zarr(path, mode="w")
+        qlook.to_zarr(path, mode="w", **options)
         return path
 
     if path.name.endswith(".zarr.zip"):
-        qlook.to_zarr(path, mode="w")
+        qlook.to_zarr(path, mode="w", **options)
         return path
 
     raise ValueError("Extension of filename is not valid.")
