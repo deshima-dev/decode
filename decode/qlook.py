@@ -1,4 +1,4 @@
-__all__ = ["pswsc", "raster", "skydip", "still", "zscan"]
+__all__ = ["auto", "pswsc", "raster", "skydip", "still", "zscan"]
 
 
 # standard library
@@ -34,6 +34,47 @@ DEFAULT_OVERWRITE = False
 DEFAULT_SKYCOORD_GRID = "6 arcsec"
 DEFAULT_SKYCOORD_UNITS = "arcsec"
 SIGMA_OVER_MAD = 1.4826
+
+
+def auto(dems: Path, /, **options: Any) -> Path:
+    """Quick-look at an observation with auto-selected command.
+
+    The used command will be selected based on the observation name
+    stored as the ``observation`` attribute in an input DEMS file.
+
+    Args:
+        dems: Input DEMS file (netCDF or Zarr).
+
+    Keyword Args:
+        options: Options for the selected command.
+            See the command help for all available options.
+
+    Returns:
+        Absolute path of the saved file.
+
+    """
+    da = load.dems(dems, chunks=None)
+    obs: str = da.attrs["observation"]
+
+    if "pswsc" in obs:
+        return pswsc(dems, **options)
+
+    if "raster" in obs:
+        return raster(dems, **options)
+
+    if "skydip" in obs:
+        return skydip(dems, **options)
+
+    if "still" in obs:
+        return still(dems, **options)
+
+    if "zscan" in obs:
+        return zscan(dems, **options)
+
+    raise ValueError(
+        f"Could not infer the command to be used from {obs!r}: "
+        "Observation name must include one of the command names. "
+    )
 
 
 def pswsc(
@@ -684,6 +725,7 @@ def main() -> None:
     with xr.set_options(keep_attrs=True):
         Fire(
             {
+                "auto": auto,
                 "default": still,
                 "pswsc": pswsc,
                 "raster": raster,
