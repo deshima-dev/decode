@@ -18,7 +18,7 @@ from . import assign, convert, load, make, plot, select, utils
 
 # constants
 DATA_FORMATS = "csv", "nc", "zarr", "zarr.zip"
-DEFAULT_DATA_TYPE = None
+DEFAULT_DATA_TYPE = "auto"
 # fmt: off
 DEFAULT_EXCL_MKID_IDS = (
     0, 18, 26, 73, 130, 184, 118, 119, 201, 202,
@@ -43,7 +43,7 @@ def pswsc(
     # options for loading
     include_mkid_ids: Optional[Sequence[int]] = DEFAULT_INCL_MKID_IDS,
     exclude_mkid_ids: Optional[Sequence[int]] = DEFAULT_EXCL_MKID_IDS,
-    data_type: Literal["df/f", "brightness", None] = DEFAULT_DATA_TYPE,
+    data_type: Literal["auto", "brightness", "df/f"] = DEFAULT_DATA_TYPE,
     frequency_units: str = DEFAULT_FREQUENCY_UNITS,
     # options for saving
     format: str = DEFAULT_FORMAT,
@@ -119,7 +119,7 @@ def raster(
     # options for loading
     include_mkid_ids: Optional[Sequence[int]] = DEFAULT_INCL_MKID_IDS,
     exclude_mkid_ids: Optional[Sequence[int]] = DEFAULT_EXCL_MKID_IDS,
-    data_type: Literal["df/f", "brightness", None] = DEFAULT_DATA_TYPE,
+    data_type: Literal["auto", "brightness", "df/f"] = DEFAULT_DATA_TYPE,
     # options for analysis
     chan_weight: Literal["uniform", "std", "std/tx"] = "std/tx",
     pwv: Literal["0.5", "1.0", "2.0", "3.0", "4.0", "5.0"] = "5.0",
@@ -237,7 +237,7 @@ def skydip(
     # options for loading
     include_mkid_ids: Optional[Sequence[int]] = DEFAULT_INCL_MKID_IDS,
     exclude_mkid_ids: Optional[Sequence[int]] = DEFAULT_EXCL_MKID_IDS,
-    data_type: Literal["df/f", "brightness", None] = DEFAULT_DATA_TYPE,
+    data_type: Literal["auto", "brightness", "df/f"] = DEFAULT_DATA_TYPE,
     # options for analysis
     chan_weight: Literal["uniform", "std", "std/tx"] = "std/tx",
     pwv: Literal["0.5", "1.0", "2.0", "3.0", "4.0", "5.0"] = "5.0",
@@ -320,7 +320,7 @@ def still(
     # options for loading
     include_mkid_ids: Optional[Sequence[int]] = DEFAULT_INCL_MKID_IDS,
     exclude_mkid_ids: Optional[Sequence[int]] = DEFAULT_EXCL_MKID_IDS,
-    data_type: Literal["df/f", "brightness", None] = DEFAULT_DATA_TYPE,
+    data_type: Literal["auto", "brightness", "df/f"] = DEFAULT_DATA_TYPE,
     # options for analysis
     chan_weight: Literal["uniform", "std", "std/tx"] = "std/tx",
     pwv: Literal["0.5", "1.0", "2.0", "3.0", "4.0", "5.0"] = "5.0",
@@ -402,7 +402,7 @@ def zscan(
     # options for loading
     include_mkid_ids: Optional[Sequence[int]] = DEFAULT_INCL_MKID_IDS,
     exclude_mkid_ids: Optional[Sequence[int]] = DEFAULT_EXCL_MKID_IDS,
-    data_type: Literal["df/f", "brightness", None] = DEFAULT_DATA_TYPE,
+    data_type: Literal["auto", "brightness", "df/f"] = DEFAULT_DATA_TYPE,
     # options for analysis
     chan_weight: Literal["uniform", "std", "std/tx"] = "std/tx",
     pwv: Literal["0.5", "1.0", "2.0", "3.0", "4.0", "5.0"] = "5.0",
@@ -560,7 +560,7 @@ def load_dems(
     *,
     include_mkid_ids: Optional[Sequence[int]] = DEFAULT_INCL_MKID_IDS,
     exclude_mkid_ids: Optional[Sequence[int]] = DEFAULT_EXCL_MKID_IDS,
-    data_type: Literal["brightness", "df/f", None] = DEFAULT_DATA_TYPE,
+    data_type: Literal["auto", "brightness", "df/f"] = DEFAULT_DATA_TYPE,
     frequency_units: str = DEFAULT_FREQUENCY_UNITS,
     skycoord_units: str = DEFAULT_SKYCOORD_UNITS,
 ) -> xr.DataArray:
@@ -614,7 +614,7 @@ def load_dems(
         skycoord_units,
     )
 
-    if data_type is None and "units" in da.attrs:
+    if data_type == "auto" and "units" in da.attrs:
         return da
 
     if data_type == "brightness":
