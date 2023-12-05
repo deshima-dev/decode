@@ -284,7 +284,7 @@ def skydip(
         ax.grid(True)
 
     fig.tight_layout()
-    return save_qlook(series, file_path, overwrite=overwrite)
+    return save_qlook(fig, file_path, overwrite=overwrite)
 
 
 def still(
@@ -357,7 +357,7 @@ def still(
         ax.grid(True)
 
     fig.tight_layout()
-    return save_qlook(series, file_path, overwrite=overwrite)
+    return save_qlook(fig, file_path, overwrite=overwrite)
 
 
 def zscan(
@@ -431,7 +431,7 @@ def zscan(
         ax.grid(True)
 
     fig.tight_layout()
-    return save_qlook(series, file_path, overwrite=overwrite)
+    return save_qlook(fig, file_path, overwrite=overwrite)
 
 
 def mean_in_time(dems: xr.DataArray) -> xr.DataArray:
