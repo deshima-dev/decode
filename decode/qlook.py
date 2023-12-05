@@ -565,28 +565,52 @@ def load_dems(
     raise ValueError("Data type could not be inferred.")
 
 
-def save_qlook(qlook: Union[Figure, xr.DataArray], filename: Path) -> Path:
+def save_qlook(
+    qlook: Union[Figure, xr.DataArray],
+    file: Path,
+    /,
+    *,
+    overwrite: bool = False,
+) -> Path:
     """Save a quick look result to a file with given format.
 
     Args:
         qlook: Matplotlib figure or DataArray to be saved.
-        filename: Path of the saved file.
+        file: Path of the saved file.
+        overwrite: Whether to overwrite the file if it exists.
 
     Returns:
         Absolute path of the saved file.
 
     """
-    if isinstance(qlook, Figure):
-        qlook.savefig(filename)
-    elif (ext := "".join(filename.suffixes)) == ".csv":
-        name = qlook.attrs["data_type"]
-        qlook.to_dataset(name=name).to_pandas().to_csv(filename)
-    elif ext == ".nc":
-        qlook.to_netcdf(filename)
-    elif ext == ".zarr" or format == ".zarr.zip":
-        qlook.to_zarr(filename, mode="w")
+    path = Path(file).expanduser().resolve()
 
-    return Path(filename).expanduser().resolve()
+    if path.exists() and not overwrite:
+        raise FileExistsError(f"{path} already exists.")
+
+    if isinstance(qlook, Figure):
+        qlook.savefig(path)
+        return path
+
+    if path.name.endswith(".csv"):
+        name = qlook.attrs["data_type"]
+        ds = qlook.to_dataset(name=name)
+        ds.to_pandas().to_csv(path)
+        return path
+
+    if path.name.endswith(".nc"):
+        qlook.to_netcdf(path)
+        return path
+
+    if path.name.endswith(".zarr"):
+        qlook.to_zarr(path, mode="w")
+        return path
+
+    if path.name.endswith(".zarr.zip"):
+        qlook.to_zarr(path, mode="w")
+        return path
+
+    raise ValueError("Extension of filename is not valid.")
 
 
 def main() -> None:
