@@ -53,28 +53,29 @@ def auto(dems: Path, /, **options: Any) -> Path:
         Absolute path of the saved file.
 
     """
-    da = load.dems(dems, chunks=None)
-    obs: str = da.attrs["observation"]
+    with xr.set_options(keep_attrs=True):
+        da = load.dems(dems, chunks=None)
+        obs: str = da.attrs["observation"]
 
-    if "pswsc" in obs:
-        return pswsc(dems, **options)
+        if "pswsc" in obs:
+            return pswsc(dems, **options)
 
-    if "raster" in obs:
-        return raster(dems, **options)
+        if "raster" in obs:
+            return raster(dems, **options)
 
-    if "skydip" in obs:
-        return skydip(dems, **options)
+        if "skydip" in obs:
+            return skydip(dems, **options)
 
-    if "still" in obs:
-        return still(dems, **options)
+        if "still" in obs:
+            return still(dems, **options)
 
-    if "zscan" in obs:
-        return zscan(dems, **options)
+        if "zscan" in obs:
+            return zscan(dems, **options)
 
-    raise ValueError(
-        f"Could not infer the command to be used from {obs!r}: "
-        "Observation name must include one of the command names. "
-    )
+        raise ValueError(
+            f"Could not infer the command to be used from {obs!r}: "
+            "Observation name must include one of the command names. "
+        )
 
 
 def pswsc(
@@ -116,41 +117,42 @@ def pswsc(
         Absolute path of the saved file.
 
     """
-    da = load_dems(
-        dems,
-        include_mkid_ids=include_mkid_ids,
-        exclude_mkid_ids=exclude_mkid_ids,
-        data_type=data_type,
-        frequency_units=frequency_units,
-    )
+    with xr.set_options(keep_attrs=True):
+        da = load_dems(
+            dems,
+            include_mkid_ids=include_mkid_ids,
+            exclude_mkid_ids=exclude_mkid_ids,
+            data_type=data_type,
+            frequency_units=frequency_units,
+        )
 
-    # make spectrum
-    da_scan = select.by(da, "state", ["ON", "OFF"])
-    da_sub = da_scan.groupby("scan").map(subtract_per_scan)
-    spec = da_sub.mean("scan")
+        # make spectrum
+        da_scan = select.by(da, "state", ["ON", "OFF"])
+        da_sub = da_scan.groupby("scan").map(subtract_per_scan)
+        spec = da_sub.mean("scan")
 
-    # save result
-    suffixes = f".{suffix}.{format}"
-    file = Path(outdir) / Path(dems).with_suffix(suffixes).name
+        # save result
+        suffixes = f".{suffix}.{format}"
+        file = Path(outdir) / Path(dems).with_suffix(suffixes).name
 
-    if format in DATA_FORMATS:
-        return save_qlook(spec, file, overwrite=overwrite, **options)
+        if format in DATA_FORMATS:
+            return save_qlook(spec, file, overwrite=overwrite, **options)
 
-    fig, axes = plt.subplots(1, 2, figsize=DEFAULT_FIGSIZE)
+        fig, axes = plt.subplots(1, 2, figsize=DEFAULT_FIGSIZE)
 
-    ax = axes[0]
-    plot.data(da.scan, ax=ax)
+        ax = axes[0]
+        plot.data(da.scan, ax=ax)
 
-    ax = axes[1]
-    plot.data(spec, x="frequency", s=5, hue=None, ax=ax)
-    ax.set_ylim(get_robust_lim(spec))
+        ax = axes[1]
+        plot.data(spec, x="frequency", s=5, hue=None, ax=ax)
+        ax.set_ylim(get_robust_lim(spec))
 
-    for ax in axes:
-        ax.set_title(Path(dems).name)
-        ax.grid(True)
+        for ax in axes:
+            ax.set_title(Path(dems).name)
+            ax.grid(True)
 
-    fig.tight_layout()
-    return save_qlook(fig, file, overwrite=overwrite, **options)
+        fig.tight_layout()
+        return save_qlook(fig, file, overwrite=overwrite, **options)
 
 
 def raster(
@@ -204,71 +206,72 @@ def raster(
         Absolute path of the saved file.
 
     """
-    da = load_dems(
-        dems,
-        include_mkid_ids=include_mkid_ids,
-        exclude_mkid_ids=exclude_mkid_ids,
-        data_type=data_type,
-        skycoord_units=skycoord_units,
-    )
-
-    # subtract temporal baseline
-    da_on = select.by(da, "state", include="SCAN")
-    da_off = select.by(da, "state", exclude="SCAN")
-    da_base = (
-        da_off.groupby("scan")
-        .map(mean_in_time)
-        .interp_like(
-            da_on,
-            method="linear",
-            kwargs={"fill_value": "extrapolate"},
+    with xr.set_options(keep_attrs=True):
+        da = load_dems(
+            dems,
+            include_mkid_ids=include_mkid_ids,
+            exclude_mkid_ids=exclude_mkid_ids,
+            data_type=data_type,
+            skycoord_units=skycoord_units,
         )
-    )
-    da_sub = da_on - da_base.values
 
-    # make continuum series
-    weight = get_chan_weight(da_off, method=chan_weight, pwv=pwv)
-    series = da_sub.weighted(weight.fillna(0)).mean("chan")
+        # subtract temporal baseline
+        da_on = select.by(da, "state", include="SCAN")
+        da_off = select.by(da, "state", exclude="SCAN")
+        da_base = (
+            da_off.groupby("scan")
+            .map(mean_in_time)
+            .interp_like(
+                da_on,
+                method="linear",
+                kwargs={"fill_value": "extrapolate"},
+            )
+        )
+        da_sub = da_on - da_base.values
 
-    # make continuum map
-    cube = make.cube(
-        da_sub,
-        skycoord_grid=skycoord_grid,
-        skycoord_units=skycoord_units,
-    )
-    cont = cube.weighted(weight.fillna(0)).mean("chan")
+        # make continuum series
+        weight = get_chan_weight(da_off, method=chan_weight, pwv=pwv)
+        series = da_sub.weighted(weight.fillna(0)).mean("chan")
 
-    # save result
-    suffixes = f".{suffix}.{format}"
-    file = Path(outdir) / Path(dems).with_suffix(suffixes).name
+        # make continuum map
+        cube = make.cube(
+            da_sub,
+            skycoord_grid=skycoord_grid,
+            skycoord_units=skycoord_units,
+        )
+        cont = cube.weighted(weight.fillna(0)).mean("chan")
 
-    if format in DATA_FORMATS:
-        return save_qlook(cont, file, overwrite=overwrite, **options)
+        # save result
+        suffixes = f".{suffix}.{format}"
+        file = Path(outdir) / Path(dems).with_suffix(suffixes).name
 
-    fig, axes = plt.subplots(1, 2, figsize=(12, 5.5))
+        if format in DATA_FORMATS:
+            return save_qlook(cont, file, overwrite=overwrite, **options)
 
-    ax = axes[0]
-    plot.data(series, ax=ax)
-    ax.set_title(Path(dems).name)
+        fig, axes = plt.subplots(1, 2, figsize=(12, 5.5))
 
-    ax = axes[1]
-    map_lim = max(abs(cube.lon).max(), abs(cube.lat).max())
-    max_pix = cont.where(cont == cont.max(), drop=True)
+        ax = axes[0]
+        plot.data(series, ax=ax)
+        ax.set_title(Path(dems).name)
 
-    cont.plot(ax=ax)  # type: ignore
-    ax.set_xlim(-map_lim, map_lim)
-    ax.set_ylim(-map_lim, map_lim)
-    ax.set_title(
-        "Maximum: "
-        f"dAz = {float(max_pix.lon):+.1f} {cont.lon.attrs['units']}, "
-        f"dEl = {float(max_pix.lat):+.1f} {cont.lat.attrs['units']}"
-    )
+        ax = axes[1]
+        map_lim = max(abs(cube.lon).max(), abs(cube.lat).max())
+        max_pix = cont.where(cont == cont.max(), drop=True)
 
-    for ax in axes:
-        ax.grid(True)
+        cont.plot(ax=ax)  # type: ignore
+        ax.set_xlim(-map_lim, map_lim)
+        ax.set_ylim(-map_lim, map_lim)
+        ax.set_title(
+            "Maximum: "
+            f"dAz = {float(max_pix.lon):+.1f} {cont.lon.attrs['units']}, "
+            f"dEl = {float(max_pix.lat):+.1f} {cont.lat.attrs['units']}"
+        )
 
-    fig.tight_layout()
-    return save_qlook(fig, file, overwrite=overwrite, **options)
+        for ax in axes:
+            ax.grid(True)
+
+        fig.tight_layout()
+        return save_qlook(fig, file, overwrite=overwrite, **options)
 
 
 def skydip(
@@ -318,40 +321,41 @@ def skydip(
         Absolute path of the saved file.
 
     """
-    da = load_dems(
-        dems,
-        include_mkid_ids=include_mkid_ids,
-        exclude_mkid_ids=exclude_mkid_ids,
-        data_type=data_type,
-    )
+    with xr.set_options(keep_attrs=True):
+        da = load_dems(
+            dems,
+            include_mkid_ids=include_mkid_ids,
+            exclude_mkid_ids=exclude_mkid_ids,
+            data_type=data_type,
+        )
 
-    # make continuum series
-    da_on = select.by(da, "state", include="SCAN")
-    da_off = select.by(da, "state", exclude="SCAN")
-    weight = get_chan_weight(da_off, method=chan_weight, pwv=pwv)
-    series = da_on.weighted(weight.fillna(0)).mean("chan")
+        # make continuum series
+        da_on = select.by(da, "state", include="SCAN")
+        da_off = select.by(da, "state", exclude="SCAN")
+        weight = get_chan_weight(da_off, method=chan_weight, pwv=pwv)
+        series = da_on.weighted(weight.fillna(0)).mean("chan")
 
-    # save result
-    suffixes = f".{suffix}.{format}"
-    file = Path(outdir) / Path(dems).with_suffix(suffixes).name
+        # save result
+        suffixes = f".{suffix}.{format}"
+        file = Path(outdir) / Path(dems).with_suffix(suffixes).name
 
-    if format in DATA_FORMATS:
-        return save_qlook(series, file, overwrite=overwrite, **options)
+        if format in DATA_FORMATS:
+            return save_qlook(series, file, overwrite=overwrite, **options)
 
-    fig, axes = plt.subplots(1, 2, figsize=DEFAULT_FIGSIZE)
+        fig, axes = plt.subplots(1, 2, figsize=DEFAULT_FIGSIZE)
 
-    ax = axes[0]
-    plot.data(series, hue="secz", ax=ax)
+        ax = axes[0]
+        plot.data(series, hue="secz", ax=ax)
 
-    ax = axes[1]
-    plot.data(series, x="secz", ax=ax)
+        ax = axes[1]
+        plot.data(series, x="secz", ax=ax)
 
-    for ax in axes:
-        ax.set_title(Path(dems).name)
-        ax.grid(True)
+        for ax in axes:
+            ax.set_title(Path(dems).name)
+            ax.grid(True)
 
-    fig.tight_layout()
-    return save_qlook(fig, file, overwrite=overwrite, **options)
+        fig.tight_layout()
+        return save_qlook(fig, file, overwrite=overwrite, **options)
 
 
 def still(
@@ -401,39 +405,40 @@ def still(
         Absolute path of the saved file.
 
     """
-    da = load_dems(
-        dems,
-        include_mkid_ids=include_mkid_ids,
-        exclude_mkid_ids=exclude_mkid_ids,
-        data_type=data_type,
-    )
+    with xr.set_options(keep_attrs=True):
+        da = load_dems(
+            dems,
+            include_mkid_ids=include_mkid_ids,
+            exclude_mkid_ids=exclude_mkid_ids,
+            data_type=data_type,
+        )
 
-    # make continuum series
-    da_off = select.by(da, "state", exclude=["ON", "SCAN"])
-    weight = get_chan_weight(da_off, method=chan_weight, pwv=pwv)
-    series = da.weighted(weight.fillna(0)).mean("chan")
+        # make continuum series
+        da_off = select.by(da, "state", exclude=["ON", "SCAN"])
+        weight = get_chan_weight(da_off, method=chan_weight, pwv=pwv)
+        series = da.weighted(weight.fillna(0)).mean("chan")
 
-    # save result
-    suffixes = f".{suffix}.{format}"
-    file = Path(outdir) / Path(dems).with_suffix(suffixes).name
+        # save result
+        suffixes = f".{suffix}.{format}"
+        file = Path(outdir) / Path(dems).with_suffix(suffixes).name
 
-    if format in DATA_FORMATS:
-        return save_qlook(series, file, overwrite=overwrite, **options)
+        if format in DATA_FORMATS:
+            return save_qlook(series, file, overwrite=overwrite, **options)
 
-    fig, axes = plt.subplots(1, 2, figsize=DEFAULT_FIGSIZE)
+        fig, axes = plt.subplots(1, 2, figsize=DEFAULT_FIGSIZE)
 
-    ax = axes[0]
-    plot.state(da, add_colorbar=False, add_legend=False, ax=ax)
+        ax = axes[0]
+        plot.state(da, add_colorbar=False, add_legend=False, ax=ax)
 
-    ax = axes[1]
-    plot.data(series, add_colorbar=False, ax=ax)
+        ax = axes[1]
+        plot.data(series, add_colorbar=False, ax=ax)
 
-    for ax in axes:
-        ax.set_title(Path(dems).name)
-        ax.grid(True)
+        for ax in axes:
+            ax.set_title(Path(dems).name)
+            ax.grid(True)
 
-    fig.tight_layout()
-    return save_qlook(fig, file, overwrite=overwrite, **options)
+        fig.tight_layout()
+        return save_qlook(fig, file, overwrite=overwrite, **options)
 
 
 def zscan(
@@ -483,40 +488,41 @@ def zscan(
         Absolute path of the saved file.
 
     """
-    da = load_dems(
-        dems,
-        include_mkid_ids=include_mkid_ids,
-        exclude_mkid_ids=exclude_mkid_ids,
-        data_type=data_type,
-    )
+    with xr.set_options(keep_attrs=True):
+        da = load_dems(
+            dems,
+            include_mkid_ids=include_mkid_ids,
+            exclude_mkid_ids=exclude_mkid_ids,
+            data_type=data_type,
+        )
 
-    # make continuum series
-    da_on = select.by(da, "state", include="ON")
-    da_off = select.by(da, "state", exclude="ON")
-    weight = get_chan_weight(da_off, method=chan_weight, pwv=pwv)
-    series = da_on.weighted(weight.fillna(0)).mean("chan")
+        # make continuum series
+        da_on = select.by(da, "state", include="ON")
+        da_off = select.by(da, "state", exclude="ON")
+        weight = get_chan_weight(da_off, method=chan_weight, pwv=pwv)
+        series = da_on.weighted(weight.fillna(0)).mean("chan")
 
-    # save result
-    suffixes = f".{suffix}.{format}"
-    file = Path(outdir) / Path(dems).with_suffix(suffixes).name
+        # save result
+        suffixes = f".{suffix}.{format}"
+        file = Path(outdir) / Path(dems).with_suffix(suffixes).name
 
-    if format in DATA_FORMATS:
-        return save_qlook(series, file, overwrite=overwrite, **options)
+        if format in DATA_FORMATS:
+            return save_qlook(series, file, overwrite=overwrite, **options)
 
-    fig, axes = plt.subplots(1, 2, figsize=DEFAULT_FIGSIZE)
+        fig, axes = plt.subplots(1, 2, figsize=DEFAULT_FIGSIZE)
 
-    ax = axes[0]
-    plot.data(series, hue="aste_subref_z", ax=ax)
+        ax = axes[0]
+        plot.data(series, hue="aste_subref_z", ax=ax)
 
-    ax = axes[1]
-    plot.data(series, x="aste_subref_z", ax=ax)
+        ax = axes[1]
+        plot.data(series, x="aste_subref_z", ax=ax)
 
-    for ax in axes:
-        ax.set_title(Path(dems).name)
-        ax.grid(True)
+        for ax in axes:
+            ax.set_title(Path(dems).name)
+            ax.grid(True)
 
-    fig.tight_layout()
-    return save_qlook(fig, file, overwrite=overwrite, **options)
+        fig.tight_layout()
+        return save_qlook(fig, file, overwrite=overwrite, **options)
 
 
 def mean_in_time(dems: xr.DataArray) -> xr.DataArray:
@@ -722,14 +728,14 @@ def save_qlook(
 
 def main() -> None:
     """Entry point of the decode-qlook command."""
-    with xr.set_options(keep_attrs=True):
-        Fire(
-            {
-                "auto": auto,
-                "pswsc": pswsc,
-                "raster": raster,
-                "skydip": skydip,
-                "still": still,
-                "zscan": zscan,
-            }
-        )
+
+    Fire(
+        {
+            "auto": auto,
+            "pswsc": pswsc,
+            "raster": raster,
+            "skydip": skydip,
+            "still": still,
+            "zscan": zscan,
+        }
+    )
