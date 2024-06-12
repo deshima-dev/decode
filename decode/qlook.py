@@ -533,18 +533,27 @@ def mean_in_time(dems: xr.DataArray) -> xr.DataArray:
 
 def subtract_per_scan(dems: xr.DataArray) -> xr.DataArray:
     """Apply source-sky subtraction to a single-scan DEMS."""
+    t_amb = 273.15
     if len(states := np.unique(dems.state)) != 1:
         raise ValueError("State must be unique.")
 
     if (state := states[0]) == "ON":
         src = select.by(dems, "beam", include="A")
         sky = select.by(dems, "beam", include="B")
-        return src.mean("time") - sky.mean("time").data
+        return (
+            t_amb
+            * (src.mean("time") - sky.mean("time").data)
+            / ((t_amb - sky.mean("time")))
+        )
 
     if state == "OFF":
         src = select.by(dems, "beam", include="B")
         sky = select.by(dems, "beam", include="A")
-        return src.mean("time") - sky.mean("time").data
+        return (
+            t_amb
+            * (src.mean("time") - sky.mean("time").data)
+            / ((t_amb - sky.mean("time")))
+        )
 
     raise ValueError("State must be either ON or OFF.")
 
