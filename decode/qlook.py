@@ -1,4 +1,13 @@
-__all__ = ["auto", "pswsc", "raster", "skydip", "still", "zscan"]
+__all__ = [
+    "auto",
+    "pswsc",
+    "raster",
+    "skydip",
+    "still",
+    "xscan",
+    "yscan",
+    "zscan",
+]
 
 
 # standard library
@@ -441,6 +450,138 @@ def still(
         return save_qlook(fig, file, overwrite=overwrite, **options)
 
 
+def xscan(
+    dems: Path,
+    /,
+    *,
+    # options for loading
+    include_mkid_ids: Optional[Sequence[int]] = DEFAULT_INCL_MKID_IDS,
+    exclude_mkid_ids: Optional[Sequence[int]] = DEFAULT_EXCL_MKID_IDS,
+    data_type: Literal["auto", "brightness", "df/f"] = DEFAULT_DATA_TYPE,
+    # options for analysis
+    chan_weight: Literal["uniform", "std", "std/tx"] = "std/tx",
+    pwv: Literal["0.5", "1.0", "2.0", "3.0", "4.0", "5.0"] = "5.0",
+    # options for saving
+    format: str = DEFAULT_FORMAT,
+    outdir: Path = DEFAULT_OUTDIR,
+    overwrite: bool = DEFAULT_OVERWRITE,
+    suffix: str = "zscan",
+    **options: Any,
+) -> Path:
+    """Quick-look at an observation of subref X-axis focus scan.
+
+    Args:
+        dems: Input DEMS file (netCDF or Zarr).
+        include_mkid_ids: MKID IDs to be included in analysis.
+            Defaults to all MKID IDs.
+        exclude_mkid_ids: MKID IDs to be excluded in analysis.
+            Defaults to bad MKID IDs found on 2023-11-19.
+        data_type: Data type of the input DEMS file.
+            Defaults to the ``long_name`` attribute in it.
+        chan_weight: Weighting method along the channel axis.
+            uniform: Uniform weight (i.e. no channel dependence).
+            std: Inverse square of temporal standard deviation of sky.
+            std/tx: Same as std but std is divided by the atmospheric
+            transmission calculated by the ATM model.
+        pwv: PWV in units of mm. Only used for the calculation of
+            the atmospheric transmission when chan_weight is std/tx.
+        format: Output image format of quick-look result.
+        outdir: Output directory for the quick-look result.
+        suffix: Suffix that precedes the file extension.
+        overwrite: Whether to overwrite the output if it exists.
+
+    Keyword Args:
+        options: Other options for saving the output (e.g. dpi).
+
+    Returns:
+        Absolute path of the saved file.
+
+    """
+    return _scan(
+        dems,
+        "x",
+        # options for loading
+        include_mkid_ids=include_mkid_ids,
+        exclude_mkid_ids=exclude_mkid_ids,
+        data_type=data_type,
+        # options for analysis
+        chan_weight=chan_weight,
+        pwv=pwv,
+        # options for saving
+        format=format,
+        outdir=outdir,
+        overwrite=overwrite,
+        suffix=suffix,
+        **options,
+    )
+
+
+def yscan(
+    dems: Path,
+    /,
+    *,
+    # options for loading
+    include_mkid_ids: Optional[Sequence[int]] = DEFAULT_INCL_MKID_IDS,
+    exclude_mkid_ids: Optional[Sequence[int]] = DEFAULT_EXCL_MKID_IDS,
+    data_type: Literal["auto", "brightness", "df/f"] = DEFAULT_DATA_TYPE,
+    # options for analysis
+    chan_weight: Literal["uniform", "std", "std/tx"] = "std/tx",
+    pwv: Literal["0.5", "1.0", "2.0", "3.0", "4.0", "5.0"] = "5.0",
+    # options for saving
+    format: str = DEFAULT_FORMAT,
+    outdir: Path = DEFAULT_OUTDIR,
+    overwrite: bool = DEFAULT_OVERWRITE,
+    suffix: str = "zscan",
+    **options: Any,
+) -> Path:
+    """Quick-look at an observation of subref Y-axis focus scan.
+
+    Args:
+        dems: Input DEMS file (netCDF or Zarr).
+        include_mkid_ids: MKID IDs to be included in analysis.
+            Defaults to all MKID IDs.
+        exclude_mkid_ids: MKID IDs to be excluded in analysis.
+            Defaults to bad MKID IDs found on 2023-11-19.
+        data_type: Data type of the input DEMS file.
+            Defaults to the ``long_name`` attribute in it.
+        chan_weight: Weighting method along the channel axis.
+            uniform: Uniform weight (i.e. no channel dependence).
+            std: Inverse square of temporal standard deviation of sky.
+            std/tx: Same as std but std is divided by the atmospheric
+            transmission calculated by the ATM model.
+        pwv: PWV in units of mm. Only used for the calculation of
+            the atmospheric transmission when chan_weight is std/tx.
+        format: Output image format of quick-look result.
+        outdir: Output directory for the quick-look result.
+        suffix: Suffix that precedes the file extension.
+        overwrite: Whether to overwrite the output if it exists.
+
+    Keyword Args:
+        options: Other options for saving the output (e.g. dpi).
+
+    Returns:
+        Absolute path of the saved file.
+
+    """
+    return _scan(
+        dems,
+        "y",
+        # options for loading
+        include_mkid_ids=include_mkid_ids,
+        exclude_mkid_ids=exclude_mkid_ids,
+        data_type=data_type,
+        # options for analysis
+        chan_weight=chan_weight,
+        pwv=pwv,
+        # options for saving
+        format=format,
+        outdir=outdir,
+        overwrite=overwrite,
+        suffix=suffix,
+        **options,
+    )
+
+
 def zscan(
     dems: Path,
     /,
@@ -459,10 +600,78 @@ def zscan(
     suffix: str = "zscan",
     **options: Any,
 ) -> Path:
-    """Quick-look at an observation of subref axial focus scan.
+    """Quick-look at an observation of subref Z-axis focus scan.
 
     Args:
         dems: Input DEMS file (netCDF or Zarr).
+        include_mkid_ids: MKID IDs to be included in analysis.
+            Defaults to all MKID IDs.
+        exclude_mkid_ids: MKID IDs to be excluded in analysis.
+            Defaults to bad MKID IDs found on 2023-11-19.
+        data_type: Data type of the input DEMS file.
+            Defaults to the ``long_name`` attribute in it.
+        chan_weight: Weighting method along the channel axis.
+            uniform: Uniform weight (i.e. no channel dependence).
+            std: Inverse square of temporal standard deviation of sky.
+            std/tx: Same as std but std is divided by the atmospheric
+            transmission calculated by the ATM model.
+        pwv: PWV in units of mm. Only used for the calculation of
+            the atmospheric transmission when chan_weight is std/tx.
+        format: Output image format of quick-look result.
+        outdir: Output directory for the quick-look result.
+        suffix: Suffix that precedes the file extension.
+        overwrite: Whether to overwrite the output if it exists.
+
+    Keyword Args:
+        options: Other options for saving the output (e.g. dpi).
+
+    Returns:
+        Absolute path of the saved file.
+
+    """
+    return _scan(
+        dems,
+        "z",
+        # options for loading
+        include_mkid_ids=include_mkid_ids,
+        exclude_mkid_ids=exclude_mkid_ids,
+        data_type=data_type,
+        # options for analysis
+        chan_weight=chan_weight,
+        pwv=pwv,
+        # options for saving
+        format=format,
+        outdir=outdir,
+        overwrite=overwrite,
+        suffix=suffix,
+        **options,
+    )
+
+
+def _scan(
+    dems: Path,
+    axis: Literal["x", "y", "z"],
+    /,
+    *,
+    # options for loading
+    include_mkid_ids: Optional[Sequence[int]] = DEFAULT_INCL_MKID_IDS,
+    exclude_mkid_ids: Optional[Sequence[int]] = DEFAULT_EXCL_MKID_IDS,
+    data_type: Literal["auto", "brightness", "df/f"] = DEFAULT_DATA_TYPE,
+    # options for analysis
+    chan_weight: Literal["uniform", "std", "std/tx"] = "std/tx",
+    pwv: Literal["0.5", "1.0", "2.0", "3.0", "4.0", "5.0"] = "5.0",
+    # options for saving
+    format: str = DEFAULT_FORMAT,
+    outdir: Path = DEFAULT_OUTDIR,
+    overwrite: bool = DEFAULT_OVERWRITE,
+    suffix: str = "_scan",
+    **options: Any,
+) -> Path:
+    """Quick-look at an observation of subref axial/radial focus scan.
+
+    Args:
+        dems: Input DEMS file (netCDF or Zarr).
+        axis: Axis of the scan (either ``'x'``, ``'y'``, or ``'z'``).
         include_mkid_ids: MKID IDs to be included in analysis.
             Defaults to all MKID IDs.
         exclude_mkid_ids: MKID IDs to be excluded in analysis.
@@ -503,7 +712,7 @@ def zscan(
         series = da_on.weighted(weight.fillna(0)).mean("chan")
 
         # save result
-        suffixes = f".{suffix}.{format}"
+        suffixes = f".{suffix.replace('_', axis)}.{format}"
         file = Path(outdir) / Path(dems).with_suffix(suffixes).name
 
         if format in DATA_FORMATS:
@@ -512,10 +721,10 @@ def zscan(
         fig, axes = plt.subplots(1, 2, figsize=DEFAULT_FIGSIZE)
 
         ax = axes[0]
-        plot.data(series, hue="aste_subref_z", ax=ax)
+        plot.data(series, hue=f"aste_subref_{axis}", ax=ax)
 
         ax = axes[1]
-        plot.data(series, x="aste_subref_z", ax=ax)
+        plot.data(series, x=f"aste_subref_{axis}", ax=ax)
 
         for ax in axes:
             ax.set_title(Path(dems).name)
@@ -745,6 +954,8 @@ def main() -> None:
             "raster": raster,
             "skydip": skydip,
             "still": still,
+            "xscan": xscan,
+            "yscan": yscan,
             "zscan": zscan,
         }
     )
