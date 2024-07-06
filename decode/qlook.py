@@ -149,14 +149,14 @@ def pswsc(
 
         fig, axes = plt.subplots(1, 2, figsize=DEFAULT_FIGSIZE)
 
-        ax = axes[0]
+        ax = axes[0]  # type: ignore
         plot.data(da.scan, ax=ax)
 
-        ax = axes[1]
+        ax = axes[1]  # type: ignore
         plot.data(spec, x="frequency", s=5, hue=None, ax=ax)
         ax.set_ylim(get_robust_lim(spec))
 
-        for ax in axes:
+        for ax in axes:  # type: ignore
             ax.set_title(Path(dems).name)
             ax.grid(True)
 
@@ -259,11 +259,11 @@ def raster(
 
         fig, axes = plt.subplots(1, 2, figsize=(12, 5.5))
 
-        ax = axes[0]
+        ax = axes[0]  # type: ignore
         plot.data(series, ax=ax)
         ax.set_title(Path(dems).name)
 
-        ax = axes[1]
+        ax = axes[1]  # type: ignore
         map_lim = max(abs(cube.lon).max(), abs(cube.lat).max())
         max_pix = cont.where(cont == cont.max(), drop=True)
 
@@ -276,7 +276,7 @@ def raster(
             f"dEl = {float(max_pix.lat):+.1f} {cont.lat.attrs['units']}"
         )
 
-        for ax in axes:
+        for ax in axes:  # type: ignore
             ax.grid(True)
 
         fig.tight_layout()
@@ -353,13 +353,13 @@ def skydip(
 
         fig, axes = plt.subplots(1, 2, figsize=DEFAULT_FIGSIZE)
 
-        ax = axes[0]
+        ax = axes[0]  # type: ignore
         plot.data(series, hue="secz", ax=ax)
 
-        ax = axes[1]
+        ax = axes[1]  # type: ignore
         plot.data(series, x="secz", ax=ax)
 
-        for ax in axes:
+        for ax in axes:  # type: ignore
             ax.set_title(Path(dems).name)
             ax.grid(True)
 
@@ -436,13 +436,13 @@ def still(
 
         fig, axes = plt.subplots(1, 2, figsize=DEFAULT_FIGSIZE)
 
-        ax = axes[0]
+        ax = axes[0]  # type: ignore
         plot.state(da, add_colorbar=False, add_legend=False, ax=ax)
 
-        ax = axes[1]
+        ax = axes[1]  # type: ignore
         plot.data(series, add_colorbar=False, ax=ax)
 
-        for ax in axes:
+        for ax in axes:  # type: ignore
             ax.set_title(Path(dems).name)
             ax.grid(True)
 
@@ -720,13 +720,13 @@ def _scan(
 
         fig, axes = plt.subplots(1, 2, figsize=DEFAULT_FIGSIZE)
 
-        ax = axes[0]
+        ax = axes[0]  # type: ignore
         plot.data(series, hue=f"aste_subref_{axis}", ax=ax)
 
-        ax = axes[1]
+        ax = axes[1]  # type: ignore
         plot.data(series, x=f"aste_subref_{axis}", ax=ax)
 
-        for ax in axes:
+        for ax in axes:  # type: ignore
             ax.set_title(Path(dems).name)
             ax.grid(True)
 
