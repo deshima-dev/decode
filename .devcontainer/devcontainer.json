@@ -1,11 +1,18 @@
 {
     "name": "decode",
     "image":"python:3.11",
-    "onCreateCommand": "pip install poetry==1.7.1",
-    "postCreateCommand": "poetry install",
+    "features": {
+        "ghcr.io/devcontainers-contrib/features/poetry:2": {
+            "version": "1.8.3"
+        }
+    },
     "containerEnv": {
         "POETRY_VIRTUALENVS_CREATE": "false"
     },
+    "runArgs": [
+        "--name=decode"
+    ],
+    "postCreateCommand": "poetry install",
     "customizations": {
         "vscode": {
             "extensions": [
