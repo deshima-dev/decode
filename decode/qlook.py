@@ -78,6 +78,12 @@ def auto(dems: Path, /, **options: Any) -> Path:
         if "still" in obs:
             return still(dems, **options)
 
+        if "xscan" in obs:
+            return xscan(dems, **options)
+
+        if "yscan" in obs:
+            return yscan(dems, **options)
+
         if "zscan" in obs:
             return zscan(dems, **options)
 
