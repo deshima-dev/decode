@@ -267,10 +267,7 @@ def raster(
 
         ax = axes[0]  # type: ignore
         plot.data(series, ax=ax)
-        ax.set_title(
-            f"{da.observation}\n"
-            f"({Path(dems).name})"
-        )
+        ax.set_title(f"{da.observation}\n({Path(dems).name})")
 
         ax = axes[1]  # type: ignore
         map_lim = max(abs(cube.lon).max(), abs(cube.lat).max())
