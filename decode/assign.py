@@ -32,10 +32,6 @@ def scan(
         DEMS DataArray to which the scan label are assigned.
 
     """
-    if not inplace:
-        # deepcopy except for data
-        dems = dems.copy(data=dems.data)
-
     is_div = xr.zeros_like(dems.scan, dtype=bool)
 
     ref = dems.coords[by].data
@@ -45,4 +41,9 @@ def scan(
         is_div[1:] |= np.diff(dems.time) >= dt
 
     new_scan = is_div.cumsum().astype(dems.scan.dtype)
-    return dems.assign_coords(scan=new_scan)
+
+    if inplace:
+        dems.coords["scan"][:] = new_scan
+        return dems
+    else:
+        return dems.assign_coords(scan=new_scan)

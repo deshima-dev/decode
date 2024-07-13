@@ -1,5 +1,6 @@
 __all__ = [
     "auto",
+    "daisy",
     "pswsc",
     "raster",
     "skydip",
@@ -20,6 +21,7 @@ from warnings import catch_warnings, simplefilter
 import numpy as np
 import xarray as xr
 import matplotlib.pyplot as plt
+from astropy.units import Quantity
 from fire import Fire
 from matplotlib.figure import Figure
 from . import assign, convert, load, make, plot, select, utils
@@ -66,6 +68,9 @@ def auto(dems: Path, /, **options: Any) -> Path:
         da = load.dems(dems, chunks=None)
         obs: str = da.attrs["observation"]
 
+        if "daisy" in obs:
+            return daisy(dems, **options)
+
         if "pswsc" in obs:
             return pswsc(dems, **options)
 
@@ -91,6 +96,137 @@ def auto(dems: Path, /, **options: Any) -> Path:
             f"Could not infer the command to be used from {obs!r}: "
             "Observation name must include one of the command names. "
         )
+
+
+def daisy(
+    dems: Path,
+    /,
+    *,
+    # options for loading
+    include_mkid_ids: Optional[Sequence[int]] = DEFAULT_INCL_MKID_IDS,
+    exclude_mkid_ids: Optional[Sequence[int]] = DEFAULT_EXCL_MKID_IDS,
+    data_type: Literal["auto", "brightness", "df/f"] = DEFAULT_DATA_TYPE,
+    # options for analysis
+    source_radius: str = "60 arcsec",
+    chan_weight: Literal["uniform", "std", "std/tx"] = "std/tx",
+    pwv: Literal["0.5", "1.0", "2.0", "3.0", "4.0", "5.0"] = "5.0",
+    skycoord_grid: str = DEFAULT_SKYCOORD_GRID,
+    skycoord_units: str = DEFAULT_SKYCOORD_UNITS,
+    # options for saving
+    format: str = DEFAULT_FORMAT,
+    outdir: Path = DEFAULT_OUTDIR,
+    overwrite: bool = DEFAULT_OVERWRITE,
+    suffix: str = "daisy",
+    **options: Any,
+) -> Path:
+    """Quick-look at a daisy scan observation.
+
+    Args:
+        dems: Input DEMS file (netCDF or Zarr).
+        include_mkid_ids: MKID IDs to be included in analysis.
+            Defaults to all MKID IDs.
+        exclude_mkid_ids: MKID IDs to be excluded in analysis.
+            Defaults to bad MKID IDs found on 2023-11-19.
+        data_type: Data type of the input DEMS file.
+            Defaults to the ``long_name`` attribute in it.
+        source_radius: Radius of the on-source area.
+            Other areas are considered off-source in sky subtraction.
+        chan_weight: Weighting method along the channel axis.
+            uniform: Uniform weight (i.e. no channel dependence).
+            std: Inverse square of temporal standard deviation of sky.
+            std/tx: Same as std but std is divided by the atmospheric
+            transmission calculated by the ATM model.
+        pwv: PWV in units of mm. Only used for the calculation of
+            the atmospheric transmission when chan_weight is std/tx.
+        skycoord_grid: Grid size of the sky coordinate axes.
+        skycoord_units: Units of the sky coordinate axes.
+        format: Output image format of quick-look result.
+        outdir: Output directory for the quick-look result.
+        suffix: Suffix that precedes the file extension.
+        overwrite: Whether to overwrite the output if it exists.
+
+    Keyword Args:
+        options: Other options for saving the output (e.g. dpi).
+
+    Returns:
+        Absolute path of the saved file.
+
+    """
+    with xr.set_options(keep_attrs=True):
+        da = load_dems(
+            dems,
+            include_mkid_ids=include_mkid_ids,
+            exclude_mkid_ids=exclude_mkid_ids,
+            data_type=data_type,
+            skycoord_units=skycoord_units,
+        )
+
+        # fmt: off
+        is_source = (
+            (da.lon**2 + da.lat**2)
+            < Quantity(source_radius).to(skycoord_units).value ** 2
+        )
+        # fmt: on
+        da.coords["state"][is_source] = "SCAN@ON"
+        assign.scan(da, by="state", inplace=True)
+
+        # subtract temporal baseline
+        da_on = select.by(da, "state", include="SCAN@ON")
+        da_off = select.by(da, "state", exclude="SCAN@ON")
+        da_base = (
+            da_off.groupby("scan")
+            .map(mean_in_time)
+            .interp_like(
+                da_on,
+                method="linear",
+                kwargs={"fill_value": "extrapolate"},
+            )
+        )
+        da_sub = da_on - da_base.values
+
+        # make continuum series
+        weight = get_chan_weight(da_off, method=chan_weight, pwv=pwv)
+        series = da_sub.weighted(weight.fillna(0)).mean("chan")
+
+        # make continuum map
+        cube = make.cube(
+            da_sub,
+            skycoord_grid=skycoord_grid,
+            skycoord_units=skycoord_units,
+        )
+        cont = cube.weighted(weight.fillna(0)).mean("chan")
+
+        # save result
+        suffixes = f".{suffix}.{format}"
+        file = Path(outdir) / Path(dems).with_suffix(suffixes).name
+
+        if format in DATA_FORMATS:
+            return save_qlook(cont, file, overwrite=overwrite, **options)
+
+        fig, axes = plt.subplots(1, 2, figsize=(12, 5.5))
+
+        ax = axes[0]  # type: ignore
+        plot.data(series, ax=ax)
+        ax.set_title(f"{Path(dems).name}\n({da.observation})")
+
+        ax = axes[1]  # type: ignore
+        map_lim = max(abs(cube.lon).max(), abs(cube.lat).max())
+        max_pix = cont.where(cont == cont.max(), drop=True)
+
+        cont.plot(ax=ax)  # type: ignore
+        ax.set_xlim(-map_lim, map_lim)
+        ax.set_ylim(-map_lim, map_lim)
+        ax.set_title(
+            f"Maximum {cont.long_name.lower()} = {cont.max():.2e} [{cont.units}]\n"
+            f"(dAz = {float(max_pix.lon):+.1f} [{cont.lon.attrs['units']}], "
+            f"dEl = {float(max_pix.lat):+.1f} [{cont.lat.attrs['units']}])"
+        )
+
+        for ax in axes:  # type: ignore
+            ax.grid(True)
+
+        fig.tight_layout()
+        return save_qlook(fig, file, overwrite=overwrite, **options)
 
 
 def pswsc(
@@ -267,7 +403,7 @@ def raster(
 
         ax = axes[0]  # type: ignore
         plot.data(series, ax=ax)
-        ax.set_title(f"{da.observation}\n({Path(dems).name})")
+        ax.set_title(f"{Path(dems).name}\n({da.observation})")
 
         ax = axes[1]  # type: ignore
         map_lim = max(abs(cube.lon).max(), abs(cube.lat).max())
@@ -956,6 +1092,7 @@ def main() -> None:
     Fire(
         {
             "auto": auto,
+            "daisy": daisy,
             "pswsc": pswsc,
             "raster": raster,
             "skydip": skydip,
