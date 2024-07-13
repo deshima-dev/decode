@@ -30,15 +30,10 @@ from . import assign, convert, load, make, plot, select, utils
 # constants
 DATA_FORMATS = "csv", "nc", "zarr", "zarr.zip"
 DEFAULT_DATA_TYPE = "auto"
-# fmt: off
-DEFAULT_EXCL_MKID_IDS = (
-    0, 18, 26, 73, 130, 184, 118, 119, 201, 202,
-    208, 214, 261, 266, 280, 283, 299, 304, 308, 321,
-)
-# fmt: on
 DEFAULT_FIGSIZE = 12, 4
 DEFAULT_FORMAT = "png"
 DEFAULT_FREQUENCY_UNITS = "GHz"
+DEFAULT_EXCL_MKID_IDS = None
 DEFAULT_INCL_MKID_IDS = None
 DEFAULT_OUTDIR = Path()
 DEFAULT_OVERWRITE = False
@@ -126,7 +121,7 @@ def daisy(
         include_mkid_ids: MKID IDs to be included in analysis.
             Defaults to all MKID IDs.
         exclude_mkid_ids: MKID IDs to be excluded in analysis.
-            Defaults to bad MKID IDs found on 2023-11-19.
+            Defaults to no MKID IDs.
         data_type: Data type of the input DEMS file.
             Defaults to the ``long_name`` attribute in it.
         source_radius: Radius of the on-source area.
@@ -252,7 +247,7 @@ def pswsc(
         include_mkid_ids: MKID IDs to be included in analysis.
             Defaults to all MKID IDs.
         exclude_mkid_ids: MKID IDs to be excluded in analysis.
-            Defaults to bad MKID IDs found on 2023-11-19.
+            Defaults to no MKID IDs.
         data_type: Data type of the input DEMS file.
             Defaults to the ``long_name`` attribute in it.
         frequency_units: Units of the frequency axis.
@@ -333,7 +328,7 @@ def raster(
         include_mkid_ids: MKID IDs to be included in analysis.
             Defaults to all MKID IDs.
         exclude_mkid_ids: MKID IDs to be excluded in analysis.
-            Defaults to bad MKID IDs found on 2023-11-19.
+            Defaults to no MKID IDs.
         data_type: Data type of the input DEMS file.
             Defaults to the ``long_name`` attribute in it.
         chan_weight: Weighting method along the channel axis.
@@ -450,7 +445,7 @@ def skydip(
         include_mkid_ids: MKID IDs to be included in analysis.
             Defaults to all MKID IDs.
         exclude_mkid_ids: MKID IDs to be excluded in analysis.
-            Defaults to bad MKID IDs found on 2023-11-19.
+            Defaults to no MKID IDs.
         data_type: Data type of the input DEMS file.
             Defaults to the ``long_name`` attribute in it.
         chan_weight: Weighting method along the channel axis.
@@ -534,7 +529,7 @@ def still(
         include_mkid_ids: MKID IDs to be included in analysis.
             Defaults to all MKID IDs.
         exclude_mkid_ids: MKID IDs to be excluded in analysis.
-            Defaults to bad MKID IDs found on 2023-11-19.
+            Defaults to no MKID IDs.
         data_type: Data type of the input DEMS file.
             Defaults to the ``long_name`` attribute in it.
         chan_weight: Weighting method along the channel axis.
@@ -617,7 +612,7 @@ def xscan(
         include_mkid_ids: MKID IDs to be included in analysis.
             Defaults to all MKID IDs.
         exclude_mkid_ids: MKID IDs to be excluded in analysis.
-            Defaults to bad MKID IDs found on 2023-11-19.
+            Defaults to no MKID IDs.
         data_type: Data type of the input DEMS file.
             Defaults to the ``long_name`` attribute in it.
         chan_weight: Weighting method along the channel axis.
@@ -683,7 +678,7 @@ def yscan(
         include_mkid_ids: MKID IDs to be included in analysis.
             Defaults to all MKID IDs.
         exclude_mkid_ids: MKID IDs to be excluded in analysis.
-            Defaults to bad MKID IDs found on 2023-11-19.
+            Defaults to no MKID IDs.
         data_type: Data type of the input DEMS file.
             Defaults to the ``long_name`` attribute in it.
         chan_weight: Weighting method along the channel axis.
@@ -749,7 +744,7 @@ def zscan(
         include_mkid_ids: MKID IDs to be included in analysis.
             Defaults to all MKID IDs.
         exclude_mkid_ids: MKID IDs to be excluded in analysis.
-            Defaults to bad MKID IDs found on 2023-11-19.
+            Defaults to no MKID IDs.
         data_type: Data type of the input DEMS file.
             Defaults to the ``long_name`` attribute in it.
         chan_weight: Weighting method along the channel axis.
@@ -817,7 +812,7 @@ def _scan(
         include_mkid_ids: MKID IDs to be included in analysis.
             Defaults to all MKID IDs.
         exclude_mkid_ids: MKID IDs to be excluded in analysis.
-            Defaults to bad MKID IDs found on 2023-11-19.
+            Defaults to no MKID IDs.
         data_type: Data type of the input DEMS file.
             Defaults to the ``long_name`` attribute in it.
         chan_weight: Weighting method along the channel axis.
@@ -978,7 +973,7 @@ def load_dems(
         include_mkid_ids: MKID IDs to be included in analysis.
             Defaults to all MKID IDs.
         exclude_mkid_ids: MKID IDs to be excluded in analysis.
-            Defaults to bad MKID IDs found on 2023-11-19.
+            Defaults to no MKID IDs.
         data_type: Data type of the input DEMS file.
             Defaults to the ``long_name`` attribute in it.
         frequency_units: Units of the frequency.
@@ -1006,7 +1001,7 @@ def load_dems(
     da = select.by(da, "d2_mkid_type", "filter")
     da = select.by(
         da,
-        "d2_mkid_id",
+        "chan",
         include=include_mkid_ids,
         exclude=exclude_mkid_ids,
     )
