@@ -30,16 +30,13 @@ from . import assign, convert, load, make, plot, select, utils
 # constants
 DATA_FORMATS = "csv", "nc", "zarr", "zarr.zip"
 DEFAULT_DATA_TYPE = "auto"
-# fmt: off
-DEFAULT_EXCL_MKID_IDS = (
-    0, 18, 26, 73, 130, 184, 118, 119, 201, 202,
-    208, 214, 261, 266, 280, 283, 299, 304, 308, 321,
-)
-# fmt: on
 DEFAULT_FIGSIZE = 12, 4
 DEFAULT_FORMAT = "png"
 DEFAULT_FREQUENCY_UNITS = "GHz"
+DEFAULT_EXCL_MKID_IDS = None
 DEFAULT_INCL_MKID_IDS = None
+DEFAULT_MIN_FREQUENCY = None
+DEFAULT_MAX_FREQUENCY = None
 DEFAULT_OUTDIR = Path()
 DEFAULT_OVERWRITE = False
 DEFAULT_SKYCOORD_GRID = "6 arcsec"
@@ -105,6 +102,8 @@ def daisy(
     # options for loading
     include_mkid_ids: Optional[Sequence[int]] = DEFAULT_INCL_MKID_IDS,
     exclude_mkid_ids: Optional[Sequence[int]] = DEFAULT_EXCL_MKID_IDS,
+    min_frequency: Optional[str] = DEFAULT_MIN_FREQUENCY,
+    max_frequency: Optional[str] = DEFAULT_MAX_FREQUENCY,
     data_type: Literal["auto", "brightness", "df/f"] = DEFAULT_DATA_TYPE,
     # options for analysis
     source_radius: str = "60 arcsec",
@@ -126,7 +125,11 @@ def daisy(
         include_mkid_ids: MKID IDs to be included in analysis.
             Defaults to all MKID IDs.
         exclude_mkid_ids: MKID IDs to be excluded in analysis.
-            Defaults to bad MKID IDs found on 2023-11-19.
+            Defaults to no MKID IDs.
+        min_frequency: Minimum frequency to be included in analysis.
+            Defaults to no minimum frequency bound.
+        max_frequency: Maximum frequency to be included in analysis.
+            Defaults to no maximum frequency bound.
         data_type: Data type of the input DEMS file.
             Defaults to the ``long_name`` attribute in it.
         source_radius: Radius of the on-source area.
@@ -157,6 +160,8 @@ def daisy(
             dems,
             include_mkid_ids=include_mkid_ids,
             exclude_mkid_ids=exclude_mkid_ids,
+            min_frequency=min_frequency,
+            max_frequency=max_frequency,
             data_type=data_type,
             skycoord_units=skycoord_units,
         )
@@ -236,6 +241,8 @@ def pswsc(
     # options for loading
     include_mkid_ids: Optional[Sequence[int]] = DEFAULT_INCL_MKID_IDS,
     exclude_mkid_ids: Optional[Sequence[int]] = DEFAULT_EXCL_MKID_IDS,
+    min_frequency: Optional[str] = DEFAULT_MIN_FREQUENCY,
+    max_frequency: Optional[str] = DEFAULT_MAX_FREQUENCY,
     data_type: Literal["auto", "brightness", "df/f"] = DEFAULT_DATA_TYPE,
     frequency_units: str = DEFAULT_FREQUENCY_UNITS,
     # options for saving
@@ -252,7 +259,11 @@ def pswsc(
         include_mkid_ids: MKID IDs to be included in analysis.
             Defaults to all MKID IDs.
         exclude_mkid_ids: MKID IDs to be excluded in analysis.
-            Defaults to bad MKID IDs found on 2023-11-19.
+            Defaults to no MKID IDs.
+        min_frequency: Minimum frequency to be included in analysis.
+            Defaults to no minimum frequency bound.
+        max_frequency: Maximum frequency to be included in analysis.
+            Defaults to no maximum frequency bound.
         data_type: Data type of the input DEMS file.
             Defaults to the ``long_name`` attribute in it.
         frequency_units: Units of the frequency axis.
@@ -273,6 +284,8 @@ def pswsc(
             dems,
             include_mkid_ids=include_mkid_ids,
             exclude_mkid_ids=exclude_mkid_ids,
+            min_frequency=min_frequency,
+            max_frequency=max_frequency,
             data_type=data_type,
             frequency_units=frequency_units,
         )
@@ -313,6 +326,8 @@ def raster(
     # options for loading
     include_mkid_ids: Optional[Sequence[int]] = DEFAULT_INCL_MKID_IDS,
     exclude_mkid_ids: Optional[Sequence[int]] = DEFAULT_EXCL_MKID_IDS,
+    min_frequency: Optional[str] = DEFAULT_MIN_FREQUENCY,
+    max_frequency: Optional[str] = DEFAULT_MAX_FREQUENCY,
     data_type: Literal["auto", "brightness", "df/f"] = DEFAULT_DATA_TYPE,
     # options for analysis
     chan_weight: Literal["uniform", "std", "std/tx"] = "std/tx",
@@ -333,7 +348,11 @@ def raster(
         include_mkid_ids: MKID IDs to be included in analysis.
             Defaults to all MKID IDs.
         exclude_mkid_ids: MKID IDs to be excluded in analysis.
-            Defaults to bad MKID IDs found on 2023-11-19.
+            Defaults to no MKID IDs.
+        min_frequency: Minimum frequency to be included in analysis.
+            Defaults to no minimum frequency bound.
+        max_frequency: Maximum frequency to be included in analysis.
+            Defaults to no maximum frequency bound.
         data_type: Data type of the input DEMS file.
             Defaults to the ``long_name`` attribute in it.
         chan_weight: Weighting method along the channel axis.
@@ -362,6 +381,8 @@ def raster(
             dems,
             include_mkid_ids=include_mkid_ids,
             exclude_mkid_ids=exclude_mkid_ids,
+            min_frequency=min_frequency,
+            max_frequency=max_frequency,
             data_type=data_type,
             skycoord_units=skycoord_units,
         )
@@ -432,6 +453,8 @@ def skydip(
     # options for loading
     include_mkid_ids: Optional[Sequence[int]] = DEFAULT_INCL_MKID_IDS,
     exclude_mkid_ids: Optional[Sequence[int]] = DEFAULT_EXCL_MKID_IDS,
+    min_frequency: Optional[str] = DEFAULT_MIN_FREQUENCY,
+    max_frequency: Optional[str] = DEFAULT_MAX_FREQUENCY,
     data_type: Literal["auto", "brightness", "df/f"] = DEFAULT_DATA_TYPE,
     # options for analysis
     chan_weight: Literal["uniform", "std", "std/tx"] = "std/tx",
@@ -450,7 +473,11 @@ def skydip(
         include_mkid_ids: MKID IDs to be included in analysis.
             Defaults to all MKID IDs.
         exclude_mkid_ids: MKID IDs to be excluded in analysis.
-            Defaults to bad MKID IDs found on 2023-11-19.
+            Defaults to no MKID IDs.
+        min_frequency: Minimum frequency to be included in analysis.
+            Defaults to no minimum frequency bound.
+        max_frequency: Maximum frequency to be included in analysis.
+            Defaults to no maximum frequency bound.
         data_type: Data type of the input DEMS file.
             Defaults to the ``long_name`` attribute in it.
         chan_weight: Weighting method along the channel axis.
@@ -477,6 +504,8 @@ def skydip(
             dems,
             include_mkid_ids=include_mkid_ids,
             exclude_mkid_ids=exclude_mkid_ids,
+            min_frequency=min_frequency,
+            max_frequency=max_frequency,
             data_type=data_type,
         )
 
@@ -516,6 +545,8 @@ def still(
     # options for loading
     include_mkid_ids: Optional[Sequence[int]] = DEFAULT_INCL_MKID_IDS,
     exclude_mkid_ids: Optional[Sequence[int]] = DEFAULT_EXCL_MKID_IDS,
+    min_frequency: Optional[str] = DEFAULT_MIN_FREQUENCY,
+    max_frequency: Optional[str] = DEFAULT_MAX_FREQUENCY,
     data_type: Literal["auto", "brightness", "df/f"] = DEFAULT_DATA_TYPE,
     # options for analysis
     chan_weight: Literal["uniform", "std", "std/tx"] = "std/tx",
@@ -534,7 +565,11 @@ def still(
         include_mkid_ids: MKID IDs to be included in analysis.
             Defaults to all MKID IDs.
         exclude_mkid_ids: MKID IDs to be excluded in analysis.
-            Defaults to bad MKID IDs found on 2023-11-19.
+            Defaults to no MKID IDs.
+        min_frequency: Minimum frequency to be included in analysis.
+            Defaults to no minimum frequency bound.
+        max_frequency: Maximum frequency to be included in analysis.
+            Defaults to no maximum frequency bound.
         data_type: Data type of the input DEMS file.
             Defaults to the ``long_name`` attribute in it.
         chan_weight: Weighting method along the channel axis.
@@ -561,6 +596,8 @@ def still(
             dems,
             include_mkid_ids=include_mkid_ids,
             exclude_mkid_ids=exclude_mkid_ids,
+            min_frequency=min_frequency,
+            max_frequency=max_frequency,
             data_type=data_type,
         )
 
@@ -599,6 +636,8 @@ def xscan(
     # options for loading
     include_mkid_ids: Optional[Sequence[int]] = DEFAULT_INCL_MKID_IDS,
     exclude_mkid_ids: Optional[Sequence[int]] = DEFAULT_EXCL_MKID_IDS,
+    min_frequency: Optional[str] = DEFAULT_MIN_FREQUENCY,
+    max_frequency: Optional[str] = DEFAULT_MAX_FREQUENCY,
     data_type: Literal["auto", "brightness", "df/f"] = DEFAULT_DATA_TYPE,
     # options for analysis
     chan_weight: Literal["uniform", "std", "std/tx"] = "std/tx",
@@ -617,7 +656,11 @@ def xscan(
         include_mkid_ids: MKID IDs to be included in analysis.
             Defaults to all MKID IDs.
         exclude_mkid_ids: MKID IDs to be excluded in analysis.
-            Defaults to bad MKID IDs found on 2023-11-19.
+            Defaults to no MKID IDs.
+        min_frequency: Minimum frequency to be included in analysis.
+            Defaults to no minimum frequency bound.
+        max_frequency: Maximum frequency to be included in analysis.
+            Defaults to no maximum frequency bound.
         data_type: Data type of the input DEMS file.
             Defaults to the ``long_name`` attribute in it.
         chan_weight: Weighting method along the channel axis.
@@ -645,6 +688,8 @@ def xscan(
         # options for loading
         include_mkid_ids=include_mkid_ids,
         exclude_mkid_ids=exclude_mkid_ids,
+        min_frequency=min_frequency,
+        max_frequency=max_frequency,
         data_type=data_type,
         # options for analysis
         chan_weight=chan_weight,
@@ -665,6 +710,8 @@ def yscan(
     # options for loading
     include_mkid_ids: Optional[Sequence[int]] = DEFAULT_INCL_MKID_IDS,
     exclude_mkid_ids: Optional[Sequence[int]] = DEFAULT_EXCL_MKID_IDS,
+    min_frequency: Optional[str] = DEFAULT_MIN_FREQUENCY,
+    max_frequency: Optional[str] = DEFAULT_MAX_FREQUENCY,
     data_type: Literal["auto", "brightness", "df/f"] = DEFAULT_DATA_TYPE,
     # options for analysis
     chan_weight: Literal["uniform", "std", "std/tx"] = "std/tx",
@@ -683,7 +730,11 @@ def yscan(
         include_mkid_ids: MKID IDs to be included in analysis.
             Defaults to all MKID IDs.
         exclude_mkid_ids: MKID IDs to be excluded in analysis.
-            Defaults to bad MKID IDs found on 2023-11-19.
+            Defaults to no MKID IDs.
+        min_frequency: Minimum frequency to be included in analysis.
+            Defaults to no minimum frequency bound.
+        max_frequency: Maximum frequency to be included in analysis.
+            Defaults to no maximum frequency bound.
         data_type: Data type of the input DEMS file.
             Defaults to the ``long_name`` attribute in it.
         chan_weight: Weighting method along the channel axis.
@@ -711,6 +762,8 @@ def yscan(
         # options for loading
         include_mkid_ids=include_mkid_ids,
         exclude_mkid_ids=exclude_mkid_ids,
+        min_frequency=min_frequency,
+        max_frequency=max_frequency,
         data_type=data_type,
         # options for analysis
         chan_weight=chan_weight,
@@ -731,6 +784,8 @@ def zscan(
     # options for loading
     include_mkid_ids: Optional[Sequence[int]] = DEFAULT_INCL_MKID_IDS,
     exclude_mkid_ids: Optional[Sequence[int]] = DEFAULT_EXCL_MKID_IDS,
+    min_frequency: Optional[str] = DEFAULT_MIN_FREQUENCY,
+    max_frequency: Optional[str] = DEFAULT_MAX_FREQUENCY,
     data_type: Literal["auto", "brightness", "df/f"] = DEFAULT_DATA_TYPE,
     # options for analysis
     chan_weight: Literal["uniform", "std", "std/tx"] = "std/tx",
@@ -749,7 +804,11 @@ def zscan(
         include_mkid_ids: MKID IDs to be included in analysis.
             Defaults to all MKID IDs.
         exclude_mkid_ids: MKID IDs to be excluded in analysis.
-            Defaults to bad MKID IDs found on 2023-11-19.
+            Defaults to no MKID IDs.
+        min_frequency: Minimum frequency to be included in analysis.
+            Defaults to no minimum frequency bound.
+        max_frequency: Maximum frequency to be included in analysis.
+            Defaults to no maximum frequency bound.
         data_type: Data type of the input DEMS file.
             Defaults to the ``long_name`` attribute in it.
         chan_weight: Weighting method along the channel axis.
@@ -777,6 +836,8 @@ def zscan(
         # options for loading
         include_mkid_ids=include_mkid_ids,
         exclude_mkid_ids=exclude_mkid_ids,
+        min_frequency=min_frequency,
+        max_frequency=max_frequency,
         data_type=data_type,
         # options for analysis
         chan_weight=chan_weight,
@@ -798,6 +859,8 @@ def _scan(
     # options for loading
     include_mkid_ids: Optional[Sequence[int]] = DEFAULT_INCL_MKID_IDS,
     exclude_mkid_ids: Optional[Sequence[int]] = DEFAULT_EXCL_MKID_IDS,
+    min_frequency: Optional[str] = DEFAULT_MIN_FREQUENCY,
+    max_frequency: Optional[str] = DEFAULT_MAX_FREQUENCY,
     data_type: Literal["auto", "brightness", "df/f"] = DEFAULT_DATA_TYPE,
     # options for analysis
     chan_weight: Literal["uniform", "std", "std/tx"] = "std/tx",
@@ -817,7 +880,11 @@ def _scan(
         include_mkid_ids: MKID IDs to be included in analysis.
             Defaults to all MKID IDs.
         exclude_mkid_ids: MKID IDs to be excluded in analysis.
-            Defaults to bad MKID IDs found on 2023-11-19.
+            Defaults to no MKID IDs.
+        min_frequency: Minimum frequency to be included in analysis.
+            Defaults to no minimum frequency bound.
+        max_frequency: Maximum frequency to be included in analysis.
+            Defaults to no maximum frequency bound.
         data_type: Data type of the input DEMS file.
             Defaults to the ``long_name`` attribute in it.
         chan_weight: Weighting method along the channel axis.
@@ -844,6 +911,8 @@ def _scan(
             dems,
             include_mkid_ids=include_mkid_ids,
             exclude_mkid_ids=exclude_mkid_ids,
+            min_frequency=min_frequency,
+            max_frequency=max_frequency,
             data_type=data_type,
         )
 
@@ -967,6 +1036,8 @@ def load_dems(
     *,
     include_mkid_ids: Optional[Sequence[int]] = DEFAULT_INCL_MKID_IDS,
     exclude_mkid_ids: Optional[Sequence[int]] = DEFAULT_EXCL_MKID_IDS,
+    min_frequency: Optional[str] = DEFAULT_MIN_FREQUENCY,
+    max_frequency: Optional[str] = DEFAULT_MAX_FREQUENCY,
     data_type: Literal["auto", "brightness", "df/f"] = DEFAULT_DATA_TYPE,
     frequency_units: str = DEFAULT_FREQUENCY_UNITS,
     skycoord_units: str = DEFAULT_SKYCOORD_UNITS,
@@ -978,7 +1049,11 @@ def load_dems(
         include_mkid_ids: MKID IDs to be included in analysis.
             Defaults to all MKID IDs.
         exclude_mkid_ids: MKID IDs to be excluded in analysis.
-            Defaults to bad MKID IDs found on 2023-11-19.
+            Defaults to no MKID IDs.
+        min_frequency: Minimum frequency to be included in analysis.
+            Defaults to no minimum frequency bound.
+        max_frequency: Maximum frequency to be included in analysis.
+            Defaults to no maximum frequency bound.
         data_type: Data type of the input DEMS file.
             Defaults to the ``long_name`` attribute in it.
         frequency_units: Units of the frequency.
@@ -1006,9 +1081,15 @@ def load_dems(
     da = select.by(da, "d2_mkid_type", "filter")
     da = select.by(
         da,
-        "d2_mkid_id",
+        "chan",
         include=include_mkid_ids,
         exclude=exclude_mkid_ids,
+    )
+    da = select.by(
+        da,
+        "frequency",
+        min=min_frequency,
+        max=max_frequency,
     )
     da = convert.coord_units(
         da,
