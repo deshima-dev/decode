@@ -1065,17 +1065,29 @@ def load_dems(
     """
     da = load.dems(dems, chunks=None)
 
+    if min_frequency is not None:
+        min_frequency = Quantity(min_frequency).to(frequency_units).value
+
+    if max_frequency is not None:
+        max_frequency = Quantity(max_frequency).to(frequency_units).value
+
     if da.frame == "altaz":
         z = np.pi / 2 - convert.units(da.lat, "rad")
         secz = cast(xr.DataArray, 1 / np.cos(z))
-
         da = da.assign_coords(
-            secz=secz.assign_attrs(
-                long_name="sec(Z)",
-                units="dimensionless",
-            )
+            secz=secz.assign_attrs(long_name="sec(Z)", units="dimensionless")
         )
 
+    da = convert.coord_units(
+        da,
+        ["d2_mkid_frequency", "frequency"],
+        frequency_units,
+    )
+    da = convert.coord_units(
+        da,
+        ["lat", "lat_origin", "lon", "lon_origin"],
+        skycoord_units,
+    )
     da = assign.scan(da, by="state")
     da = convert.frame(da, "relative")
     da = select.by(da, "d2_mkid_type", "filter")
@@ -1090,16 +1102,6 @@ def load_dems(
         "frequency",
         min=min_frequency,
         max=max_frequency,
-    )
-    da = convert.coord_units(
-        da,
-        ["d2_mkid_frequency", "frequency"],
-        frequency_units,
-    )
-    da = convert.coord_units(
-        da,
-        ["lat", "lat_origin", "lon", "lon_origin"],
-        skycoord_units,
     )
 
     if data_type == "auto" and "units" in da.attrs:
