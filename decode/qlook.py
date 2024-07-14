@@ -12,6 +12,8 @@ __all__ = [
 
 
 # standard library
+from contextlib import contextmanager
+from logging import DEBUG, basicConfig, getLogger
 from pathlib import Path
 from typing import Any, Literal, Optional, Sequence, Union, cast
 from warnings import catch_warnings, simplefilter
@@ -30,6 +32,7 @@ from . import assign, convert, load, make, plot, select, utils
 # constants
 DATA_FORMATS = "csv", "nc", "zarr", "zarr.zip"
 DEFAULT_DATA_TYPE = "auto"
+DEFAULT_DEBUG = False
 DEFAULT_FIGSIZE = 12, 4
 DEFAULT_FORMAT = "png"
 DEFAULT_FREQUENCY_UNITS = "GHz"
@@ -42,6 +45,20 @@ DEFAULT_OVERWRITE = False
 DEFAULT_SKYCOORD_GRID = "6 arcsec"
 DEFAULT_SKYCOORD_UNITS = "arcsec"
 SIGMA_OVER_MAD = 1.4826
+LOGGER = getLogger(__name__)
+
+
+@contextmanager
+def set_logger(debug: bool):
+    level = LOGGER.level
+
+    if debug:
+        LOGGER.setLevel(DEBUG)
+
+    try:
+        yield
+    finally:
+        LOGGER.setLevel(level)
 
 
 def auto(dems: Path, /, **options: Any) -> Path:
@@ -52,9 +69,7 @@ def auto(dems: Path, /, **options: Any) -> Path:
 
     Args:
         dems: Input DEMS file (netCDF or Zarr).
-
-    Keyword Args:
-        options: Options for the selected command.
+        **options: Options for the selected command.
             See the command help for all available options.
 
     Returns:
@@ -116,6 +131,8 @@ def daisy(
     outdir: Path = DEFAULT_OUTDIR,
     overwrite: bool = DEFAULT_OVERWRITE,
     suffix: str = "daisy",
+    # other options
+    debug: bool = DEFAULT_DEBUG,
     **options: Any,
 ) -> Path:
     """Quick-look at a daisy scan observation.
@@ -145,16 +162,19 @@ def daisy(
         skycoord_units: Units of the sky coordinate axes.
         format: Output image format of quick-look result.
         outdir: Output directory for the quick-look result.
-        suffix: Suffix that precedes the file extension.
         overwrite: Whether to overwrite the output if it exists.
-
-    Keyword Args:
-        options: Other options for saving the output (e.g. dpi).
+        suffix: Suffix that precedes the file extension.
+        debug: Whether to print detailed logs for debugging.
+        **options: Other options for saving the output (e.g. dpi).
 
     Returns:
         Absolute path of the saved file.
 
     """
+    with set_logger(debug):
+        for key, val in locals().items():
+            LOGGER.debug(f"{key}: {val!r}")
+
     with xr.set_options(keep_attrs=True):
         da = load_dems(
             dems,
@@ -250,6 +270,8 @@ def pswsc(
     outdir: Path = DEFAULT_OUTDIR,
     overwrite: bool = DEFAULT_OVERWRITE,
     suffix: str = "pswsc",
+    # other options
+    debug: bool = DEFAULT_DEBUG,
     **options: Any,
 ) -> Path:
     """Quick-look at a PSW observation with sky chopper.
@@ -271,14 +293,17 @@ def pswsc(
         outdir: Output directory for the quick-look result.
         overwrite: Whether to overwrite the output if it exists.
         suffix: Suffix that precedes the file extension.
-
-    Keyword Args:
-        options: Other options for saving the output (e.g. dpi).
+        debug: Whether to print detailed logs for debugging.
+        **options: Other options for saving the output (e.g. dpi).
 
     Returns:
         Absolute path of the saved file.
 
     """
+    with set_logger(debug):
+        for key, val in locals().items():
+            LOGGER.debug(f"{key}: {val!r}")
+
     with xr.set_options(keep_attrs=True):
         da = load_dems(
             dems,
@@ -339,6 +364,8 @@ def raster(
     outdir: Path = DEFAULT_OUTDIR,
     overwrite: bool = DEFAULT_OVERWRITE,
     suffix: str = "raster",
+    # other options
+    debug: bool = DEFAULT_DEBUG,
     **options: Any,
 ) -> Path:
     """Quick-look at a raster scan observation.
@@ -366,16 +393,19 @@ def raster(
         skycoord_units: Units of the sky coordinate axes.
         format: Output image format of quick-look result.
         outdir: Output directory for the quick-look result.
-        suffix: Suffix that precedes the file extension.
         overwrite: Whether to overwrite the output if it exists.
-
-    Keyword Args:
-        options: Other options for saving the output (e.g. dpi).
+        suffix: Suffix that precedes the file extension.
+        debug: Whether to print detailed logs for debugging.
+        **options: Other options for saving the output (e.g. dpi).
 
     Returns:
         Absolute path of the saved file.
 
     """
+    with set_logger(debug):
+        for key, val in locals().items():
+            LOGGER.debug(f"{key}: {val!r}")
+
     with xr.set_options(keep_attrs=True):
         da = load_dems(
             dems,
@@ -464,6 +494,8 @@ def skydip(
     outdir: Path = DEFAULT_OUTDIR,
     overwrite: bool = DEFAULT_OVERWRITE,
     suffix: str = "skydip",
+    # other options
+    debug: bool = DEFAULT_DEBUG,
     **options: Any,
 ) -> Path:
     """Quick-look at a skydip observation.
@@ -489,16 +521,19 @@ def skydip(
             the atmospheric transmission when chan_weight is std/tx.
         format: Output image format of quick-look result.
         outdir: Output directory for the quick-look result.
-        suffix: Suffix that precedes the file extension.
         overwrite: Whether to overwrite the output if it exists.
-
-    Keyword Args:
-        options: Other options for saving the output (e.g. dpi).
+        suffix: Suffix that precedes the file extension.
+        debug: Whether to print detailed logs for debugging.
+        **options: Other options for saving the output (e.g. dpi).
 
     Returns:
         Absolute path of the saved file.
 
     """
+    with set_logger(debug):
+        for key, val in locals().items():
+            LOGGER.debug(f"{key}: {val!r}")
+
     with xr.set_options(keep_attrs=True):
         da = load_dems(
             dems,
@@ -556,6 +591,8 @@ def still(
     outdir: Path = DEFAULT_OUTDIR,
     overwrite: bool = DEFAULT_OVERWRITE,
     suffix: str = "still",
+    # other options
+    debug: bool = DEFAULT_DEBUG,
     **options: Any,
 ) -> Path:
     """Quick-look at a still observation.
@@ -581,16 +618,19 @@ def still(
             the atmospheric transmission when chan_weight is std/tx.
         format: Output data format of the quick-look result.
         outdir: Output directory for the quick-look result.
-        suffix: Suffix that precedes the file extension.
         overwrite: Whether to overwrite the output if it exists.
-
-    Keyword Args:
-        options: Other options for saving the output (e.g. dpi).
+        suffix: Suffix that precedes the file extension.
+        debug: Whether to print detailed logs for debugging.
+        **options: Other options for saving the output (e.g. dpi).
 
     Returns:
         Absolute path of the saved file.
 
     """
+    with set_logger(debug):
+        for key, val in locals().items():
+            LOGGER.debug(f"{key}: {val!r}")
+
     with xr.set_options(keep_attrs=True):
         da = load_dems(
             dems,
@@ -647,6 +687,8 @@ def xscan(
     outdir: Path = DEFAULT_OUTDIR,
     overwrite: bool = DEFAULT_OVERWRITE,
     suffix: str = "zscan",
+    # other options
+    debug: bool = DEFAULT_DEBUG,
     **options: Any,
 ) -> Path:
     """Quick-look at an observation of subref X-axis focus scan.
@@ -672,16 +714,19 @@ def xscan(
             the atmospheric transmission when chan_weight is std/tx.
         format: Output image format of quick-look result.
         outdir: Output directory for the quick-look result.
-        suffix: Suffix that precedes the file extension.
         overwrite: Whether to overwrite the output if it exists.
-
-    Keyword Args:
-        options: Other options for saving the output (e.g. dpi).
+        suffix: Suffix that precedes the file extension.
+        debug: Whether to print detailed logs for debugging.
+        **options: Other options for saving the output (e.g. dpi).
 
     Returns:
         Absolute path of the saved file.
 
     """
+    with set_logger(debug):
+        for key, val in locals().items():
+            LOGGER.debug(f"{key}: {val!r}")
+
     return _scan(
         dems,
         "x",
@@ -721,6 +766,8 @@ def yscan(
     outdir: Path = DEFAULT_OUTDIR,
     overwrite: bool = DEFAULT_OVERWRITE,
     suffix: str = "zscan",
+    # other options
+    debug: bool = DEFAULT_DEBUG,
     **options: Any,
 ) -> Path:
     """Quick-look at an observation of subref Y-axis focus scan.
@@ -746,16 +793,19 @@ def yscan(
             the atmospheric transmission when chan_weight is std/tx.
         format: Output image format of quick-look result.
         outdir: Output directory for the quick-look result.
-        suffix: Suffix that precedes the file extension.
         overwrite: Whether to overwrite the output if it exists.
-
-    Keyword Args:
-        options: Other options for saving the output (e.g. dpi).
+        suffix: Suffix that precedes the file extension.
+        debug: Whether to print detailed logs for debugging.
+        **options: Other options for saving the output (e.g. dpi).
 
     Returns:
         Absolute path of the saved file.
 
     """
+    with set_logger(debug):
+        for key, val in locals().items():
+            LOGGER.debug(f"{key}: {val!r}")
+
     return _scan(
         dems,
         "y",
@@ -795,6 +845,8 @@ def zscan(
     outdir: Path = DEFAULT_OUTDIR,
     overwrite: bool = DEFAULT_OVERWRITE,
     suffix: str = "zscan",
+    # other options
+    debug: bool = DEFAULT_DEBUG,
     **options: Any,
 ) -> Path:
     """Quick-look at an observation of subref Z-axis focus scan.
@@ -820,16 +872,19 @@ def zscan(
             the atmospheric transmission when chan_weight is std/tx.
         format: Output image format of quick-look result.
         outdir: Output directory for the quick-look result.
-        suffix: Suffix that precedes the file extension.
         overwrite: Whether to overwrite the output if it exists.
-
-    Keyword Args:
-        options: Other options for saving the output (e.g. dpi).
+        suffix: Suffix that precedes the file extension.
+        debug: Whether to print detailed logs for debugging.
+        **options: Other options for saving the output (e.g. dpi).
 
     Returns:
         Absolute path of the saved file.
 
     """
+    with set_logger(debug):
+        for key, val in locals().items():
+            LOGGER.debug(f"{key}: {val!r}")
+
     return _scan(
         dems,
         "z",
@@ -843,6 +898,7 @@ def zscan(
         chan_weight=chan_weight,
         pwv=pwv,
         # options for saving
+        debug=debug,
         format=format,
         outdir=outdir,
         overwrite=overwrite,
@@ -870,6 +926,8 @@ def _scan(
     outdir: Path = DEFAULT_OUTDIR,
     overwrite: bool = DEFAULT_OVERWRITE,
     suffix: str = "_scan",
+    # other options
+    debug: bool = DEFAULT_DEBUG,
     **options: Any,
 ) -> Path:
     """Quick-look at an observation of subref axial/radial focus scan.
@@ -896,16 +954,19 @@ def _scan(
             the atmospheric transmission when chan_weight is std/tx.
         format: Output image format of quick-look result.
         outdir: Output directory for the quick-look result.
-        suffix: Suffix that precedes the file extension.
         overwrite: Whether to overwrite the output if it exists.
-
-    Keyword Args:
-        options: Other options for saving the output (e.g. dpi).
+        suffix: Suffix that precedes the file extension.
+        debug: Whether to print detailed logs for debugging.
+        **options: Other options for saving the output (e.g. dpi).
 
     Returns:
         Absolute path of the saved file.
 
     """
+    with set_logger(debug):
+        for key, val in locals().items():
+            LOGGER.debug(f"{key}: {val!r}")
+
     with xr.set_options(keep_attrs=True):
         da = load_dems(
             dems,
@@ -1171,6 +1232,11 @@ def save_qlook(
 
 def main() -> None:
     """Entry point of the decode-qlook command."""
+
+    basicConfig(
+        datefmt="%Y-%m-%d %H:%M:%S",
+        format="[%(asctime)s %(name)s %(funcName)s %(levelname)s] %(message)s",
+    )
 
     Fire(
         {
