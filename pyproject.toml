@@ -21,7 +21,7 @@ documentation = "https://deshima-dev.github.io/decode/"
 [tool.poetry.dependencies]
 python = ">=3.9, <3.13"
 astropy = ">=5.2, <7.0"
-dems = "^0.9"
+dems = "^2024.7.2"
 matplotlib = "^3.7"
 numpy = "^1.23"
 pandas = ">=1.5, <3.0"
