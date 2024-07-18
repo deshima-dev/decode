@@ -3,7 +3,7 @@ message: "If you use this software, please cite it as below."
 
 title: "de:code"
 abstract: "DESHIMA code for data analysis"
-version: 2.17.0
+version: 2024.7.0
 date-released: 2024-07-14
 license: "MIT"
 doi: "10.5281/zenodo.3384216"
