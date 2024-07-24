@@ -430,7 +430,7 @@ def raster(
             )
         )
         t_atm = da_on.temperature
-        da_sub = t_atm * (da_on - da_base.data) / (t_atm - da_base.data)
+        da_sub = t_atm * (da_on - da_base) / (t_atm - da_base)
 
         # make continuum series
         weight = get_chan_weight(da_off, method=chan_weight, pwv=pwv)
