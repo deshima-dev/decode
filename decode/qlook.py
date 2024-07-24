@@ -207,7 +207,7 @@ def daisy(
                 kwargs={"fill_value": "extrapolate"},
             )
         )
-        da_sub = da_on - da_base.data
+        da_sub = da_on - da_base.values
 
         # make continuum series
         weight = get_chan_weight(da_off, method=chan_weight, pwv=pwv)
@@ -430,10 +430,7 @@ def raster(
             )
         )
         t_atm = da_on.temperature
-        da_sub = t_atm * (da_on - da_base.data)/ (t_atm - da_base.data)
-                                                    
-
-        
+        da_sub = t_atm * (da_on - da_base.data) / (t_atm - da_base.data)
 
         # make continuum series
         weight = get_chan_weight(da_off, method=chan_weight, pwv=pwv)
