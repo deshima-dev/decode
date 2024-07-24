@@ -429,7 +429,8 @@ def raster(
                 kwargs={"fill_value": "extrapolate"},
             )
         )
-        da_sub = da_on - da_base.values
+        t_atm = da_on.temperature
+        da_sub = t_atm * (da_on - da_base) / (t_atm - da_base)
 
         # make continuum series
         weight = get_chan_weight(da_off, method=chan_weight, pwv=pwv)
