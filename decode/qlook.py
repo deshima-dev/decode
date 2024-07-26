@@ -1316,7 +1316,7 @@ def fit_cube(cube):
             for j in range(7):
                 res.append(np.nan)
         res_list.append(res)
-    res_df = pd.DataFrame(np.array(res_list), columns=header)
+    res_df = pd.DataFrame(np.array(res_list), columns=np.array(header))
     return res_df
 
 
