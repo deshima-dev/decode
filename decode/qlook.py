@@ -445,16 +445,16 @@ def raster(
             skycoord_units=skycoord_units,
         )
         cont = cube.weighted(weight.fillna(0)).mean("chan")
-        
+
         ### GaussFit (cont)
         data = np.array(copy.deepcopy(cont).data)
-        data[data!=data] = 0.0
+        data[data != data] = 0.0
         x, y = np.meshgrid(np.array(cube["lon"]), np.array(cube["lat"]))
         initial_guess = (1, 0, 0, 30, 30, 0, 0)
         popt, pcov = curve_fit(gaussian_2d, (x, y), data.ravel(), p0=initial_guess)
         perr = np.sqrt(np.diag(pcov))
         data_fitted = gaussian_2d((x, y), *popt).reshape(x.shape)
-        
+
         ### GaussFit (all chan)
         df_gauss_fit = fit_cube(cube)
         # to toml here
@@ -477,7 +477,13 @@ def raster(
         max_pix = cont.where(cont == cont.max(), drop=True)
 
         cont.plot(ax=ax)  # type: ignore
-        cont_fit = ax.contour(data_fitted, extent=(x.min(), x.max(), y.min(), y.max()), origin='lower', levels=np.linspace(0, np.nanmax(data), 8), colors="k")
+        cont_fit = ax.contour(
+            data_fitted,
+            extent=(x.min(), x.max(), y.min(), y.max()),
+            origin="lower",
+            levels=np.linspace(0, np.nanmax(data), 8),
+            colors="k",
+        )
         ax.set_xlim(-map_lim, map_lim)
         ax.set_ylim(-map_lim, map_lim)
         ax.set_title(
@@ -1250,21 +1256,42 @@ def save_qlook(
     raise ValueError("Extension of filename is not valid.")
 
 
-
 def gaussian_2d(xy, amp, xo, yo, sigma_x, sigma_y, theta, offset):
     x, y = xy
     xo = float(xo)
     yo = float(yo)
-    a = (np.cos(theta)**2) / (2*sigma_x**2) + (np.sin(theta)**2) / (2*sigma_y**2)
-    b = -(np.sin(2*theta)) / (4*sigma_x**2) + (np.sin(2*theta)) / (4*sigma_y**2)
-    c = (np.sin(theta)**2) / (2*sigma_x**2) + (np.cos(theta)**2) / (2*sigma_y**2)
-    g = offset + amp*np.exp(-(a*((x-xo)**2) + 2*b*(x-xo)*(y-yo) + c*((y-yo)**2)))
+    a = (np.cos(theta) ** 2) / (2 * sigma_x**2) + (np.sin(theta) ** 2) / (
+        2 * sigma_y**2
+    )
+    b = -(np.sin(2 * theta)) / (4 * sigma_x**2) + (np.sin(2 * theta)) / (4 * sigma_y**2)
+    c = (np.sin(theta) ** 2) / (2 * sigma_x**2) + (np.cos(theta) ** 2) / (
+        2 * sigma_y**2
+    )
+    g = offset + amp * np.exp(
+        -(a * ((x - xo) ** 2) + 2 * b * (x - xo) * (y - yo) + c * ((y - yo) ** 2))
+    )
     return g.ravel()
+
 
 def fit_cube(cube):
     res_list = []
-    header = ["mkid_id", "amp", "center_lon", "center_lat", "sigma_x", "sigma_y", "theta_deg", "floor", 
-          "err_amp", "err_center_lon", "err_center_lat", "err_sigma_x", "err_sigma_y", "err_theta_deg", "err_floor"]
+    header = [
+        "mkid_id",
+        "amp",
+        "center_lon",
+        "center_lat",
+        "sigma_x",
+        "sigma_y",
+        "theta_deg",
+        "floor",
+        "err_amp",
+        "err_center_lon",
+        "err_center_lat",
+        "err_sigma_x",
+        "err_sigma_y",
+        "err_theta_deg",
+        "err_floor",
+    ]
     for i in range(len(cube)):
         res = []
         xr_tempo = cube[i]
@@ -1272,10 +1299,12 @@ def fit_cube(cube):
         res.append(mkid_id)
         try:
             data_tempo = np.array(xr_tempo.data)
-            data_tempo[data_tempo!=data_tempo] = 0.0
+            data_tempo[data_tempo != data_tempo] = 0.0
             x, y = np.meshgrid(np.array(cube["lon"]), np.array(cube["lat"]))
             initial_guess = (1, 0, 0, 30, 30, 0, 0)
-            popt, pcov = curve_fit(gaussian_2d, (x, y), data_tempo.ravel(), p0=initial_guess)
+            popt, pcov = curve_fit(
+                gaussian_2d, (x, y), data_tempo.ravel(), p0=initial_guess
+            )
             perr = np.sqrt(np.diag(pcov))
             for j in range(7):
                 res.append(popt[j])
