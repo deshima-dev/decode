@@ -185,6 +185,7 @@ def daisy(
             data_type=data_type,
             skycoord_units=skycoord_units,
         )
+        da = select.by(da, "state", exclude="GRAD")
 
         # fmt: off
         is_source = (
