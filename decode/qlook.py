@@ -287,7 +287,7 @@ def daisy(
                 f"(sigma_x = {popt[3]:+.2f}, "
                 f"sigma_y = {popt[4]:+.2f},"
                 f"theta = {np.rad2deg(popt[5]):+.1f}, \n"
-                f"min_frequency: {min_frequency/1e9:+.1f} GHz, max_frequency: {max_frequency/1e9:+.1f} GHz"
+                f"min_frequency: {float(min_frequency):+.1f} GHz, max_frequency: {float(max_frequency):+.1f} GHz"
             )
 
         for ax in axes:  # type: ignore
@@ -544,7 +544,7 @@ def raster(
                 f"(sigma_x = {popt[3]:+.2f}, "
                 f"sigma_y = {popt[4]:+.2f},"
                 f"theta = {np.rad2deg(popt[5]):+.1f}, \n"
-                f"min_frequency: {min_frequency/1e9:+.1f} GHz, max_frequency: {max_frequency/1e9:+.1f} GHz"
+                f"min_frequency: {float(min_frequency):+.1f} GHz, max_frequency: {float(max_frequency):+.1f} GHz"
             )
 
         for ax in axes:  # type: ignore
