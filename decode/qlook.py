@@ -27,6 +27,9 @@ from astropy.units import Quantity
 from fire import Fire
 from matplotlib.figure import Figure
 from . import assign, convert, load, make, plot, select, utils
+import copy
+from scipy.optimize import curve_fit
+import pandas as pd
 
 
 # constants
@@ -40,6 +43,7 @@ DEFAULT_EXCL_MKID_IDS = None
 DEFAULT_INCL_MKID_IDS = None
 DEFAULT_MIN_FREQUENCY = None
 DEFAULT_MAX_FREQUENCY = None
+DEFAULT_ROLLING_TIME = 200
 DEFAULT_OUTDIR = Path()
 DEFAULT_OVERWRITE = False
 DEFAULT_SKYCOORD_GRID = "6 arcsec"
@@ -119,6 +123,7 @@ def daisy(
     exclude_mkid_ids: Optional[Sequence[int]] = DEFAULT_EXCL_MKID_IDS,
     min_frequency: Optional[str] = DEFAULT_MIN_FREQUENCY,
     max_frequency: Optional[str] = DEFAULT_MAX_FREQUENCY,
+    rolling_time: int = DEFAULT_ROLLING_TIME,
     data_type: Literal["auto", "brightness", "df/f"] = DEFAULT_DATA_TYPE,
     # options for analysis
     source_radius: str = "60 arcsec",
@@ -185,7 +190,6 @@ def daisy(
             data_type=data_type,
             skycoord_units=skycoord_units,
         )
-        da = select.by(da, "state", exclude="GRAD")
 
         # fmt: off
         is_source = (
@@ -208,8 +212,13 @@ def daisy(
                 kwargs={"fill_value": "extrapolate"},
             )
         )
-        t_atm = da_on.temperature
-        da_sub = t_atm * (da_on - da_base) / (t_atm - da_base)
+        da_sub = da_on - da_base.values
+
+        ### Rolling
+        da_sub_rolled = (
+            copy.deepcopy(da_sub).rolling(time=int(rolling_time), center=True).mean()
+        )
+        da_sub = da_sub - da_sub_rolled
 
         # make continuum series
         weight = get_chan_weight(da_off, method=chan_weight, pwv=pwv)
@@ -222,6 +231,19 @@ def daisy(
             skycoord_units=skycoord_units,
         )
         cont = cube.weighted(weight.fillna(0)).mean("chan")
+
+        ### GaussFit (cont)
+        data = np.array(copy.deepcopy(cont).data)
+        data[data != data] = 0.0
+        x, y = np.meshgrid(np.array(cube["lon"]), np.array(cube["lat"]))
+        initial_guess = (1, 0, 0, 30, 30, 0, 0)
+        popt, pcov = curve_fit(gaussian_2d, (x, y), data.ravel(), p0=initial_guess)
+        perr = np.sqrt(np.diag(pcov))
+        data_fitted = gaussian_2d((x, y), *popt).reshape(x.shape)
+
+        ### GaussFit (all chan)
+        df_gauss_fit = fit_cube(cube)
+        # to toml here
 
         # save result
         suffixes = f".{suffix}.{format}"
@@ -241,13 +263,40 @@ def daisy(
         max_pix = cont.where(cont == cont.max(), drop=True)
 
         cont.plot(ax=ax)  # type: ignore
+        cont_fit = ax.contour(
+            data_fitted,
+            extent=(x.min(), x.max(), y.min(), y.max()),
+            origin="lower",
+            levels=np.linspace(0, np.nanmax(data), 8),
+            colors="k",
+        )
         ax.set_xlim(-map_lim, map_lim)
         ax.set_ylim(-map_lim, map_lim)
-        ax.set_title(
-            f"Maximum {cont.long_name.lower()} = {cont.max():.2e} [{cont.units}]\n"
-            f"(dAz = {float(max_pix.lon):+.1f} [{cont.lon.attrs['units']}], "
-            f"dEl = {float(max_pix.lat):+.1f} [{cont.lat.attrs['units']}])"
-        )
+        # ax.set_title(
+        #    f"Maximum {cont.long_name.lower()} = {cont.max():.2e} [{cont.units}]\n"
+        #    f"(dAz = {float(max_pix.lon):+.1f} [{cont.lon.attrs['units']}], "
+        #    f"dEl = {float(max_pix.lat):+.1f} [{cont.lat.attrs['units']}])"
+        # )
+        if min_frequency == None or max_frequency == None:
+            ax.set_title(
+                f"Maximum {cont.long_name.lower()} = {popt[0]:+.2f} [{cont.units}]\n"
+                f"(dAz = {popt[1]:+.2f} [{cont.lon.attrs['units']}], "
+                f"dEl = {popt[2]:+.2f} [{cont.lat.attrs['units']}]), \n"
+                f"(sigma_x = {popt[3]:+.2f}, "
+                f"sigma_y = {popt[4]:+.2f},"
+                f"theta = {np.rad2deg(popt[5]):+.1f}, \n"
+                f"min_frequency: None, max_frequency: None"
+            )
+        else:
+            ax.set_title(
+                f"Maximum {cont.long_name.lower()} = {popt[0]:+.2f} [{cont.units}]\n"
+                f"(dAz = {popt[1]:+.2f} [{cont.lon.attrs['units']}], "
+                f"dEl = {popt[2]:+.2f} [{cont.lat.attrs['units']}]), \n"
+                f"(sigma_x = {popt[3]:+.2f}, "
+                f"sigma_y = {popt[4]:+.2f},"
+                f"theta = {np.rad2deg(popt[5]):+.1f}, \n"
+                f"min_frequency: {float(min_frequency):+.1f} GHz, max_frequency: {float(max_frequency):+.1f} GHz"
+            )
 
         for ax in axes:  # type: ignore
             ax.grid(True)
@@ -431,8 +480,7 @@ def raster(
                 kwargs={"fill_value": "extrapolate"},
             )
         )
-        t_atm = da_on.temperature
-        da_sub = t_atm * (da_on - da_base) / (t_atm - da_base)
+        da_sub = da_on - da_base.values
 
         # make continuum series
         weight = get_chan_weight(da_off, method=chan_weight, pwv=pwv)
@@ -445,6 +493,19 @@ def raster(
             skycoord_units=skycoord_units,
         )
         cont = cube.weighted(weight.fillna(0)).mean("chan")
+
+        ### GaussFit (cont)
+        data = np.array(copy.deepcopy(cont).data)
+        data[data != data] = 0.0
+        x, y = np.meshgrid(np.array(cube["lon"]), np.array(cube["lat"]))
+        initial_guess = (1, 0, 0, 30, 30, 0, 0)
+        popt, pcov = curve_fit(gaussian_2d, (x, y), data.ravel(), p0=initial_guess)
+        perr = np.sqrt(np.diag(pcov))
+        data_fitted = gaussian_2d((x, y), *popt).reshape(x.shape)
+
+        ### GaussFit (all chan)
+        df_gauss_fit = fit_cube(cube)
+        # to toml here
 
         # save result
         suffixes = f".{suffix}.{format}"
@@ -464,13 +525,35 @@ def raster(
         max_pix = cont.where(cont == cont.max(), drop=True)
 
         cont.plot(ax=ax)  # type: ignore
+        cont_fit = ax.contour(
+            data_fitted,
+            extent=(x.min(), x.max(), y.min(), y.max()),
+            origin="lower",
+            levels=np.linspace(0, np.nanmax(data), 8),
+            colors="k",
+        )
         ax.set_xlim(-map_lim, map_lim)
         ax.set_ylim(-map_lim, map_lim)
-        ax.set_title(
-            f"Maximum {cont.long_name.lower()} = {cont.max():.2e} [{cont.units}]\n"
-            f"(dAz = {float(max_pix.lon):+.1f} [{cont.lon.attrs['units']}], "
-            f"dEl = {float(max_pix.lat):+.1f} [{cont.lat.attrs['units']}])"
-        )
+        if min_frequency == None or max_frequency == None:
+            ax.set_title(
+                f"Maximum {cont.long_name.lower()} = {popt[0]:+.2f} [{cont.units}]\n"
+                f"(dAz = {popt[1]:+.2f} [{cont.lon.attrs['units']}], "
+                f"dEl = {popt[2]:+.2f} [{cont.lat.attrs['units']}]), \n"
+                f"(sigma_x = {popt[3]:+.2f}, "
+                f"sigma_y = {popt[4]:+.2f},"
+                f"theta = {np.rad2deg(popt[5]):+.1f}, \n"
+                f"min_frequency: None, max_frequency: None"
+            )
+        else:
+            ax.set_title(
+                f"Maximum {cont.long_name.lower()} = {popt[0]:+.2f} [{cont.units}]\n"
+                f"(dAz = {popt[1]:+.2f} [{cont.lon.attrs['units']}], "
+                f"dEl = {popt[2]:+.2f} [{cont.lat.attrs['units']}]), \n"
+                f"(sigma_x = {popt[3]:+.2f}, "
+                f"sigma_y = {popt[4]:+.2f},"
+                f"theta = {np.rad2deg(popt[5]):+.1f}, \n"
+                f"min_frequency: {float(min_frequency):+.1f} GHz, max_frequency: {float(max_frequency):+.1f} GHz"
+            )
 
         for ax in axes:  # type: ignore
             ax.grid(True)
@@ -1231,6 +1314,70 @@ def save_qlook(
         return path
 
     raise ValueError("Extension of filename is not valid.")
+
+
+def gaussian_2d(xy, amp, xo, yo, sigma_x, sigma_y, theta, offset):
+    x, y = xy
+    xo = float(xo)
+    yo = float(yo)
+    a = (np.cos(theta) ** 2) / (2 * sigma_x**2) + (np.sin(theta) ** 2) / (
+        2 * sigma_y**2
+    )
+    b = -(np.sin(2 * theta)) / (4 * sigma_x**2) + (np.sin(2 * theta)) / (4 * sigma_y**2)
+    c = (np.sin(theta) ** 2) / (2 * sigma_x**2) + (np.cos(theta) ** 2) / (
+        2 * sigma_y**2
+    )
+    g = offset + amp * np.exp(
+        -(a * ((x - xo) ** 2) + 2 * b * (x - xo) * (y - yo) + c * ((y - yo) ** 2))
+    )
+    return g.ravel()
+
+
+def fit_cube(cube):
+    res_list = []
+    header = [
+        "mkid_id",
+        "amp",
+        "center_lon",
+        "center_lat",
+        "sigma_x",
+        "sigma_y",
+        "theta_deg",
+        "floor",
+        "err_amp",
+        "err_center_lon",
+        "err_center_lat",
+        "err_sigma_x",
+        "err_sigma_y",
+        "err_theta_deg",
+        "err_floor",
+    ]
+    for i in range(len(cube)):
+        res = []
+        xr_tempo = cube[i]
+        mkid_id = int(xr_tempo["d2_mkid_id"])
+        res.append(mkid_id)
+        try:
+            data_tempo = np.array(xr_tempo.data)
+            data_tempo[data_tempo != data_tempo] = 0.0
+            x, y = np.meshgrid(np.array(cube["lon"]), np.array(cube["lat"]))
+            initial_guess = (1, 0, 0, 30, 30, 0, 0)
+            popt, pcov = curve_fit(
+                gaussian_2d, (x, y), data_tempo.ravel(), p0=initial_guess
+            )
+            perr = np.sqrt(np.diag(pcov))
+            for j in range(7):
+                res.append(popt[j])
+            for j in range(7):
+                res.append(perr[j])
+        except:
+            for j in range(7):
+                res.append(np.nan)
+            for j in range(7):
+                res.append(np.nan)
+        res_list.append(res)
+    res_df = pd.DataFrame(np.array(res_list), columns=np.array(header))
+    return res_df
 
 
 def main() -> None:
