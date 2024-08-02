@@ -31,7 +31,6 @@ import copy
 from scipy.optimize import curve_fit
 import pandas as pd
 
-
 # constants
 DATA_FORMATS = "csv", "nc", "zarr", "zarr.zip"
 DEFAULT_DATA_TYPE = "auto"
@@ -188,6 +187,7 @@ def daisy(
             data_type=data_type,
             skycoord_units=skycoord_units,
         )
+        da = select.by(da, "state", exclude="GRAD")
 
         # fmt: off
         is_source = (
@@ -233,10 +233,6 @@ def daisy(
         popt, pcov = curve_fit(gaussian_2d, (x, y), data.ravel(), p0=initial_guess)
         perr = np.sqrt(np.diag(pcov))
         data_fitted = gaussian_2d((x, y), *popt).reshape(x.shape)
-
-        ### GaussFit (all chan)
-        df_gauss_fit = fit_cube(cube)
-        # to toml here
 
         # save result
         suffixes = f".{suffix}.{format}"
@@ -473,7 +469,8 @@ def raster(
                 kwargs={"fill_value": "extrapolate"},
             )
         )
-        da_sub = da_on - da_base.values
+        t_atm = da_on.temperature
+        da_sub = t_atm * (da_on - da_base) / (t_atm - da_base)
 
         # make continuum series
         weight = get_chan_weight(da_off, method=chan_weight, pwv=pwv)
@@ -495,10 +492,6 @@ def raster(
         popt, pcov = curve_fit(gaussian_2d, (x, y), data.ravel(), p0=initial_guess)
         perr = np.sqrt(np.diag(pcov))
         data_fitted = gaussian_2d((x, y), *popt).reshape(x.shape)
-
-        ### GaussFit (all chan)
-        df_gauss_fit = fit_cube(cube)
-        # to toml here
 
         # save result
         suffixes = f".{suffix}.{format}"
@@ -527,6 +520,11 @@ def raster(
         )
         ax.set_xlim(-map_lim, map_lim)
         ax.set_ylim(-map_lim, map_lim)
+        # ax.set_title(
+        #    f"Maximum {cont.long_name.lower()} = {cont.max():.2e} [{cont.units}]\n"
+        #    f"(dAz = {float(max_pix.lon):+.1f} [{cont.lon.attrs['units']}], "
+        #    f"dEl = {float(max_pix.lat):+.1f} [{cont.lat.attrs['units']}])"
+        # )
         if min_frequency == None or max_frequency == None:
             ax.set_title(
                 f"Maximum {cont.long_name.lower()} = {popt[0]:+.2f} [{cont.units}]\n"
@@ -1324,53 +1322,6 @@ def gaussian_2d(xy, amp, xo, yo, sigma_x, sigma_y, theta, offset):
         -(a * ((x - xo) ** 2) + 2 * b * (x - xo) * (y - yo) + c * ((y - yo) ** 2))
     )
     return g.ravel()
-
-
-def fit_cube(cube):
-    res_list = []
-    header = [
-        "mkid_id",
-        "amp",
-        "center_lon",
-        "center_lat",
-        "sigma_x",
-        "sigma_y",
-        "theta_deg",
-        "floor",
-        "err_amp",
-        "err_center_lon",
-        "err_center_lat",
-        "err_sigma_x",
-        "err_sigma_y",
-        "err_theta_deg",
-        "err_floor",
-    ]
-    for i in range(len(cube)):
-        res = []
-        xr_tempo = cube[i]
-        mkid_id = int(xr_tempo["d2_mkid_id"])
-        res.append(mkid_id)
-        try:
-            data_tempo = np.array(xr_tempo.data)
-            data_tempo[data_tempo != data_tempo] = 0.0
-            x, y = np.meshgrid(np.array(cube["lon"]), np.array(cube["lat"]))
-            initial_guess = (1, 0, 0, 30, 30, 0, 0)
-            popt, pcov = curve_fit(
-                gaussian_2d, (x, y), data_tempo.ravel(), p0=initial_guess
-            )
-            perr = np.sqrt(np.diag(pcov))
-            for j in range(7):
-                res.append(popt[j])
-            for j in range(7):
-                res.append(perr[j])
-        except:
-            for j in range(7):
-                res.append(np.nan)
-            for j in range(7):
-                res.append(np.nan)
-        res_list.append(res)
-    res_df = pd.DataFrame(np.array(res_list), columns=np.array(header))
-    return res_df
 
 
 def main() -> None:
