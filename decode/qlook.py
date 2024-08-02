@@ -27,7 +27,9 @@ from astropy.units import Quantity
 from fire import Fire
 from matplotlib.figure import Figure
 from . import assign, convert, load, make, plot, select, utils
-
+import copy
+from scipy.optimize import curve_fit
+import pandas as pd
 
 # constants
 DATA_FORMATS = "csv", "nc", "zarr", "zarr.zip"
@@ -222,6 +224,10 @@ def daisy(
             skycoord_units=skycoord_units,
         )
         cont = cube.weighted(weight.fillna(0)).mean("chan")
+
+        ### GaussFit (all chan)
+        df_gauss_fit = fit_cube(cube)
+        # to toml here
 
         # save result
         suffixes = f".{suffix}.{format}"
@@ -445,6 +451,10 @@ def raster(
             skycoord_units=skycoord_units,
         )
         cont = cube.weighted(weight.fillna(0)).mean("chan")
+
+        ### GaussFit (all chan)
+        df_gauss_fit = fit_cube(cube)
+        # to toml here
 
         # save result
         suffixes = f".{suffix}.{format}"
@@ -1231,6 +1241,70 @@ def save_qlook(
         return path
 
     raise ValueError("Extension of filename is not valid.")
+
+
+def gaussian_2d(xy, amp, xo, yo, sigma_x, sigma_y, theta, offset):
+    x, y = xy
+    xo = float(xo)
+    yo = float(yo)
+    a = (np.cos(theta) ** 2) / (2 * sigma_x**2) + (np.sin(theta) ** 2) / (
+        2 * sigma_y**2
+    )
+    b = -(np.sin(2 * theta)) / (4 * sigma_x**2) + (np.sin(2 * theta)) / (4 * sigma_y**2)
+    c = (np.sin(theta) ** 2) / (2 * sigma_x**2) + (np.cos(theta) ** 2) / (
+        2 * sigma_y**2
+    )
+    g = offset + amp * np.exp(
+        -(a * ((x - xo) ** 2) + 2 * b * (x - xo) * (y - yo) + c * ((y - yo) ** 2))
+    )
+    return g.ravel()
+
+
+def fit_cube(cube):
+    res_list = []
+    header = [
+        "mkid_id",
+        "amp",
+        "center_lon",
+        "center_lat",
+        "sigma_x",
+        "sigma_y",
+        "theta_deg",
+        "floor",
+        "err_amp",
+        "err_center_lon",
+        "err_center_lat",
+        "err_sigma_x",
+        "err_sigma_y",
+        "err_theta_deg",
+        "err_floor",
+    ]
+    for i in range(len(cube)):
+        res = []
+        xr_tempo = cube[i]
+        mkid_id = int(xr_tempo["d2_mkid_id"])
+        res.append(mkid_id)
+        try:
+            data_tempo = np.array(xr_tempo.data)
+            data_tempo[data_tempo != data_tempo] = 0.0
+            x, y = np.meshgrid(np.array(cube["lon"]), np.array(cube["lat"]))
+            initial_guess = (1, 0, 0, 30, 30, 0, 0)
+            popt, pcov = curve_fit(
+                gaussian_2d, (x, y), data_tempo.ravel(), p0=initial_guess
+            )
+            perr = np.sqrt(np.diag(pcov))
+            for j in range(7):
+                res.append(popt[j])
+            for j in range(7):
+                res.append(perr[j])
+        except:
+            for j in range(7):
+                res.append(np.nan)
+            for j in range(7):
+                res.append(np.nan)
+        res_list.append(res)
+    res_df = pd.DataFrame(np.array(res_list), columns=np.array(header))
+    return res_df
 
 
 def main() -> None:
