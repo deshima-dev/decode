@@ -106,7 +106,7 @@ def cube(
     init_sigma_y: float = 20.0,
     init_theta: float = 0.0,
     init_offset: float = 0.0,
-) -> xr.DataArray:
+) -> xr.Dataset:
     """Apply 2D Gaussian fit to each channel of a 3D spectral cube."""
     return cube.curvefit(
         coords=("lon", "lat"),
