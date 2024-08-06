@@ -93,3 +93,32 @@ def dtau_dpwv(freq: NDArray[np.float_]) -> xr.DataArray:
     tau = load.atm(type="tau").interp(freq=freq, method="linear")
     fit = tau.curvefit("pwv", lambda x, a, b: a * x + b)
     return fit["curvefit_coefficients"].sel(param="a", drop=True)
+
+
+def cube(
+    cube: xr.DataArray,
+    /,
+    *,
+    init_amp: float = 1.0,
+    init_x0: float = 0.0,
+    init_y0: float = 0.0,
+    init_sigma_x: float = 20.0,
+    init_sigma_y: float = 20.0,
+    init_theta: float = 0.0,
+    init_offset: float = 0.0,
+) -> xr.DataArray:
+    """Apply 2D Gaussian fit to each channel of a 3D spectral cube."""
+    return cube.curvefit(
+        coords=("lon", "lat"),
+        func=gaussian_2d,
+        p0={
+            "amp": init_amp,
+            "x0": init_x0,
+            "y0": init_y0,
+            "sigma_x": init_sigma_x,
+            "sigma_y": init_sigma_y,
+            "theta": init_theta,
+            "offset": init_offset,
+        },
+        errors="ignore",
+    )
