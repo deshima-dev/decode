@@ -17,7 +17,7 @@ from logging import DEBUG, basicConfig, getLogger
 from pathlib import Path
 from typing import Any, Literal, Optional, Sequence, Union, cast
 from warnings import catch_warnings, simplefilter
-
+import copy
 
 # dependencies
 import numpy as np
@@ -26,10 +26,9 @@ import matplotlib.pyplot as plt
 from astropy.units import Quantity
 from fire import Fire
 from matplotlib.figure import Figure
-from . import assign, convert, load, make, plot, select, utils
-import copy
 from scipy.optimize import curve_fit
-import pandas as pd
+from . import assign, convert, load, make, plot, select, utils
+
 
 # constants
 DATA_FORMATS = "csv", "nc", "zarr", "zarr.zip"
@@ -227,7 +226,7 @@ def daisy(
 
         ### GaussFit (cont)
         data = np.array(copy.deepcopy(cont).data)
-        data[data != data] = 0.0
+        data[np.isnan(data)] = 0
         x, y = np.meshgrid(np.array(cube["lon"]), np.array(cube["lat"]))
         initial_guess = (1, 0, 0, 30, 30, 0, 0)
         popt, pcov = curve_fit(gaussian_2d, (x, y), data.ravel(), p0=initial_guess)
@@ -252,7 +251,7 @@ def daisy(
         max_pix = cont.where(cont == cont.max(), drop=True)
 
         cont.plot(ax=ax)  # type: ignore
-        cont_fit = ax.contour(
+        ax.contour(
             data_fitted,
             extent=(x.min(), x.max(), y.min(), y.max()),
             origin="lower",
@@ -261,31 +260,15 @@ def daisy(
         )
         ax.set_xlim(-map_lim, map_lim)
         ax.set_ylim(-map_lim, map_lim)
-        # ax.set_title(
-        #    f"Maximum {cont.long_name.lower()} = {cont.max():.2e} [{cont.units}]\n"
-        #    f"(dAz = {float(max_pix.lon):+.1f} [{cont.lon.attrs['units']}], "
-        #    f"dEl = {float(max_pix.lat):+.1f} [{cont.lat.attrs['units']}])"
-        # )
-        if min_frequency == None or max_frequency == None:
-            ax.set_title(
-                f"Maximum {cont.long_name.lower()} = {popt[0]:+.2f} [{cont.units}]\n"
-                f"(dAz = {popt[1]:+.2f} [{cont.lon.attrs['units']}], "
-                f"dEl = {popt[2]:+.2f} [{cont.lat.attrs['units']}]), \n"
-                f"(sigma_x = {popt[3]:+.2f}, "
-                f"sigma_y = {popt[4]:+.2f},"
-                f"theta = {np.rad2deg(popt[5]):+.1f}, \n"
-                f"min_frequency: None, max_frequency: None"
-            )
-        else:
-            ax.set_title(
-                f"Maximum {cont.long_name.lower()} = {popt[0]:+.2f} [{cont.units}]\n"
-                f"(dAz = {popt[1]:+.2f} [{cont.lon.attrs['units']}], "
-                f"dEl = {popt[2]:+.2f} [{cont.lat.attrs['units']}]), \n"
-                f"(sigma_x = {popt[3]:+.2f}, "
-                f"sigma_y = {popt[4]:+.2f},"
-                f"theta = {np.rad2deg(popt[5]):+.1f}, \n"
-                f"min_frequency: {float(min_frequency):+.1f} GHz, max_frequency: {float(max_frequency):+.1f} GHz"
-            )
+        ax.set_title(
+            f"Maximum {cont.long_name.lower()} = {popt[0]:+.2f} [{cont.units}]\n"
+            f"(dAz = {popt[1]:+.2f} [{cont.lon.attrs['units']}], "
+            f"dEl = {popt[2]:+.2f} [{cont.lat.attrs['units']}]), \n"
+            f"(sigma_x = {popt[3]:+.2f}, "
+            f"sigma_y = {popt[4]:+.2f},"
+            f"theta = {np.rad2deg(popt[5]):+.1f}, \n"
+            f"min_frequency: {min_frequency}, max_frequency: {max_frequency}"
+        )
 
         for ax in axes:  # type: ignore
             ax.grid(True)
@@ -520,31 +503,15 @@ def raster(
         )
         ax.set_xlim(-map_lim, map_lim)
         ax.set_ylim(-map_lim, map_lim)
-        # ax.set_title(
-        #    f"Maximum {cont.long_name.lower()} = {cont.max():.2e} [{cont.units}]\n"
-        #    f"(dAz = {float(max_pix.lon):+.1f} [{cont.lon.attrs['units']}], "
-        #    f"dEl = {float(max_pix.lat):+.1f} [{cont.lat.attrs['units']}])"
-        # )
-        if min_frequency == None or max_frequency == None:
-            ax.set_title(
-                f"Maximum {cont.long_name.lower()} = {popt[0]:+.2f} [{cont.units}]\n"
-                f"(dAz = {popt[1]:+.2f} [{cont.lon.attrs['units']}], "
-                f"dEl = {popt[2]:+.2f} [{cont.lat.attrs['units']}]), \n"
-                f"(sigma_x = {popt[3]:+.2f}, "
-                f"sigma_y = {popt[4]:+.2f},"
-                f"theta = {np.rad2deg(popt[5]):+.1f}, \n"
-                f"min_frequency: None, max_frequency: None"
-            )
-        else:
-            ax.set_title(
-                f"Maximum {cont.long_name.lower()} = {popt[0]:+.2f} [{cont.units}]\n"
-                f"(dAz = {popt[1]:+.2f} [{cont.lon.attrs['units']}], "
-                f"dEl = {popt[2]:+.2f} [{cont.lat.attrs['units']}]), \n"
-                f"(sigma_x = {popt[3]:+.2f}, "
-                f"sigma_y = {popt[4]:+.2f},"
-                f"theta = {np.rad2deg(popt[5]):+.1f}, \n"
-                f"min_frequency: {float(min_frequency):+.1f} GHz, max_frequency: {float(max_frequency):+.1f} GHz"
-            )
+        ax.set_title(
+            f"Maximum {cont.long_name.lower()} = {popt[0]:+.2f} [{cont.units}]\n"
+            f"(dAz = {popt[1]:+.2f} [{cont.lon.attrs['units']}], "
+            f"dEl = {popt[2]:+.2f} [{cont.lat.attrs['units']}]), \n"
+            f"(sigma_x = {popt[3]:+.2f}, "
+            f"sigma_y = {popt[4]:+.2f},"
+            f"theta = {np.rad2deg(popt[5]):+.1f}, \n"
+            f"min_frequency: {min_frequency}, max_frequency: {max_frequency}"
+        )
 
         for ax in axes:  # type: ignore
             ax.grid(True)
@@ -1307,10 +1274,10 @@ def save_qlook(
     raise ValueError("Extension of filename is not valid.")
 
 
-def gaussian_2d(xy, amp, xo, yo, sigma_x, sigma_y, theta, offset):
+def gaussian_2d(xy, amp, x0, y0, sigma_x, sigma_y, theta, offset):
     x, y = xy
-    xo = float(xo)
-    yo = float(yo)
+    x0 = float(x0)
+    y0 = float(y0)
     a = (np.cos(theta) ** 2) / (2 * sigma_x**2) + (np.sin(theta) ** 2) / (
         2 * sigma_y**2
     )
@@ -1319,7 +1286,7 @@ def gaussian_2d(xy, amp, xo, yo, sigma_x, sigma_y, theta, offset):
         2 * sigma_y**2
     )
     g = offset + amp * np.exp(
-        -(a * ((x - xo) ** 2) + 2 * b * (x - xo) * (y - yo) + c * ((y - yo) ** 2))
+        -(a * ((x - x0) ** 2) + 2 * b * (x - x0) * (y - y0) + c * ((y - y0) ** 2))
     )
     return g.ravel()
 
