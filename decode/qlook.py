@@ -27,7 +27,7 @@ from astropy.units import Quantity
 from fire import Fire
 from matplotlib.figure import Figure
 from scipy.optimize import curve_fit
-from . import assign, convert, load, make, plot, select, utils
+from . import assign, convert, load, make, plot, select, utils, fit
 import pandas as pd
 
 # constants
@@ -452,7 +452,7 @@ def raster(
         cont = cube.weighted(weight.fillna(0)).mean("chan")
 
         ### GaussFit (all chan)
-        df_gauss_fit = fit_cube(cube)
+        fitted_cube = fit.cube(cube)
         # to toml here
 
         # save result
@@ -1240,23 +1240,6 @@ def save_qlook(
         return path
 
     raise ValueError("Extension of filename is not valid.")
-
-
-def gaussian_2d(xy, amp, x0, y0, sigma_x, sigma_y, theta, offset):
-    x, y = xy
-    x0 = float(x0)
-    y0 = float(y0)
-    a = (np.cos(theta) ** 2) / (2 * sigma_x**2) + (np.sin(theta) ** 2) / (
-        2 * sigma_y**2
-    )
-    b = -(np.sin(2 * theta)) / (4 * sigma_x**2) + (np.sin(2 * theta)) / (4 * sigma_y**2)
-    c = (np.sin(theta) ** 2) / (2 * sigma_x**2) + (np.cos(theta) ** 2) / (
-        2 * sigma_y**2
-    )
-    g = offset + amp * np.exp(
-        -(a * ((x - x0) ** 2) + 2 * b * (x - x0) * (y - y0) + c * ((y - y0) ** 2))
-    )
-    return g.ravel()
 
 
 def main() -> None:
