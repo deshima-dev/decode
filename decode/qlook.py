@@ -41,6 +41,7 @@ DEFAULT_EXCL_MKID_IDS = None
 DEFAULT_INCL_MKID_IDS = None
 DEFAULT_MIN_FREQUENCY = None
 DEFAULT_MAX_FREQUENCY = None
+DEFAULT_ROLLING_TIME = 200
 DEFAULT_OUTDIR = Path()
 DEFAULT_OVERWRITE = False
 DEFAULT_SKYCOORD_GRID = "6 arcsec"
@@ -122,6 +123,7 @@ def daisy(
     max_frequency: Optional[str] = DEFAULT_MAX_FREQUENCY,
     data_type: Literal["auto", "brightness", "df/f"] = DEFAULT_DATA_TYPE,
     # options for analysis
+    rolling_time: int = DEFAULT_ROLLING_TIME,
     source_radius: str = "60 arcsec",
     chan_weight: Literal["uniform", "std", "std/tx"] = "std/tx",
     pwv: Literal["0.5", "1.0", "2.0", "3.0", "4.0", "5.0"] = "5.0",
@@ -150,6 +152,7 @@ def daisy(
             Defaults to no maximum frequency bound.
         data_type: Data type of the input DEMS file.
             Defaults to the ``long_name`` attribute in it.
+        rolling_time: Moving window size.
         source_radius: Radius of the on-source area.
             Other areas are considered off-source in sky subtraction.
         chan_weight: Weighting method along the channel axis.
@@ -187,6 +190,10 @@ def daisy(
             skycoord_units=skycoord_units,
         )
         da = select.by(da, "state", exclude="GRAD")
+
+        ### Rolling
+        da_rolled = da.rolling(time=int(rolling_time), center=True).mean()
+        da = da - da_rolled
 
         # fmt: off
         is_source = (
