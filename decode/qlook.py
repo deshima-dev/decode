@@ -120,9 +120,9 @@ def daisy(
     exclude_mkid_ids: Optional[Sequence[int]] = DEFAULT_EXCL_MKID_IDS,
     min_frequency: Optional[str] = DEFAULT_MIN_FREQUENCY,
     max_frequency: Optional[str] = DEFAULT_MAX_FREQUENCY,
-    rolling_time: int = DEFAULT_ROLLING_TIME,
     data_type: Literal["auto", "brightness", "df/f"] = DEFAULT_DATA_TYPE,
     # options for analysis
+    rolling_time: int = DEFAULT_ROLLING_TIME,
     source_radius: str = "60 arcsec",
     chan_weight: Literal["uniform", "std", "std/tx"] = "std/tx",
     pwv: Literal["0.5", "1.0", "2.0", "3.0", "4.0", "5.0"] = "5.0",
@@ -151,6 +151,7 @@ def daisy(
             Defaults to no maximum frequency bound.
         data_type: Data type of the input DEMS file.
             Defaults to the ``long_name`` attribute in it.
+        rolling_time: Moving window size.
         source_radius: Radius of the on-source area.
             Other areas are considered off-source in sky subtraction.
         chan_weight: Weighting method along the channel axis.
@@ -189,6 +190,10 @@ def daisy(
         )
         da = select.by(da, "state", exclude="GRAD")
 
+        ### Rolling
+        da_rolled = da.rolling(time=int(rolling_time), center=True).mean()
+        da = da - da_rolled
+
         # fmt: off
         is_source = (
             (da.lon**2 + da.lat**2)
@@ -212,10 +217,6 @@ def daisy(
         )
         t_atm = da_on.temperature
         da_sub = t_atm * (da_on - da_base) / (t_atm - da_base)
-
-        ### Rolling
-        da_sub_rolled = da_sub.rolling(time=int(rolling_time), center=True).mean()
-        da_sub = da_sub - da_sub_rolled
 
         # make continuum series
         weight = get_chan_weight(da_off, method=chan_weight, pwv=pwv)
