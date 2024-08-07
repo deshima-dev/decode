@@ -12,7 +12,6 @@ __all__ = [
 
 
 # standard library
-import copy
 from contextlib import contextmanager
 from logging import DEBUG, basicConfig, getLogger
 from pathlib import Path
@@ -27,7 +26,6 @@ import matplotlib.pyplot as plt
 from astropy.units import Quantity
 from fire import Fire
 from matplotlib.figure import Figure
-from scipy.optimize import curve_fit
 from . import assign, convert, load, make, plot, select, utils
 
 
@@ -42,6 +40,7 @@ DEFAULT_EXCL_MKID_IDS = None
 DEFAULT_INCL_MKID_IDS = None
 DEFAULT_MIN_FREQUENCY = None
 DEFAULT_MAX_FREQUENCY = None
+DEFAULT_ROLLING_TIME = 200
 DEFAULT_OUTDIR = Path()
 DEFAULT_OVERWRITE = False
 DEFAULT_SKYCOORD_GRID = "6 arcsec"
@@ -123,6 +122,7 @@ def daisy(
     max_frequency: Optional[str] = DEFAULT_MAX_FREQUENCY,
     data_type: Literal["auto", "brightness", "df/f"] = DEFAULT_DATA_TYPE,
     # options for analysis
+    rolling_time: int = DEFAULT_ROLLING_TIME,
     source_radius: str = "60 arcsec",
     chan_weight: Literal["uniform", "std", "std/tx"] = "std/tx",
     pwv: Literal["0.5", "1.0", "2.0", "3.0", "4.0", "5.0"] = "5.0",
@@ -151,6 +151,7 @@ def daisy(
             Defaults to no maximum frequency bound.
         data_type: Data type of the input DEMS file.
             Defaults to the ``long_name`` attribute in it.
+        rolling_time: Moving window size.
         source_radius: Radius of the on-source area.
             Other areas are considered off-source in sky subtraction.
         chan_weight: Weighting method along the channel axis.
@@ -189,6 +190,10 @@ def daisy(
         )
         da = select.by(da, "state", exclude="GRAD")
 
+        ### Rolling
+        da_rolled = da.rolling(time=int(rolling_time), center=True).mean()
+        da = da - da_rolled
+
         # fmt: off
         is_source = (
             (da.lon**2 + da.lat**2)
@@ -225,15 +230,6 @@ def daisy(
         )
         cont = cube.weighted(weight.fillna(0)).mean("chan")
 
-        ### GaussFit (cont)
-        data = np.array(copy.deepcopy(cont).data)
-        data[np.isnan(data)] = 0
-        x, y = np.meshgrid(np.array(cube["lon"]), np.array(cube["lat"]))
-        initial_guess = (1, 0, 0, 30, 30, 0, 0)
-        popt, pcov = curve_fit(gaussian_2d, (x, y), data.ravel(), p0=initial_guess)
-        perr = np.sqrt(np.diag(pcov))
-        data_fitted = gaussian_2d((x, y), *popt).reshape(x.shape)
-
         # save result
         suffixes = f".{suffix}.{format}"
         file = Path(outdir) / Path(dems).with_suffix(suffixes).name
@@ -252,23 +248,12 @@ def daisy(
         max_pix = cont.where(cont == cont.max(), drop=True)
 
         cont.plot(ax=ax)  # type: ignore
-        ax.contour(
-            data_fitted,
-            extent=(x.min(), x.max(), y.min(), y.max()),
-            origin="lower",
-            levels=np.linspace(0, np.nanmax(data), 8),
-            colors="k",
-        )
         ax.set_xlim(-map_lim, map_lim)
         ax.set_ylim(-map_lim, map_lim)
         ax.set_title(
-            f"Maximum {cont.long_name.lower()} = {popt[0]:+.2f} [{cont.units}]\n"
-            f"(dAz = {popt[1]:+.2f} [{cont.lon.attrs['units']}], "
-            f"dEl = {popt[2]:+.2f} [{cont.lat.attrs['units']}]), \n"
-            f"(sigma_x = {popt[3]:+.2f}, "
-            f"sigma_y = {popt[4]:+.2f},"
-            f"theta = {np.rad2deg(popt[5]):+.1f}, \n"
-            f"min_frequency: {min_frequency}, max_frequency: {max_frequency}"
+            f"Maximum {cont.long_name.lower()} = {cont.max():.2e} [{cont.units}]\n"
+            f"(dAz = {float(max_pix.lon):+.1f} [{cont.lon.attrs['units']}], "
+            f"dEl = {float(max_pix.lat):+.1f} [{cont.lat.attrs['units']}])"
         )
 
         for ax in axes:  # type: ignore
@@ -468,15 +453,6 @@ def raster(
         )
         cont = cube.weighted(weight.fillna(0)).mean("chan")
 
-        ### GaussFit (cont)
-        data = np.array(copy.deepcopy(cont).data)
-        data[data != data] = 0.0
-        x, y = np.meshgrid(np.array(cube["lon"]), np.array(cube["lat"]))
-        initial_guess = (1, 0, 0, 30, 30, 0, 0)
-        popt, pcov = curve_fit(gaussian_2d, (x, y), data.ravel(), p0=initial_guess)
-        perr = np.sqrt(np.diag(pcov))
-        data_fitted = gaussian_2d((x, y), *popt).reshape(x.shape)
-
         # save result
         suffixes = f".{suffix}.{format}"
         file = Path(outdir) / Path(dems).with_suffix(suffixes).name
@@ -495,23 +471,12 @@ def raster(
         max_pix = cont.where(cont == cont.max(), drop=True)
 
         cont.plot(ax=ax)  # type: ignore
-        ax.contour(
-            data_fitted,
-            extent=(x.min(), x.max(), y.min(), y.max()),
-            origin="lower",
-            levels=np.linspace(0, np.nanmax(data), 8),
-            colors="k",
-        )
         ax.set_xlim(-map_lim, map_lim)
         ax.set_ylim(-map_lim, map_lim)
         ax.set_title(
-            f"Maximum {cont.long_name.lower()} = {popt[0]:+.2f} [{cont.units}]\n"
-            f"(dAz = {popt[1]:+.2f} [{cont.lon.attrs['units']}], "
-            f"dEl = {popt[2]:+.2f} [{cont.lat.attrs['units']}]), \n"
-            f"(sigma_x = {popt[3]:+.2f}, "
-            f"sigma_y = {popt[4]:+.2f},"
-            f"theta = {np.rad2deg(popt[5]):+.1f}, \n"
-            f"min_frequency: {min_frequency}, max_frequency: {max_frequency}"
+            f"Maximum {cont.long_name.lower()} = {cont.max():.2e} [{cont.units}]\n"
+            f"(dAz = {float(max_pix.lon):+.1f} [{cont.lon.attrs['units']}], "
+            f"dEl = {float(max_pix.lat):+.1f} [{cont.lat.attrs['units']}])"
         )
 
         for ax in axes:  # type: ignore
@@ -1273,23 +1238,6 @@ def save_qlook(
         return path
 
     raise ValueError("Extension of filename is not valid.")
-
-
-def gaussian_2d(xy, amp, x0, y0, sigma_x, sigma_y, theta, offset):
-    x, y = xy
-    x0 = float(x0)
-    y0 = float(y0)
-    a = (np.cos(theta) ** 2) / (2 * sigma_x**2) + (np.sin(theta) ** 2) / (
-        2 * sigma_y**2
-    )
-    b = -(np.sin(2 * theta)) / (4 * sigma_x**2) + (np.sin(2 * theta)) / (4 * sigma_y**2)
-    c = (np.sin(theta) ** 2) / (2 * sigma_x**2) + (np.cos(theta) ** 2) / (
-        2 * sigma_y**2
-    )
-    g = offset + amp * np.exp(
-        -(a * ((x - x0) ** 2) + 2 * b * (x - x0) * (y - y0) + c * ((y - y0) ** 2))
-    )
-    return g.ravel()
 
 
 def main() -> None:
