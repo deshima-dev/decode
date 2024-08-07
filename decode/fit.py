@@ -93,3 +93,49 @@ def dtau_dpwv(freq: NDArray[np.float_]) -> xr.DataArray:
     tau = load.atm(type="tau").interp(freq=freq, method="linear")
     fit = tau.curvefit("pwv", lambda x, a, b: a * x + b)
     return fit["curvefit_coefficients"].sel(param="a", drop=True)
+
+
+def cube(
+    cube: xr.DataArray,
+    /,
+    *,
+    init_amp: float = 1.0,
+    init_x0: float = 0.0,
+    init_y0: float = 0.0,
+    init_sigma_x: float = 20.0,
+    init_sigma_y: float = 20.0,
+    init_theta: float = 0.0,
+    init_offset: float = 0.0,
+) -> xr.Dataset:
+    """Apply 2D Gaussian fit to each channel of a 3D spectral cube."""
+    return cube.curvefit(
+        coords=("lon", "lat"),
+        func=gaussian_2d,
+        p0={
+            "amp": init_amp,
+            "x0": init_x0,
+            "y0": init_y0,
+            "sigma_x": init_sigma_x,
+            "sigma_y": init_sigma_y,
+            "theta": init_theta,
+            "offset": init_offset,
+        },
+        errors="ignore",
+    )
+
+
+def gaussian_2d(xy, amp, x0, y0, sigma_x, sigma_y, theta, offset):
+    x, y = xy
+    x0 = float(x0)
+    y0 = float(y0)
+    a = (np.cos(theta) ** 2) / (2 * sigma_x**2) + (np.sin(theta) ** 2) / (
+        2 * sigma_y**2
+    )
+    b = -(np.sin(2 * theta)) / (4 * sigma_x**2) + (np.sin(2 * theta)) / (4 * sigma_y**2)
+    c = (np.sin(theta) ** 2) / (2 * sigma_x**2) + (np.cos(theta) ** 2) / (
+        2 * sigma_y**2
+    )
+    g = offset + amp * np.exp(
+        -(a * ((x - x0) ** 2) + 2 * b * (x - x0) * (y - y0) + c * ((y - y0) ** 2))
+    )
+    return g.ravel()

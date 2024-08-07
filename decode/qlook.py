@@ -17,7 +17,7 @@ from logging import DEBUG, basicConfig, getLogger
 from pathlib import Path
 from typing import Any, Literal, Optional, Sequence, Union, cast
 from warnings import catch_warnings, simplefilter
-
+import copy
 
 # dependencies
 import numpy as np
@@ -26,8 +26,9 @@ import matplotlib.pyplot as plt
 from astropy.units import Quantity
 from fire import Fire
 from matplotlib.figure import Figure
-from . import assign, convert, load, make, plot, select, utils
-
+from scipy.optimize import curve_fit
+from . import assign, convert, load, make, plot, select, utils, fit
+import pandas as pd
 
 # constants
 DATA_FORMATS = "csv", "nc", "zarr", "zarr.zip"
@@ -229,6 +230,10 @@ def daisy(
             skycoord_units=skycoord_units,
         )
         cont = cube.weighted(weight.fillna(0)).mean("chan")
+
+        ### GaussFit (all chan)
+        fitted_cube = fit.cube(cube)
+        # to toml here
 
         # save result
         suffixes = f".{suffix}.{format}"
@@ -452,6 +457,10 @@ def raster(
             skycoord_units=skycoord_units,
         )
         cont = cube.weighted(weight.fillna(0)).mean("chan")
+
+        ### GaussFit (all chan)
+        fitted_cube = fit.cube(cube)
+        # to toml here
 
         # save result
         suffixes = f".{suffix}.{format}"
