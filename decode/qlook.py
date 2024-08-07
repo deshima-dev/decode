@@ -231,7 +231,7 @@ def daisy(
             skycoord_units=skycoord_units,
         )
         cont = cube.weighted(weight.fillna(0)).mean("chan")
-        
+
         ### GaussFit (cont)
         data = np.array(copy.deepcopy(cont).data)
         data[np.isnan(data)] = 0
@@ -474,7 +474,7 @@ def raster(
             skycoord_units=skycoord_units,
         )
         cont = cube.weighted(weight.fillna(0)).mean("chan")
-        
+
         ### GaussFit (cont)
         data = np.array(copy.deepcopy(cont).data)
         data[data != data] = 0.0
@@ -1297,7 +1297,7 @@ def gaussian_2d(xy, amp, x0, y0, sigma_x, sigma_y, theta, offset):
         -(a * ((x - x0) ** 2) + 2 * b * (x - x0) * (y - y0) + c * ((y - y0) ** 2))
     )
     return g.ravel()
-    
+
 
 def main() -> None:
     """Entry point of the decode-qlook command."""
