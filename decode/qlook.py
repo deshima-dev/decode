@@ -370,7 +370,7 @@ def pswsc(
         ax.set_ylim(get_robust_lim(spec))
 
         for ax in axes:  # type: ignore
-            ax.set_title(Path(dems).name)
+            ax.set_title(f"{Path(dems).name}\n({da.observation})")
             ax.grid(True)
 
         fig.tight_layout()
@@ -622,7 +622,7 @@ def skydip(
         plot.data(series, x="secz", ax=ax)
 
         for ax in axes:  # type: ignore
-            ax.set_title(Path(dems).name)
+            ax.set_title(f"{Path(dems).name}\n({da.observation})")
             ax.grid(True)
 
         fig.tight_layout()
@@ -718,7 +718,7 @@ def still(
         plot.data(series, add_colorbar=False, ax=ax)
 
         for ax in axes:  # type: ignore
-            ax.set_title(Path(dems).name)
+            ax.set_title(f"{Path(dems).name}\n({da.observation})")
             ax.grid(True)
 
         fig.tight_layout()
@@ -1055,7 +1055,7 @@ def _scan(
         plot.data(series, x=f"aste_subref_{axis}", ax=ax)
 
         for ax in axes:  # type: ignore
-            ax.set_title(Path(dems).name)
+            ax.set_title(f"{Path(dems).name}\n({da.observation})")
             ax.grid(True)
 
         fig.tight_layout()
