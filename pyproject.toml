@@ -5,6 +5,7 @@ description = "DESHIMA code for data analysis"
 authors = [
     "Akio Taniguchi <taniguchi@a.phys.nagoya-u.ac.jp>",
     "Juri Yamanaka <j.yamanaka@a.phys.nagoya-u.ac.jp>",
+    "Shinji Fujita <s-fujita@ism.ac.jp>",
 ]
 keywords = [
     "astronomy",

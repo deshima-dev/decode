@@ -16,3 +16,7 @@ authors:
   - given-names: "Juri"
     family-names: "Yamanaka"
     affiliation: "Nagoya University"
+  - given-names: "Shinji"
+    family-names: "Fujita"
+    affiliation: "The Institute of Statistical Mathematics"
+    orcid: "https://orcid.org/0000-0002-6375-7065"
