@@ -12,6 +12,7 @@ __all__ = [
 
 
 # standard library
+import copy
 from contextlib import contextmanager
 from logging import DEBUG, basicConfig, getLogger
 from pathlib import Path
@@ -26,6 +27,7 @@ import matplotlib.pyplot as plt
 from astropy.units import Quantity
 from fire import Fire
 from matplotlib.figure import Figure
+from scipy.optimize import curve_fit
 from . import assign, convert, load, make, plot, select, utils
 
 
@@ -229,6 +231,15 @@ def daisy(
             skycoord_units=skycoord_units,
         )
         cont = cube.weighted(weight.fillna(0)).mean("chan")
+        
+        ### GaussFit (cont)
+        data = np.array(copy.deepcopy(cont).data)
+        data[np.isnan(data)] = 0
+        x, y = np.meshgrid(np.array(cube["lon"]), np.array(cube["lat"]))
+        initial_guess = (1, 0, 0, 30, 30, 0, 0)
+        popt, pcov = curve_fit(gaussian_2d, (x, y), data.ravel(), p0=initial_guess)
+        perr = np.sqrt(np.diag(pcov))
+        data_fitted = gaussian_2d((x, y), *popt).reshape(x.shape)
 
         # save result
         suffixes = f".{suffix}.{format}"
@@ -248,12 +259,23 @@ def daisy(
         max_pix = cont.where(cont == cont.max(), drop=True)
 
         cont.plot(ax=ax)  # type: ignore
+        ax.contour(
+            data_fitted,
+            extent=(x.min(), x.max(), y.min(), y.max()),
+            origin="lower",
+            levels=np.linspace(0, np.nanmax(data), 8),
+            colors="k",
+        )
         ax.set_xlim(-map_lim, map_lim)
         ax.set_ylim(-map_lim, map_lim)
         ax.set_title(
-            f"Maximum {cont.long_name.lower()} = {cont.max():.2e} [{cont.units}]\n"
-            f"(dAz = {float(max_pix.lon):+.1f} [{cont.lon.attrs['units']}], "
-            f"dEl = {float(max_pix.lat):+.1f} [{cont.lat.attrs['units']}])"
+            f"Maximum {cont.long_name.lower()} = {popt[0]:+.2f} [{cont.units}]\n"
+            f"(dAz = {popt[1]:+.2f} [{cont.lon.attrs['units']}], "
+            f"dEl = {popt[2]:+.2f} [{cont.lat.attrs['units']}]), \n"
+            f"(sigma_x = {popt[3]:+.2f}, "
+            f"sigma_y = {popt[4]:+.2f},"
+            f"theta = {np.rad2deg(popt[5]):+.1f}, \n"
+            f"min_frequency: {min_frequency}, max_frequency: {max_frequency}"
         )
 
         for ax in axes:  # type: ignore
@@ -452,6 +474,15 @@ def raster(
             skycoord_units=skycoord_units,
         )
         cont = cube.weighted(weight.fillna(0)).mean("chan")
+        
+        ### GaussFit (cont)
+        data = np.array(copy.deepcopy(cont).data)
+        data[data != data] = 0.0
+        x, y = np.meshgrid(np.array(cube["lon"]), np.array(cube["lat"]))
+        initial_guess = (1, 0, 0, 30, 30, 0, 0)
+        popt, pcov = curve_fit(gaussian_2d, (x, y), data.ravel(), p0=initial_guess)
+        perr = np.sqrt(np.diag(pcov))
+        data_fitted = gaussian_2d((x, y), *popt).reshape(x.shape)
 
         # save result
         suffixes = f".{suffix}.{format}"
@@ -471,12 +502,23 @@ def raster(
         max_pix = cont.where(cont == cont.max(), drop=True)
 
         cont.plot(ax=ax)  # type: ignore
+        ax.contour(
+            data_fitted,
+            extent=(x.min(), x.max(), y.min(), y.max()),
+            origin="lower",
+            levels=np.linspace(0, np.nanmax(data), 8),
+            colors="k",
+        )
         ax.set_xlim(-map_lim, map_lim)
         ax.set_ylim(-map_lim, map_lim)
         ax.set_title(
-            f"Maximum {cont.long_name.lower()} = {cont.max():.2e} [{cont.units}]\n"
-            f"(dAz = {float(max_pix.lon):+.1f} [{cont.lon.attrs['units']}], "
-            f"dEl = {float(max_pix.lat):+.1f} [{cont.lat.attrs['units']}])"
+            f"Maximum {cont.long_name.lower()} = {popt[0]:+.2f} [{cont.units}]\n"
+            f"(dAz = {popt[1]:+.2f} [{cont.lon.attrs['units']}], "
+            f"dEl = {popt[2]:+.2f} [{cont.lat.attrs['units']}]), \n"
+            f"(sigma_x = {popt[3]:+.2f}, "
+            f"sigma_y = {popt[4]:+.2f},"
+            f"theta = {np.rad2deg(popt[5]):+.1f}, \n"
+            f"min_frequency: {min_frequency}, max_frequency: {max_frequency}"
         )
 
         for ax in axes:  # type: ignore
@@ -1239,6 +1281,23 @@ def save_qlook(
 
     raise ValueError("Extension of filename is not valid.")
 
+
+def gaussian_2d(xy, amp, x0, y0, sigma_x, sigma_y, theta, offset):
+    x, y = xy
+    x0 = float(x0)
+    y0 = float(y0)
+    a = (np.cos(theta) ** 2) / (2 * sigma_x**2) + (np.sin(theta) ** 2) / (
+        2 * sigma_y**2
+    )
+    b = -(np.sin(2 * theta)) / (4 * sigma_x**2) + (np.sin(2 * theta)) / (4 * sigma_y**2)
+    c = (np.sin(theta) ** 2) / (2 * sigma_x**2) + (np.cos(theta) ** 2) / (
+        2 * sigma_y**2
+    )
+    g = offset + amp * np.exp(
+        -(a * ((x - x0) ** 2) + 2 * b * (x - x0) * (y - y0) + c * ((y - y0) ** 2))
+    )
+    return g.ravel()
+    
 
 def main() -> None:
     """Entry point of the decode-qlook command."""
