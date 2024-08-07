@@ -269,13 +269,15 @@ def daisy(
         ax.set_xlim(-map_lim, map_lim)
         ax.set_ylim(-map_lim, map_lim)
         ax.set_title(
-            f"Maximum {cont.long_name.lower()} = {popt[0]:+.2f} [{cont.units}]\n"
-            f"(dAz = {popt[1]:+.2f} [{cont.lon.attrs['units']}], "
-            f"dEl = {popt[2]:+.2f} [{cont.lat.attrs['units']}]), \n"
-            f"(sigma_x = {popt[3]:+.2f}, "
-            f"sigma_y = {popt[4]:+.2f},"
-            f"theta = {np.rad2deg(popt[5]):+.1f}, \n"
-            f"min_frequency: {min_frequency}, max_frequency: {max_frequency}"
+            f"Peak = {popt[0]:+.2f} [{cont.units}], "
+            f"dAz = {popt[1]:+.2f} [{cont.lon.attrs['units']}], "
+            f"dEl = {popt[2]:+.2f} [{cont.lat.attrs['units']}]),\n"
+            f"$\\sigma_x$ = {popt[3]:+.2f} [{skycoord_units}], "
+            f"$\\sigma_y$ = {popt[4]:+.2f} [{skycoord_units}], "
+            f"$\\theta$ = {np.rad2deg(popt[5]):+.1f} [deg],\n"
+            f"min_frequency = {min_frequency}, "
+            f"max_frequency = {max_frequency}",
+            fontsize=10,
         )
 
         for ax in axes:  # type: ignore
@@ -368,7 +370,7 @@ def pswsc(
         ax.set_ylim(get_robust_lim(spec))
 
         for ax in axes:  # type: ignore
-            ax.set_title(Path(dems).name)
+            ax.set_title(f"{Path(dems).name}\n({da.observation})")
             ax.grid(True)
 
         fig.tight_layout()
@@ -512,13 +514,15 @@ def raster(
         ax.set_xlim(-map_lim, map_lim)
         ax.set_ylim(-map_lim, map_lim)
         ax.set_title(
-            f"Maximum {cont.long_name.lower()} = {popt[0]:+.2f} [{cont.units}]\n"
-            f"(dAz = {popt[1]:+.2f} [{cont.lon.attrs['units']}], "
-            f"dEl = {popt[2]:+.2f} [{cont.lat.attrs['units']}]), \n"
-            f"(sigma_x = {popt[3]:+.2f}, "
-            f"sigma_y = {popt[4]:+.2f},"
-            f"theta = {np.rad2deg(popt[5]):+.1f}, \n"
-            f"min_frequency: {min_frequency}, max_frequency: {max_frequency}"
+            f"Peak = {popt[0]:+.2f} [{cont.units}], "
+            f"dAz = {popt[1]:+.2f} [{cont.lon.attrs['units']}], "
+            f"dEl = {popt[2]:+.2f} [{cont.lat.attrs['units']}]),\n"
+            f"$\\sigma_x$ = {popt[3]:+.2f} [{skycoord_units}], "
+            f"$\\sigma_y$ = {popt[4]:+.2f} [{skycoord_units}], "
+            f"$\\theta$ = {np.rad2deg(popt[5]):+.1f} [deg],\n"
+            f"min_frequency = {min_frequency}, "
+            f"max_frequency = {max_frequency}",
+            fontsize=10,
         )
 
         for ax in axes:  # type: ignore
@@ -618,7 +622,7 @@ def skydip(
         plot.data(series, x="secz", ax=ax)
 
         for ax in axes:  # type: ignore
-            ax.set_title(Path(dems).name)
+            ax.set_title(f"{Path(dems).name}\n({da.observation})")
             ax.grid(True)
 
         fig.tight_layout()
@@ -714,7 +718,7 @@ def still(
         plot.data(series, add_colorbar=False, ax=ax)
 
         for ax in axes:  # type: ignore
-            ax.set_title(Path(dems).name)
+            ax.set_title(f"{Path(dems).name}\n({da.observation})")
             ax.grid(True)
 
         fig.tight_layout()
@@ -1051,7 +1055,7 @@ def _scan(
         plot.data(series, x=f"aste_subref_{axis}", ax=ax)
 
         for ax in axes:  # type: ignore
-            ax.set_title(Path(dems).name)
+            ax.set_title(f"{Path(dems).name}\n({da.observation})")
             ax.grid(True)
 
         fig.tight_layout()
