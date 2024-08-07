@@ -1,0 +1,27 @@
+decode package
+==============
+
+Submodules
+----------
+
+.. toctree::
+   :maxdepth: 4
+
+   decode.assign
+   decode.convert
+   decode.correct
+   decode.fit
+   decode.load
+   decode.make
+   decode.plot
+   decode.qlook
+   decode.select
+   decode.utils
+
+Module contents
+---------------
+
+.. automodule:: decode
+   :members:
+   :undoc-members:
+   :show-inheritance:
