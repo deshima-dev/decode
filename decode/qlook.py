@@ -277,7 +277,7 @@ def daisy(
                 f"dEl = {popt[2]:+.2f} [{cont.lat.attrs['units']}],\n"
                 f"$\\sigma_x$ = {np.abs(popt[3]):+.2f} [{skycoord_units}], "
                 f"$\\sigma_y$ = {np.abs(popt[4]):+.2f} [{skycoord_units}], "
-                f"P.A. = {np.mod(np.rad2deg(popt[5]) + 180, 360) - 180:+.1f} [deg],\n"
+                f"P.A. = {(np.rad2deg(popt[5]) + 90) % 180 - 90:+.1f} [deg],\n"
                 f"min_frequency = {min_frequency}, "
                 f"max_frequency = {max_frequency}",
                 fontsize=10,
@@ -532,7 +532,7 @@ def raster(
                 f"dEl = {popt[2]:+.2f} [{cont.lat.attrs['units']}],\n"
                 f"$\\sigma_x$ = {np.abs(popt[3]):+.2f} [{skycoord_units}], "
                 f"$\\sigma_y$ = {np.abs(popt[4]):+.2f} [{skycoord_units}], "
-                f"P.A. = {np.mod(np.rad2deg(popt[5]) + 180, 360) - 180:+.1f} [deg],\n"
+                f"P.A. = {(np.rad2deg(popt[5]) + 90) % 180 - 90:+.1f} [deg],\n"
                 f"min_frequency = {min_frequency}, "
                 f"max_frequency = {max_frequency}",
                 fontsize=10,
