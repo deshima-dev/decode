@@ -274,7 +274,7 @@ def daisy(
             ax.set_title(
                 f"Peak = {popt[0]:+.2e} [{cont.units}], "
                 f"dAz = {popt[1]:+.2f} [{cont.lon.attrs['units']}], "
-                f"dEl = {popt[2]:+.2f} [{cont.lat.attrs['units']}]),\n"
+                f"dEl = {popt[2]:+.2f} [{cont.lat.attrs['units']}],\n"
                 f"$\\sigma_x$ = {np.abs(popt[3]):+.2f} [{skycoord_units}], "
                 f"$\\sigma_y$ = {np.abs(popt[4]):+.2f} [{skycoord_units}], "
                 f"P.A. = {np.mod(np.rad2deg(popt[5]) + 180, 360) - 180:+.1f} [deg],\n"
@@ -529,7 +529,7 @@ def raster(
             ax.set_title(
                 f"Peak = {popt[0]:+.2e} [{cont.units}], "
                 f"dAz = {popt[1]:+.2f} [{cont.lon.attrs['units']}], "
-                f"dEl = {popt[2]:+.2f} [{cont.lat.attrs['units']}]),\n"
+                f"dEl = {popt[2]:+.2f} [{cont.lat.attrs['units']}],\n"
                 f"$\\sigma_x$ = {np.abs(popt[3]):+.2f} [{skycoord_units}], "
                 f"$\\sigma_y$ = {np.abs(popt[4]):+.2f} [{skycoord_units}], "
                 f"P.A. = {np.mod(np.rad2deg(popt[5]) + 180, 360) - 180:+.1f} [deg],\n"
