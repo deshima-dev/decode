@@ -233,13 +233,17 @@ def daisy(
         cont = cube.weighted(weight.fillna(0)).mean("chan")
 
         ### GaussFit (cont)
-        data = np.array(copy.deepcopy(cont).data)
-        data[np.isnan(data)] = 0
-        x, y = np.meshgrid(np.array(cube["lon"]), np.array(cube["lat"]))
-        initial_guess = (1, 0, 0, 30, 30, 0, 0)
-        popt, pcov = curve_fit(gaussian_2d, (x, y), data.ravel(), p0=initial_guess)
-        perr = np.sqrt(np.diag(pcov))
-        data_fitted = gaussian_2d((x, y), *popt).reshape(x.shape)
+        try:
+            data = np.array(copy.deepcopy(cont).data)
+            data[data != data] = 0.0
+            x, y = np.meshgrid(np.array(cube["lon"]), np.array(cube["lat"]))
+            initial_guess = (1, 0, 0, 30, 30, 0, 0)
+            popt, pcov = curve_fit(gaussian_2d, (x, y), data.ravel(), p0=initial_guess)
+            perr = np.sqrt(np.diag(pcov))
+            data_fitted = gaussian_2d((x, y), *popt).reshape(x.shape)
+            GaussFit_cont_flag = True
+        except:
+            GaussFit_cont_flag = False
 
         # save result
         suffixes = f".{suffix}.{format}"
@@ -259,26 +263,32 @@ def daisy(
         max_pix = cont.where(cont == cont.max(), drop=True)
 
         cont.plot(ax=ax)  # type: ignore
-        ax.contour(
-            data_fitted,
-            extent=(x.min(), x.max(), y.min(), y.max()),
-            origin="lower",
-            levels=np.linspace(0, np.nanmax(data), 8),
-            colors="k",
-        )
+        if GaussFit_cont_flag:
+            ax.contour(
+                data_fitted,
+                extent=(x.min(), x.max(), y.min(), y.max()),
+                origin="lower",
+                levels=np.linspace(0, popt[0], 8),
+                colors="k",
+            )
+            ax.set_title(
+                f"Peak = {popt[0]:+.2e} [{cont.units}], "
+                f"dAz = {popt[1]:+.2f} [{cont.lon.attrs['units']}], "
+                f"dEl = {popt[2]:+.2f} [{cont.lat.attrs['units']}]),\n"
+                f"$\\sigma_x$ = {np.abs(popt[3]):+.2f} [{skycoord_units}], "
+                f"$\\sigma_y$ = {np.abs(popt[4]):+.2f} [{skycoord_units}], "
+                f"P.A. = {np.mod(np.rad2deg(popt[5]) + 180, 360) - 180:+.1f} [deg],\n"
+                f"min_frequency = {min_frequency}, "
+                f"max_frequency = {max_frequency}",
+                fontsize=10,
+            )
+        else:
+            ax.set_title(
+                f"min_frequency = {min_frequency}, " f"max_frequency = {max_frequency}",
+                fontsize=10,
+            )
         ax.set_xlim(-map_lim, map_lim)
         ax.set_ylim(-map_lim, map_lim)
-        ax.set_title(
-            f"Peak = {popt[0]:+.2f} [{cont.units}], "
-            f"dAz = {popt[1]:+.2f} [{cont.lon.attrs['units']}], "
-            f"dEl = {popt[2]:+.2f} [{cont.lat.attrs['units']}]),\n"
-            f"$\\sigma_x$ = {popt[3]:+.2f} [{skycoord_units}], "
-            f"$\\sigma_y$ = {popt[4]:+.2f} [{skycoord_units}], "
-            f"$\\theta$ = {np.rad2deg(popt[5]):+.1f} [deg],\n"
-            f"min_frequency = {min_frequency}, "
-            f"max_frequency = {max_frequency}",
-            fontsize=10,
-        )
 
         for ax in axes:  # type: ignore
             ax.grid(True)
@@ -478,13 +488,17 @@ def raster(
         cont = cube.weighted(weight.fillna(0)).mean("chan")
 
         ### GaussFit (cont)
-        data = np.array(copy.deepcopy(cont).data)
-        data[data != data] = 0.0
-        x, y = np.meshgrid(np.array(cube["lon"]), np.array(cube["lat"]))
-        initial_guess = (1, 0, 0, 30, 30, 0, 0)
-        popt, pcov = curve_fit(gaussian_2d, (x, y), data.ravel(), p0=initial_guess)
-        perr = np.sqrt(np.diag(pcov))
-        data_fitted = gaussian_2d((x, y), *popt).reshape(x.shape)
+        try:
+            data = np.array(copy.deepcopy(cont).data)
+            data[data != data] = 0.0
+            x, y = np.meshgrid(np.array(cube["lon"]), np.array(cube["lat"]))
+            initial_guess = (1, 0, 0, 30, 30, 0, 0)
+            popt, pcov = curve_fit(gaussian_2d, (x, y), data.ravel(), p0=initial_guess)
+            perr = np.sqrt(np.diag(pcov))
+            data_fitted = gaussian_2d((x, y), *popt).reshape(x.shape)
+            GaussFit_cont_flag = True
+        except:
+            GaussFit_cont_flag = False
 
         # save result
         suffixes = f".{suffix}.{format}"
@@ -504,26 +518,32 @@ def raster(
         max_pix = cont.where(cont == cont.max(), drop=True)
 
         cont.plot(ax=ax)  # type: ignore
-        ax.contour(
-            data_fitted,
-            extent=(x.min(), x.max(), y.min(), y.max()),
-            origin="lower",
-            levels=np.linspace(0, np.nanmax(data), 8),
-            colors="k",
-        )
+        if GaussFit_cont_flag:
+            ax.contour(
+                data_fitted,
+                extent=(x.min(), x.max(), y.min(), y.max()),
+                origin="lower",
+                levels=np.linspace(0, popt[0], 8),
+                colors="k",
+            )
+            ax.set_title(
+                f"Peak = {popt[0]:+.2e} [{cont.units}], "
+                f"dAz = {popt[1]:+.2f} [{cont.lon.attrs['units']}], "
+                f"dEl = {popt[2]:+.2f} [{cont.lat.attrs['units']}]),\n"
+                f"$\\sigma_x$ = {np.abs(popt[3]):+.2f} [{skycoord_units}], "
+                f"$\\sigma_y$ = {np.abs(popt[4]):+.2f} [{skycoord_units}], "
+                f"P.A. = {np.mod(np.rad2deg(popt[5]) + 180, 360) - 180:+.1f} [deg],\n"
+                f"min_frequency = {min_frequency}, "
+                f"max_frequency = {max_frequency}",
+                fontsize=10,
+            )
+        else:
+            ax.set_title(
+                f"min_frequency = {min_frequency}, " f"max_frequency = {max_frequency}",
+                fontsize=10,
+            )
         ax.set_xlim(-map_lim, map_lim)
         ax.set_ylim(-map_lim, map_lim)
-        ax.set_title(
-            f"Peak = {popt[0]:+.2f} [{cont.units}], "
-            f"dAz = {popt[1]:+.2f} [{cont.lon.attrs['units']}], "
-            f"dEl = {popt[2]:+.2f} [{cont.lat.attrs['units']}]),\n"
-            f"$\\sigma_x$ = {popt[3]:+.2f} [{skycoord_units}], "
-            f"$\\sigma_y$ = {popt[4]:+.2f} [{skycoord_units}], "
-            f"$\\theta$ = {np.rad2deg(popt[5]):+.1f} [deg],\n"
-            f"min_frequency = {min_frequency}, "
-            f"max_frequency = {max_frequency}",
-            fontsize=10,
-        )
 
         for ax in axes:  # type: ignore
             ax.grid(True)
