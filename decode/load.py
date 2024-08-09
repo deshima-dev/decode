@@ -11,6 +11,7 @@ from warnings import catch_warnings, simplefilter
 import numpy as np
 import pandas as pd
 import xarray as xr
+from . import convert
 
 
 # constants
@@ -66,20 +67,24 @@ def atm(*, type: Literal["eta", "tau"] = "tau") -> xr.DataArray:
         raise ValueError("Type must be either eta or tau.")
 
 
-def dems(dems: Union[Path, str], /, **options: Any) -> xr.DataArray:
+def dems(
+    dems: Union[Path, str],
+    /,
+    measure: Literal["brightness", "df/f"] = "brightness",
+    **options: Any,
+) -> xr.DataArray:
     """Load a DEMS file as a DataArray.
 
     Args:
         dems: Path of the DEMS file.
+        measure: Measure of the DataArray (either brightness or df/f).
+        **options: Options to be passed to ``xarray.open_dataarray``.
 
-    Keyword Args:
-        options: Arguments to be passed to ``xarray.open_dataarray``.
-
-    Return:
+    Returns:
         Loaded DEMS DataArray.
 
     Raises:
-        ValueError: Raised if the file type is not supported.
+        ValueError: Raised if file type or measure is not supported.
 
     """
     suffixes = Path(dems).suffixes
@@ -101,4 +106,18 @@ def dems(dems: Union[Path, str], /, **options: Any) -> xr.DataArray:
             "Use netCDF (.nc) or Zarr (.zarr, .zarr.zip)."
         )
 
-    return xr.open_dataarray(dems, **options)
+    da = xr.open_dataarray(dems, **options)
+
+    if da.long_name == "Brightness" and measure == "brightness":
+        return da
+
+    if da.long_name == "df/f" and measure == "df/f":
+        return da
+
+    if da.long_name == "df/f" and measure == "brightness":
+        return convert.dfof_to_brightness(da)
+
+    if da.long_name == "Brightness" and measure == "df/f":
+        raise ValueError("Brightness-to-df/f conversion is not supported.")
+
+    raise ValueError("Measure must be either brightness or df/f.")
