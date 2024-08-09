@@ -235,15 +235,15 @@ def daisy(
         ### GaussFit (cont)
         try:
             data = np.array(copy.deepcopy(cont).data)
-            data[data != data] = 0.0
+            data[np.isnan(data)] = 0.0
             x, y = np.meshgrid(np.array(cube["lon"]), np.array(cube["lat"]))
             initial_guess = (1, 0, 0, 30, 30, 0, 0)
             popt, pcov = curve_fit(gaussian_2d, (x, y), data.ravel(), p0=initial_guess)
             perr = np.sqrt(np.diag(pcov))
             data_fitted = gaussian_2d((x, y), *popt).reshape(x.shape)
-            GaussFit_cont_flag = True
+            is_gaussfit_successful = True
         except:
-            GaussFit_cont_flag = False
+            is_gaussfit_successful = False
 
         # save result
         suffixes = f".{suffix}.{format}"
@@ -263,7 +263,7 @@ def daisy(
         max_pix = cont.where(cont == cont.max(), drop=True)
 
         cont.plot(ax=ax)  # type: ignore
-        if GaussFit_cont_flag:
+        if is_gaussfit_successful:
             ax.contour(
                 data_fitted,
                 extent=(x.min(), x.max(), y.min(), y.max()),
@@ -284,7 +284,11 @@ def daisy(
             )
         else:
             ax.set_title(
-                f"min_frequency = {min_frequency}, " f"max_frequency = {max_frequency}",
+                f"Maximum {cont.long_name.lower()} = {cont.max():.2e} [{cont.units}]\n"
+                f"(dAz = {float(max_pix.lon):+.1f} [{cont.lon.attrs['units']}], "
+                f"dEl = {float(max_pix.lat):+.1f} [{cont.lat.attrs['units']}]),\n"
+                f"min_frequency = {min_frequency}, "
+                f"max_frequency = {max_frequency}",
                 fontsize=10,
             )
         ax.set_xlim(-map_lim, map_lim)
@@ -490,15 +494,15 @@ def raster(
         ### GaussFit (cont)
         try:
             data = np.array(copy.deepcopy(cont).data)
-            data[data != data] = 0.0
+            data[np.isnan(data)] = 0.0
             x, y = np.meshgrid(np.array(cube["lon"]), np.array(cube["lat"]))
             initial_guess = (1, 0, 0, 30, 30, 0, 0)
             popt, pcov = curve_fit(gaussian_2d, (x, y), data.ravel(), p0=initial_guess)
             perr = np.sqrt(np.diag(pcov))
             data_fitted = gaussian_2d((x, y), *popt).reshape(x.shape)
-            GaussFit_cont_flag = True
+            is_gaussfit_successful = True
         except:
-            GaussFit_cont_flag = False
+            is_gaussfit_successful = False
 
         # save result
         suffixes = f".{suffix}.{format}"
@@ -518,7 +522,7 @@ def raster(
         max_pix = cont.where(cont == cont.max(), drop=True)
 
         cont.plot(ax=ax)  # type: ignore
-        if GaussFit_cont_flag:
+        if is_gaussfit_successful:
             ax.contour(
                 data_fitted,
                 extent=(x.min(), x.max(), y.min(), y.max()),
@@ -539,7 +543,11 @@ def raster(
             )
         else:
             ax.set_title(
-                f"min_frequency = {min_frequency}, " f"max_frequency = {max_frequency}",
+                f"Maximum {cont.long_name.lower()} = {cont.max():.2e} [{cont.units}]\n"
+                f"(dAz = {float(max_pix.lon):+.1f} [{cont.lon.attrs['units']}], "
+                f"dEl = {float(max_pix.lat):+.1f} [{cont.lat.attrs['units']}]),\n"
+                f"min_frequency = {min_frequency}, "
+                f"max_frequency = {max_frequency}",
                 fontsize=10,
             )
         ax.set_xlim(-map_lim, map_lim)
