@@ -284,11 +284,12 @@ def daisy(
             )
         else:
             ax.set_title(
-                f"Maximum {cont.long_name.lower()} = {cont.max():.2e} [{cont.units}]\n"
-                f"(dAz = {float(max_pix.lon):+.1f} [{cont.lon.attrs['units']}], "
-                f"dEl = {float(max_pix.lat):+.1f} [{cont.lat.attrs['units']}]),\n"
+                f"Peak = {cont.max():.2e} [{cont.units}], "
+                f"dAz = {float(max_pix.lon):+.1f} [{cont.lon.attrs['units']}], "
+                f"dEl = {float(max_pix.lat):+.1f} [{cont.lat.attrs['units']}],\n"
                 f"min_frequency = {min_frequency}, "
-                f"max_frequency = {max_frequency}",
+                f"max_frequency = {max_frequency}\n"
+                "(Gaussian fit failed: dAz and dEl are peak pixel based)",
                 fontsize=10,
             )
         ax.set_xlim(-map_lim, map_lim)
@@ -543,11 +544,12 @@ def raster(
             )
         else:
             ax.set_title(
-                f"Maximum {cont.long_name.lower()} = {cont.max():.2e} [{cont.units}]\n"
-                f"(dAz = {float(max_pix.lon):+.1f} [{cont.lon.attrs['units']}], "
-                f"dEl = {float(max_pix.lat):+.1f} [{cont.lat.attrs['units']}]),\n"
+                f"Peak = {cont.max():.2e} [{cont.units}], "
+                f"dAz = {float(max_pix.lon):+.1f} [{cont.lon.attrs['units']}], "
+                f"dEl = {float(max_pix.lat):+.1f} [{cont.lat.attrs['units']}],\n"
                 f"min_frequency = {min_frequency}, "
-                f"max_frequency = {max_frequency}",
+                f"max_frequency = {max_frequency}\n"
+                "(Gaussian fit failed: dAz and dEl are peak pixel based)",
                 fontsize=10,
             )
         ax.set_xlim(-map_lim, map_lim)
