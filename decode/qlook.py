@@ -294,6 +294,7 @@ def daisy(
             )
         ax.set_xlim(-map_lim, map_lim)
         ax.set_ylim(-map_lim, map_lim)
+        ax.axes.set_aspect("equal", "datalim")
 
         for ax in axes:  # type: ignore
             ax.grid(True)
@@ -554,6 +555,7 @@ def raster(
             )
         ax.set_xlim(-map_lim, map_lim)
         ax.set_ylim(-map_lim, map_lim)
+        ax.axes.set_aspect("equal", "datalim")
 
         for ax in axes:  # type: ignore
             ax.grid(True)
