@@ -1,4 +1,4 @@
-__all__ = ["mad"]
+__all__ = ["mad", "phaseof"]
 
 
 # dependencies
@@ -38,3 +38,35 @@ def mad(
         )
 
     return median(cast(xr.DataArray, np.abs(da - median(da))))
+
+
+def phaseof(
+    da: xr.DataArray,
+    /,
+    *,
+    keep_attrs: bool = False,
+    keep_coords: bool = False,
+) -> xr.DataArray:
+    """Assign a phase to each value in a 1D DataArray.
+
+    The function assigns a unique phase (int64) to consecutive
+    identical values in the DataArray. The phase increases
+    sequentially whenever the value in the DataArray changes.
+
+    Args:
+        da: Input 1D DataArray.
+        keep_attrs: Whether to keep attributes of the input.
+        keep_coords: Whether to keep coordinates of the input.
+
+    Returns:
+        1D int64 DataArray of phases.
+
+    """
+    if da.ndim != 1:
+        raise ValueError("Input DataArray must be 1D.")
+
+    is_transision = xr.zeros_like(da, bool)
+    is_transision.data[1:] = da.data[1:] != da.data[:-1]
+
+    phase = is_transision.cumsum(keep_attrs=keep_attrs)
+    return phase if keep_coords else phase.reset_coords(drop=True)
