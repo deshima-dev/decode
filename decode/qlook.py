@@ -237,8 +237,14 @@ def daisy(
             data = np.array(copy.deepcopy(cont).data)
             data[np.isnan(data)] = 0.0
             x, y = np.meshgrid(np.array(cube["lon"]), np.array(cube["lat"]))
-            initial_guess = (1, 0, 0, 30, 30, 0, 0)
-            popt, pcov = curve_fit(gaussian_2d, (x, y), data.ravel(), p0=initial_guess)
+            initial_guess = (1, 0, 0, 1, 10, 0, 0)
+            bounds = (
+                [0, -np.inf, -np.inf, 1, 0, -np.pi, -np.inf],
+                [np.inf, np.inf, np.inf, np.inf, np.inf, 0, np.inf],
+            )
+            popt, pcov = curve_fit(
+                gaussian_2d, (x, y), data.ravel(), p0=initial_guess, bounds=bounds
+            )
             perr = np.sqrt(np.diag(pcov))
             data_fitted = gaussian_2d((x, y), *popt).reshape(x.shape)
             is_gaussfit_successful = True
@@ -268,16 +274,18 @@ def daisy(
                 data_fitted,
                 extent=(x.min(), x.max(), y.min(), y.max()),
                 origin="lower",
-                levels=np.linspace(0, popt[0], 8),
+                levels=np.linspace(0, popt[0], 9) + popt[6],
                 colors="k",
+                linewidths=[0.75, 0.75, 0.75, 0.75, 1.50, 0.75, 0.75, 0.75, 0.75],
+                linestyles="-",
             )
             ax.set_title(
                 f"Peak = {popt[0]:+.2e} [{cont.units}], "
                 f"dAz = {popt[1]:+.2f} [{cont.lon.attrs['units']}], "
                 f"dEl = {popt[2]:+.2f} [{cont.lat.attrs['units']}],\n"
-                f"$\\sigma_x$ = {np.abs(popt[3]):+.2f} [{skycoord_units}], "
-                f"$\\sigma_y$ = {np.abs(popt[4]):+.2f} [{skycoord_units}], "
-                f"P.A. = {(np.rad2deg(popt[5]) + 90) % 180 - 90:+.1f} [deg],\n"
+                f"FWHM_x = {popt[3]*popt[4]*2.354820:+.2f} [{skycoord_units}], "
+                f"FWHM_y = {popt[4]*2.354820:+.2f} [{skycoord_units}], "
+                f"P.A. = {np.rad2deg(popt[5]+np.pi/2.0):+.1f} [deg],\n"
                 f"min_frequency = {min_frequency}, "
                 f"max_frequency = {max_frequency}",
                 fontsize=10,
@@ -292,7 +300,7 @@ def daisy(
                 "(Gaussian fit failed: dAz and dEl are peak pixel based)",
                 fontsize=10,
             )
-        ax.set_xlim(-map_lim, map_lim)
+        ax.set_xlim(map_lim, -map_lim)
         ax.set_ylim(-map_lim, map_lim)
         ax.axes.set_aspect("equal", "datalim")
 
@@ -498,8 +506,14 @@ def raster(
             data = np.array(copy.deepcopy(cont).data)
             data[np.isnan(data)] = 0.0
             x, y = np.meshgrid(np.array(cube["lon"]), np.array(cube["lat"]))
-            initial_guess = (1, 0, 0, 30, 30, 0, 0)
-            popt, pcov = curve_fit(gaussian_2d, (x, y), data.ravel(), p0=initial_guess)
+            initial_guess = (1, 0, 0, 1, 10, 0, 0)
+            bounds = (
+                [0, -np.inf, -np.inf, 1, 0, -np.pi, -np.inf],
+                [np.inf, np.inf, np.inf, np.inf, np.inf, 0, np.inf],
+            )
+            popt, pcov = curve_fit(
+                gaussian_2d, (x, y), data.ravel(), p0=initial_guess, bounds=bounds
+            )
             perr = np.sqrt(np.diag(pcov))
             data_fitted = gaussian_2d((x, y), *popt).reshape(x.shape)
             is_gaussfit_successful = True
@@ -529,16 +543,18 @@ def raster(
                 data_fitted,
                 extent=(x.min(), x.max(), y.min(), y.max()),
                 origin="lower",
-                levels=np.linspace(0, popt[0], 8),
+                levels=np.linspace(0, popt[0], 9) + popt[6],
                 colors="k",
+                linewidths=[0.75, 0.75, 0.75, 0.75, 1.50, 0.75, 0.75, 0.75, 0.75],
+                linestyles="-",
             )
             ax.set_title(
                 f"Peak = {popt[0]:+.2e} [{cont.units}], "
                 f"dAz = {popt[1]:+.2f} [{cont.lon.attrs['units']}], "
                 f"dEl = {popt[2]:+.2f} [{cont.lat.attrs['units']}],\n"
-                f"$\\sigma_x$ = {np.abs(popt[3]):+.2f} [{skycoord_units}], "
-                f"$\\sigma_y$ = {np.abs(popt[4]):+.2f} [{skycoord_units}], "
-                f"P.A. = {(np.rad2deg(popt[5]) + 90) % 180 - 90:+.1f} [deg],\n"
+                f"FWHM_x = {popt[3]*popt[4]*2.354820:+.2f} [{skycoord_units}], "
+                f"FWHM_y = {popt[4]*2.354820:+.2f} [{skycoord_units}], "
+                f"P.A. = {np.rad2deg(popt[5]+np.pi/2.0):+.1f} [deg],\n"
                 f"min_frequency = {min_frequency}, "
                 f"max_frequency = {max_frequency}",
                 fontsize=10,
@@ -553,7 +569,7 @@ def raster(
                 "(Gaussian fit failed: dAz and dEl are peak pixel based)",
                 fontsize=10,
             )
-        ax.set_xlim(-map_lim, map_lim)
+        ax.set_xlim(map_lim, -map_lim)
         ax.set_ylim(-map_lim, map_lim)
         ax.axes.set_aspect("equal", "datalim")
 
@@ -1318,10 +1334,11 @@ def save_qlook(
     raise ValueError("Extension of filename is not valid.")
 
 
-def gaussian_2d(xy, amp, x0, y0, sigma_x, sigma_y, theta, offset):
+def gaussian_2d(xy, amp, x0, y0, sigma_x_over_y, sigma_y, theta, offset):
     x, y = xy
     x0 = float(x0)
     y0 = float(y0)
+    sigma_x = sigma_y * sigma_x_over_y
     a = (np.cos(theta) ** 2) / (2 * sigma_x**2) + (np.sin(theta) ** 2) / (
         2 * sigma_y**2
     )
