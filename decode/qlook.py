@@ -303,6 +303,21 @@ def daisy(
         return save_qlook(fig, file, overwrite=overwrite, **options)
 
 
+def flag_spike(index: xr.DataArray, /) -> xr.DataArray:
+    index[:1] = index[-1:] = True
+    return index
+
+
+def despike(dems: xr.DataArray) -> xr.DataArray:
+    is_spike = (
+        xr.zeros_like(dems.time, bool)
+        .reset_coords(drop=True)
+        .groupby(utils.phaseof(dems.beam))
+        .map(flag_spike)
+    )
+    return dems.where(~is_spike, drop=True)
+
+
 def pswsc(
     dems: Path,
     /,
@@ -364,8 +379,10 @@ def pswsc(
             frequency_units=frequency_units,
         )
 
+        da_despiked = despike(da)
+
         # make spectrum
-        da_scan = select.by(da, "state", ["ON", "OFF"])
+        da_scan = select.by(da_despiked, "state", ["ON", "OFF"])
         da_sub = da_scan.groupby("scan").map(subtract_per_scan)
         spec = da_sub.mean("scan")
 
@@ -379,7 +396,7 @@ def pswsc(
         fig, axes = plt.subplots(1, 2, figsize=DEFAULT_FIGSIZE)
 
         ax = axes[0]  # type: ignore
-        plot.data(da.scan, ax=ax)
+        plot.data(da_despiked.scan, ax=ax)
 
         ax = axes[1]  # type: ignore
         plot.data(spec, x="frequency", s=5, hue=None, ax=ax)
