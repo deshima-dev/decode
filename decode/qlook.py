@@ -303,21 +303,6 @@ def daisy(
         return save_qlook(fig, file, overwrite=overwrite, **options)
 
 
-def flag_spike(index: xr.DataArray, /) -> xr.DataArray:
-    index[:1] = index[-1:] = True
-    return index
-
-
-def despike(dems: xr.DataArray) -> xr.DataArray:
-    is_spike = (
-        xr.zeros_like(dems.time, bool)
-        .reset_coords(drop=True)
-        .groupby(utils.phaseof(dems.beam))
-        .map(flag_spike)
-    )
-    return dems.where(~is_spike, drop=True)
-
-
 def pswsc(
     dems: Path,
     /,
@@ -1109,6 +1094,21 @@ def _scan(
 
         fig.tight_layout()
         return save_qlook(fig, file, overwrite=overwrite, **options)
+
+
+def despike(dems: xr.DataArray, /) -> xr.DataArray:
+    is_spike = (
+        xr.zeros_like(dems.time, bool)
+        .reset_coords(drop=True)
+        .groupby(utils.phaseof(dems.beam))
+        .map(flag_spike)
+    )
+    return dems.where(~is_spike, drop=True)
+
+
+def flag_spike(index: xr.DataArray, /) -> xr.DataArray:
+    index[:1] = index[-1:] = True
+    return index
 
 
 def mean_in_time(dems: xr.DataArray) -> xr.DataArray:
