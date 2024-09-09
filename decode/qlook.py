@@ -285,7 +285,7 @@ def daisy(
                 f"dEl = {popt[2]:+.2f} [{cont.lat.attrs['units']}],\n"
                 f"FWHM_x = {popt[3]*popt[4]*2.354820:+.2f} [{skycoord_units}], "
                 f"FWHM_y = {popt[4]*2.354820:+.2f} [{skycoord_units}], "
-                f"P.A. = {np.rad2deg(popt[5]+np.pi/2.0):+.1f} [deg],\n"
+                f"P.A. = {-np.rad2deg(popt[5]+np.pi/2.0):+.1f} [deg],\n"
                 f"min_frequency = {min_frequency}, "
                 f"max_frequency = {max_frequency}",
                 fontsize=10,
@@ -300,7 +300,7 @@ def daisy(
                 "(Gaussian fit failed: dAz and dEl are peak pixel based)",
                 fontsize=10,
             )
-        ax.set_xlim(map_lim, -map_lim)
+        ax.set_xlim(-map_lim, map_lim)
         ax.set_ylim(-map_lim, map_lim)
         ax.axes.set_aspect("equal", "datalim")
 
@@ -556,7 +556,7 @@ def raster(
                 f"dEl = {popt[2]:+.2f} [{cont.lat.attrs['units']}],\n"
                 f"FWHM_x = {popt[3]*popt[4]*2.354820:+.2f} [{skycoord_units}], "
                 f"FWHM_y = {popt[4]*2.354820:+.2f} [{skycoord_units}], "
-                f"P.A. = {np.rad2deg(popt[5]+np.pi/2.0):+.1f} [deg],\n"
+                f"P.A. = {-np.rad2deg(popt[5]+np.pi/2.0):+.1f} [deg],\n"
                 f"min_frequency = {min_frequency}, "
                 f"max_frequency = {max_frequency}",
                 fontsize=10,
@@ -571,7 +571,7 @@ def raster(
                 "(Gaussian fit failed: dAz and dEl are peak pixel based)",
                 fontsize=10,
             )
-        ax.set_xlim(map_lim, -map_lim)
+        ax.set_xlim(-map_lim, map_lim)
         ax.set_ylim(-map_lim, map_lim)
         ax.axes.set_aspect("equal", "datalim")
 
