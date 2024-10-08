@@ -248,7 +248,7 @@ def daisy(
             perr = np.sqrt(np.diag(pcov))
             data_fitted = gaussian_2d((x, y), *popt).reshape(x.shape)
             chi2, reduced_chi2 = calc_chi2(
-                data, data_fitted, sigma=1.0, num_params=len(p0)
+                data, data_fitted, sigma=1.0, num_params=len(initial_guess)
             )
             fit_res_params_dict = make_fit_res_params_dict(
                 popt, perr, chi2, reduced_chi2
@@ -526,7 +526,7 @@ def raster(
             perr = np.sqrt(np.diag(pcov))
             data_fitted = gaussian_2d((x, y), *popt).reshape(x.shape)
             chi2, reduced_chi2 = calc_chi2(
-                data, data_fitted, sigma=1.0, num_params=len(p0)
+                data, data_fitted, sigma=1.0, num_params=len(initial_guess)
             )
             fit_res_params_dict = make_fit_res_params_dict(
                 popt, perr, chi2, reduced_chi2
@@ -1383,7 +1383,7 @@ def gaussian_2d(xy, amp, x0, y0, sigma_x_over_y, sigma_y, theta, offset):
     return g.ravel()
 
 
-def calculate_chi_squared(data_obs, data_fit, sigma, num_params):
+def calc_chi2(data_obs, data_fit, sigma, num_params):
     chi2 = np.sum(((data_obs - data_fit) / sigma) ** 2)
     dof = len(data_obs) - num_params
     reduced_chi2 = chi2 / dof
