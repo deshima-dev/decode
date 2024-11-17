@@ -2,6 +2,7 @@ __all__ = [
     "auto",
     "daisy",
     "pswsc",
+    "abba",
     "raster",
     "skydip",
     "still",
@@ -88,6 +89,9 @@ def auto(dems: Path, /, **options: Any) -> Path:
 
         if "pswsc" in obs:
             return pswsc(dems, **options)
+
+        if "abba" in obs:
+            return abba(dems, **options)
 
         if "raster" in obs:
             return raster(dems, **options)
@@ -418,7 +422,7 @@ def abba(
     format: str = DEFAULT_FORMAT,
     outdir: Path = DEFAULT_OUTDIR,
     overwrite: bool = DEFAULT_OVERWRITE,
-    suffix: str = "abba_pswsc",
+    suffix: str = "abba",
     # other options
     debug: bool = DEFAULT_DEBUG,
     **options: Any,
@@ -466,18 +470,13 @@ def abba(
 
         da_despike = despike(da)
 
-        # extracting nodAB dataset
+        # make spectrum
         da_onoff = select.by(da_despike, "state", ["ON", "OFF"])
-        # make cuntinus ID label of nod (Equal to scan label,but the latter is discrete)
         scan_onoff = utils.phaseof(da_onoff.state)
-
         chop_per_scan = da_onoff.beam.groupby(scan_onoff).apply(utils.phaseof)
         is_second_half = chop_per_scan.groupby(scan_onoff).apply(
             lambda group: (group >= group.mean())
         )
-
-        # make is_second_half coord usinf the func each_half_cal
-        # make abba_cycle label and abba_phase using quotient and remainder devided by 4.
         abba_cycle = (scan_onoff.data * 2 + is_second_half - 1) // 4
         abba_phase = (scan_onoff * 2 + is_second_half - 1) % 4
         da_abba = da_onoff.assign_coords(abba_cycle=abba_cycle, abba_phase=abba_phase)
@@ -490,10 +489,12 @@ def abba(
         # save result
         suffixes = f".{suffix}.{format}"
         file = Path(outdir) / Path(dems).with_suffix(suffixes).name
+
         if format in DATA_FORMATS:
             return save_qlook(da_abba_select, file, overwrite=overwrite, **options)
 
-        fig, ax = plt.subplots(figsize=(6, 4))
+        fig, ax = plt.subplots(figsize=(6, 4))  # type: ignore
+
         plot.data(da_abba_select, x="frequency", s=5, hue=None)
         ax.set_ylim(get_robust_lim(da_abba_select))
         ax.grid(True)
@@ -1492,6 +1493,7 @@ def main() -> None:
             "auto": auto,
             "daisy": daisy,
             "pswsc": pswsc,
+            "abba": abba,
             "raster": raster,
             "skydip": skydip,
             "still": still,
