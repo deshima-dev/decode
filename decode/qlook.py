@@ -403,6 +403,106 @@ def pswsc(
         return save_qlook(fig, file, overwrite=overwrite, **options)
 
 
+def abba(
+    dems: Path,
+    /,
+    *,
+    # options for loading
+    include_mkid_ids: Optional[Sequence[int]] = DEFAULT_INCL_MKID_IDS,
+    exclude_mkid_ids: Optional[Sequence[int]] = DEFAULT_EXCL_MKID_IDS,
+    min_frequency: Optional[str] = DEFAULT_MIN_FREQUENCY,
+    max_frequency: Optional[str] = DEFAULT_MAX_FREQUENCY,
+    data_type: Literal["auto", "brightness", "df/f"] = DEFAULT_DATA_TYPE,
+    frequency_units: str = DEFAULT_FREQUENCY_UNITS,
+    # options for saving
+    format: str = DEFAULT_FORMAT,
+    outdir: Path = DEFAULT_OUTDIR,
+    overwrite: bool = DEFAULT_OVERWRITE,
+    suffix: str = "abba_pswsc",
+    # other options
+    debug: bool = DEFAULT_DEBUG,
+    **options: Any,
+) -> Path:
+    """Quick-look at a ABBA PSW  observation with sky chopper.
+
+    Args:
+        dems: Input DEMS file (netCDF or Zarr).
+        include_mkid_ids: MKID IDs to be included in analysis.
+            Defaults to all MKID IDs.
+        exclude_mkid_ids: MKID IDs to be excluded in analysis.
+            Defaults to no MKID IDs.
+        min_frequency: Minimum frequency to be included in analysis.
+            Defaults to no minimum frequency bound.
+        max_frequency: Maximum frequency to be included in analysis.
+            Defaults to no maximum frequency bound.
+        data_type: Data type of the input DEMS file.
+            Defaults to the ``long_name`` attribute in it.
+        frequency_units: Units of the frequency axis.
+        format: Output data format of the quick-look result.
+        outdir: Output directory for the quick-look result.
+        overwrite: Whether to overwrite the output if it exists.
+        suffix: Suffix that precedes the file extension.
+        debug: Whether to print detailed logs for debugging.
+        **options: Other options for saving the output (e.g. dpi).
+
+    Returns:
+        Absolute path of the saved file.
+    """
+
+    with set_logger(debug):
+        for key, val in locals().items():
+            LOGGER.debug(f"{key}: {val!r}")
+
+    with xr.set_options(keep_attrs=True):
+        da = load_dems(
+            dems,
+            include_mkid_ids=include_mkid_ids,
+            exclude_mkid_ids=exclude_mkid_ids,
+            min_frequency=min_frequency,
+            max_frequency=max_frequency,
+            data_type=data_type,
+            frequency_units=frequency_units,
+        )
+
+        da_despike = despike(da)
+
+        # extracting nodAB dataset
+        da_onoff = select.by(da_despike, "state", ["ON", "OFF"])
+        # make cuntinus ID label of nod (Equal to scan label,but the latter is discrete)
+        scan_onoff = utils.phaseof(da_onoff.state)
+
+        chop_per_scan = da_onoff.beam.groupby(scan_onoff).apply(utils.phaseof)
+        is_second_half = chop_per_scan.groupby(scan_onoff).apply(
+            lambda group: (group >= group.mean())
+        )
+
+        # make is_second_half coord usinf the func each_half_cal
+        # make abba_cycle label and abba_phase using quotient and remainder devided by 4.
+        abba_cycle = (scan_onoff.data * 2 + is_second_half - 1) // 4
+        abba_phase = (scan_onoff * 2 + is_second_half - 1) % 4
+        da_abba = da_onoff.assign_coords(abba_cycle=abba_cycle, abba_phase=abba_phase)
+        da_abba_select = (
+            da_abba.groupby("abba_cycle")
+            .map(subtract_per_abba_cycle)
+            .mean("abba_cycle")
+        )
+
+        # save result
+        suffixes = f".{suffix}.{format}"
+        file = Path(outdir) / Path(dems).with_suffix(suffixes).name
+        if format in DATA_FORMATS:
+            return save_qlook(da_abba_select, file, overwrite=overwrite, **options)
+
+        fig, ax = plt.subplots(figsize=(6, 4))
+        plot.data(da_abba_select, x="frequency", s=5, hue=None)
+        ax.set_ylim(get_robust_lim(da_abba_select))
+        ax.grid(True)
+        ax.set_title(f"{Path(dems).name}\n({da.observation})")
+
+        fig.tight_layout()
+        return save_qlook(fig, file, overwrite=overwrite, **options)
+
+
 def raster(
     dems: Path,
     /,
@@ -1158,6 +1258,16 @@ def subtract_per_scan(dems: xr.DataArray) -> xr.DataArray:
         )
 
     raise ValueError("State must be either ON or OFF.")
+
+
+def subtract_per_abba_cycle(dems: xr.DataArray) -> xr.DataArray:
+    """Apply abba atm-corrction to a single-scan DEMS."""
+    required_elements = {0, 1, 2, 3}
+    if required_elements == set(np.unique(dems.abba_phase.values)):
+        per_abba = dems.groupby("abba_phase").map(subtract_per_scan)
+        return per_abba.mean("abba_phase")
+    else:
+        return xr.DataArray(np.nan)
 
 
 def get_chan_weight(
