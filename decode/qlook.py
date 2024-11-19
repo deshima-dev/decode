@@ -32,6 +32,7 @@ from . import assign, convert, load, make, plot, select, utils
 
 
 # constants
+ABBA_PHASES = {0, 1, 2, 3}
 DATA_FORMATS = "csv", "nc", "zarr", "zarr.zip"
 DEFAULT_DATA_TYPE = "auto"
 DEFAULT_DEBUG = False
@@ -49,7 +50,6 @@ DEFAULT_SKYCOORD_GRID = "6 arcsec"
 DEFAULT_SKYCOORD_UNITS = "arcsec"
 SIGMA_OVER_MAD = 1.4826
 LOGGER = getLogger(__name__)
-ABBA_PHASE = {0, 1, 2, 3}
 
 
 @contextmanager
@@ -1145,8 +1145,21 @@ def mean_in_time(dems: xr.DataArray) -> xr.DataArray:
     return xr.zeros_like(middle) + dems.mean("time")
 
 
-def subtract_per_scan(dems: xr.DataArray) -> xr.DataArray:
-    """Apply source-sky subtraction to a single-scan DEMS."""
+def subtract_per_abba_cycle(dems: xr.DataArray, /) -> xr.DataArray:
+    """Take the whole abba-cycle average which are applied atm corecction"""
+    if not set(np.unique(dems.abba_phase)) == ABBA_PHASES:
+        return xr.DataArray(np.nan)
+
+    return (
+        dems
+        .groupby("abba_phase")
+        .map(subtract_per_abba_phase)
+        .mean("abba_phase")
+    )
+
+
+def subtract_per_abba_phase(dems: xr.DataArray) -> xr.DataArray:
+    """Apply atm corecction to each abba-phase DEMS."""
     t_amb = 273.15
     if len(states := np.unique(dems.state)) != 1:
         raise ValueError("State must be unique.")
@@ -1170,15 +1183,6 @@ def subtract_per_scan(dems: xr.DataArray) -> xr.DataArray:
         )
 
     raise ValueError("State must be either ON or OFF.")
-
-
-def subtract_per_abba_cycle(dems: xr.DataArray) -> xr.DataArray:
-    """Apply abba atm-corrction to a single-scan DEMS."""
-    if ABBA_PHASE == set(np.unique(dems.abba_phase.values)):
-        per_abba = dems.groupby("abba_phase").map(subtract_per_scan)
-        return per_abba.mean("abba_phase")
-    else:
-        return xr.DataArray(np.nan)
 
 
 def get_chan_weight(
