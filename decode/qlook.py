@@ -1150,12 +1150,7 @@ def subtract_per_abba_cycle(dems: xr.DataArray, /) -> xr.DataArray:
     if not set(np.unique(dems.abba_phase)) == ABBA_PHASES:
         return xr.DataArray(np.nan)
 
-    return (
-        dems
-        .groupby("abba_phase")
-        .map(subtract_per_abba_phase)
-        .mean("abba_phase")
-    )
+    return dems.groupby("abba_phase").map(subtract_per_abba_phase).mean("abba_phase")
 
 
 def subtract_per_abba_phase(dems: xr.DataArray) -> xr.DataArray:
