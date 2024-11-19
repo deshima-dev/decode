@@ -382,8 +382,8 @@ def pswsc(
         is_second_half = chop_per_scan.groupby(scan_onoff).apply(
             lambda group: (group >= group.mean())
         )
-        abba_cycle = (scan_onoff.data * 2 + is_second_half - 1) // 4
-        abba_phase = (scan_onoff.data * 2 + is_second_half - 1) % 4
+        abba_cycle = (scan_onoff * 2 + is_second_half - 1) // 4
+        abba_phase = (scan_onoff * 2 + is_second_half - 1) % 4
         da_abba = da_onoff.assign_coords(abba_cycle=abba_cycle, abba_phase=abba_phase)
         spec = (
             da_abba.groupby("abba_cycle")
@@ -1146,7 +1146,7 @@ def mean_in_time(dems: xr.DataArray) -> xr.DataArray:
 
 
 def subtract_per_abba_cycle(dems: xr.DataArray, /) -> xr.DataArray:
-    """Take the whole abba-cycle average which are applied atm corecction"""
+    """Take each abba-cycle's average which are applied atm corecction"""
     if not set(np.unique(dems.abba_phase)) == ABBA_PHASES:
         return xr.DataArray(np.nan)
 
