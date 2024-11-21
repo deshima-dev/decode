@@ -375,7 +375,7 @@ def pswsc(
 
         da_despiked = despike(da)
 
-        # make spectrum
+        # calculate ABBA cycles and phases
         da_onoff = select.by(da_despiked, "state", ["ON", "OFF"])
         scan_onoff = utils.phaseof(da_onoff.state)
         chop_per_scan = da_onoff.beam.groupby(scan_onoff).apply(utils.phaseof)
@@ -384,9 +384,11 @@ def pswsc(
         )
         abba_cycle = (scan_onoff * 2 + is_second_half - 1) // 4
         abba_phase = (scan_onoff * 2 + is_second_half - 1) % 4
-        da_abba = da_onoff.assign_coords(abba_cycle=abba_cycle, abba_phase=abba_phase)
+
+        # make spectrum
         spec = (
-            da_abba.groupby("abba_cycle")
+            da_onoff.assign_coords(abba_cycle=abba_cycle, abba_phase=abba_phase)
+            .groupby("abba_cycle")
             .map(subtract_per_abba_cycle)
             .mean("abba_cycle")
         )
