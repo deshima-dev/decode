@@ -1163,31 +1163,34 @@ def subtract_per_abba_cycle(dems: xr.DataArray, /) -> xr.DataArray:
     return dems.groupby("abba_phase").map(subtract_per_abba_phase).mean("abba_phase")
 
 
-def subtract_per_abba_phase(dems: xr.DataArray) -> xr.DataArray:
-    """Apply atm corecction to each abba-phase DEMS."""
+def subtract_per_abba_phase(dems: xr.DataArray, /) -> xr.DataArray:
+    """Subtract sky from source with atmospheric correction for each ABBA phase.
+
+    Args:
+        dems: 2D DataArray (time x chan) of DEMS per ABBA phase.
+
+    Returns:
+        1D DataArray (chan) of the mean spectrum after subtraction and correction.
+
+    Raises:
+        ValueError: Raised if ``dems.state`` is not ON-only nor OFF-only.
+
+    """
     t_amb = 273.15
+
     if len(states := np.unique(dems.state)) != 1:
         raise ValueError("State must be unique.")
 
-    if (state := states[0]) == "ON":
-        src = select.by(dems, "beam", include="A")
-        sky = select.by(dems, "beam", include="B")
-        return (
-            t_amb
-            * (src.mean("time") - sky.mean("time").data)
-            / ((t_amb - sky.mean("time")))
-        )
+    if states[0] == "ON":
+        src = select.by(dems, "beam", include="A").mean("time")
+        sky = select.by(dems, "beam", include="B").mean("time")
+    elif states[0] == "OFF":
+        src = select.by(dems, "beam", include="B").mean("time")
+        sky = select.by(dems, "beam", include="A").mean("time")
+    else:
+        raise ValueError("State must be either ON or OFF.")
 
-    if state == "OFF":
-        src = select.by(dems, "beam", include="B")
-        sky = select.by(dems, "beam", include="A")
-        return (
-            t_amb
-            * (src.mean("time") - sky.mean("time").data)
-            / ((t_amb - sky.mean("time")))
-        )
-
-    raise ValueError("State must be either ON or OFF.")
+    return t_amb * (src - sky.data) / (t_amb - sky)
 
 
 def get_chan_weight(
