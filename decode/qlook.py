@@ -1146,9 +1146,19 @@ def mean_in_time(dems: xr.DataArray) -> xr.DataArray:
 
 
 def subtract_per_abba_cycle(dems: xr.DataArray, /) -> xr.DataArray:
-    """Take each abba-cycle's average which are applied atm corecction"""
+    """Subtract sky from source with atmospheric correction for each ABBA cycle.
+
+    Args:
+        dems: 2D DataArray (time x chan) of DEMS per ABBA cycle.
+
+    Returns:
+        1D DataArray (chan) of the mean spectrum after subtraction and correction.
+        If ABBA phases per cycle are incomplete, i.e., some phases are missing,
+        a spectrum filled with NaN will be returned instead.
+
+    """
     if not set(np.unique(dems.abba_phase)) == ABBA_PHASES:
-        return xr.DataArray(np.nan)
+        return dems.mean("time") * np.nan
 
     return dems.groupby("abba_phase").map(subtract_per_abba_phase).mean("abba_phase")
 
