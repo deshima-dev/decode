@@ -1,4 +1,4 @@
-__all__ = ["coord_units", "frame", "units"]
+__all__ = ["coord_units", "dfof_to_brightness", "frame", "units"]
 
 
 # standard library
@@ -15,6 +15,11 @@ from astropy.units import Equivalency, Quantity, Unit
 T = TypeVar("T")
 Multiple = Union[Sequence[T], T]
 UnitLike = Union[xr.DataArray, Unit, str]
+
+
+# constants
+DEFAULT_T_ATM = 273.0  # K
+DEFAULT_T_ROOM = 293.0  # K
 
 
 def coord_units(
@@ -49,6 +54,30 @@ def coord_units(
         da = da.assign_coords({coord_name: new_coord})
 
     return da
+
+
+def dfof_to_brightness(da: xr.DataArray, /) -> xr.DataArray:
+    """Convert a DataArray of df/f to that of brightness."""
+    if np.isnan(T_atm := da.temperature.mean().data):
+        T_atm = DEFAULT_T_ATM
+
+    if np.isnan(T_room := da.aste_cabin_temperature.mean().data):
+        T_room = DEFAULT_T_ROOM
+
+    fwd = da.d2_resp_fwd.data
+    p0 = da.d2_resp_p0.data
+    T0 = da.d2_resp_t0.data
+
+    return (
+        da.copy(
+            deep=True,
+            data=(da.data + p0 * np.sqrt(T_room + T0)) ** 2 / (p0**2 * fwd)
+            - T0 / fwd
+            - (1 - fwd) / fwd * T_atm,
+        )
+        .astype(da.dtype)
+        .assign_attrs(long_name="Brightness", units="K")
+    )
 
 
 def frame(da: xr.DataArray, new_frame: str, /) -> xr.DataArray:
