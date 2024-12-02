@@ -288,7 +288,7 @@ def daisy(
             )
             ax.set_title(
                 f"Peak = {fit_res_params_dict['peak']:+.2e} [{cont.units}], "
-                f"dAz = {fit_res_params_dict['offset_az']::+.2f} [{cont.lon.attrs['units']}], "
+                f"dAz = {fit_res_params_dict['offset_az']:+.2f} [{cont.lon.attrs['units']}], "
                 f"dEl = {fit_res_params_dict['offset_el']:+.2f} [{cont.lat.attrs['units']}],\n"
                 f"FWHM_maj = {fit_res_params_dict['hpbw_major']:+.2f} [{skycoord_units}], "
                 f"FWHM_min = {fit_res_params_dict['hpbw_minor']:+.2f} [{skycoord_units}], "
@@ -566,7 +566,7 @@ def raster(
             )
             ax.set_title(
                 f"Peak = {fit_res_params_dict['peak']:+.2e} [{cont.units}], "
-                f"dAz = {fit_res_params_dict['offset_az']::+.2f} [{cont.lon.attrs['units']}], "
+                f"dAz = {fit_res_params_dict['offset_az']:+.2f} [{cont.lon.attrs['units']}], "
                 f"dEl = {fit_res_params_dict['offset_el']:+.2f} [{cont.lat.attrs['units']}],\n"
                 f"FWHM_maj = {fit_res_params_dict['hpbw_major']:+.2f} [{skycoord_units}], "
                 f"FWHM_min = {fit_res_params_dict['hpbw_minor']:+.2f} [{skycoord_units}], "
