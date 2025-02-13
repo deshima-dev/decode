@@ -254,8 +254,8 @@ def daisy(
                 popt, perr, chi2, reduced_chi2
             )
             is_gaussfit_successful = True
-        except Exception as e:
-            print(f"An error occurred: {e}")
+        except Exception as error:
+            LOGGER.warning(f"An error occurred on 2D Gaussian fitting: {error}")
             is_gaussfit_successful = False
 
         # save result
@@ -532,8 +532,8 @@ def raster(
                 popt, perr, chi2, reduced_chi2
             )
             is_gaussfit_successful = True
-        except Exception as e:
-            print(f"An error occurred: {e}")
+        except Exception as error:
+            LOGGER.warning(f"An error occurred on 2D Gaussian fitting: {error}")
             is_gaussfit_successful = False
 
         # save result
