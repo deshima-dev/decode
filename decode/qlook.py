@@ -1383,14 +1383,14 @@ def gaussian_2d(xy, amp, x0, y0, sigma_x_over_y, sigma_y, theta, offset):
     return g.ravel()
 
 
-def calc_chi2(data_obs, data_fit, sigma, num_params):
+def calc_chi2(data_obs, data_fit, sigma, num_params) -> tuple[float, float]:
     chi2 = np.sum(((data_obs - data_fit) / sigma) ** 2)
     dof = len(data_obs) - num_params
     reduced_chi2 = chi2 / dof
     return chi2, reduced_chi2
 
 
-def make_fit_res_params_dict(popt, perr, chi2, reduced_chi2):
+def make_fit_res_params_dict(popt, perr, chi2, reduced_chi2) -> dict[str, float]:
     res = {}
     res["offset_az"] = popt[1]
     res["offset_el"] = popt[2]
