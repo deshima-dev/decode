@@ -248,8 +248,15 @@ def daisy(
             )
             perr = np.sqrt(np.diag(pcov))
             data_fitted = gaussian_2d((x, y), *popt).reshape(x.shape)
+            chi2, reduced_chi2 = calc_chi2(
+                data, data_fitted, sigma=1.0, num_params=len(initial_guess)
+            )
+            fit_res_params_dict = make_fit_res_params_dict(
+                popt, perr, chi2, reduced_chi2
+            )
             is_gaussfit_successful = True
-        except:
+        except Exception as error:
+            LOGGER.warning(f"An error occurred on 2D Gaussian fitting: {error}")
             is_gaussfit_successful = False
 
         # save result
@@ -281,12 +288,12 @@ def daisy(
                 linestyles="-",
             )
             ax.set_title(
-                f"Peak = {popt[0]:+.2e} [{cont.units}], "
-                f"dAz = {popt[1]:+.2f} [{cont.lon.attrs['units']}], "
-                f"dEl = {popt[2]:+.2f} [{cont.lat.attrs['units']}],\n"
-                f"FWHM_x = {popt[3]*popt[4]*2.354820:+.2f} [{skycoord_units}], "
-                f"FWHM_y = {popt[4]*2.354820:+.2f} [{skycoord_units}], "
-                f"P.A. = {-np.rad2deg(popt[5]+np.pi/2.0):+.1f} [deg],\n"
+                f"Peak = {fit_res_params_dict['peak']:+.2e} [{cont.units}], "
+                f"dAz = {fit_res_params_dict['offset_az']:+.2f} [{cont.lon.attrs['units']}], "
+                f"dEl = {fit_res_params_dict['offset_el']:+.2f} [{cont.lat.attrs['units']}],\n"
+                f"FWHM_maj = {fit_res_params_dict['hpbw_major']:+.2f} [{skycoord_units}], "
+                f"FWHM_min = {fit_res_params_dict['hpbw_minor']:+.2f} [{skycoord_units}], "
+                f"P.A. = {fit_res_params_dict['position_angle']:+.1f} [deg],\n"
                 f"min_frequency = {min_frequency}, "
                 f"max_frequency = {max_frequency}",
                 fontsize=10,
@@ -532,8 +539,15 @@ def raster(
             )
             perr = np.sqrt(np.diag(pcov))
             data_fitted = gaussian_2d((x, y), *popt).reshape(x.shape)
+            chi2, reduced_chi2 = calc_chi2(
+                data, data_fitted, sigma=1.0, num_params=len(initial_guess)
+            )
+            fit_res_params_dict = make_fit_res_params_dict(
+                popt, perr, chi2, reduced_chi2
+            )
             is_gaussfit_successful = True
-        except:
+        except Exception as error:
+            LOGGER.warning(f"An error occurred on 2D Gaussian fitting: {error}")
             is_gaussfit_successful = False
 
         # save result
@@ -565,12 +579,12 @@ def raster(
                 linestyles="-",
             )
             ax.set_title(
-                f"Peak = {popt[0]:+.2e} [{cont.units}], "
-                f"dAz = {popt[1]:+.2f} [{cont.lon.attrs['units']}], "
-                f"dEl = {popt[2]:+.2f} [{cont.lat.attrs['units']}],\n"
-                f"FWHM_x = {popt[3]*popt[4]*2.354820:+.2f} [{skycoord_units}], "
-                f"FWHM_y = {popt[4]*2.354820:+.2f} [{skycoord_units}], "
-                f"P.A. = {-np.rad2deg(popt[5]+np.pi/2.0):+.1f} [deg],\n"
+                f"Peak = {fit_res_params_dict['peak']:+.2e} [{cont.units}], "
+                f"dAz = {fit_res_params_dict['offset_az']:+.2f} [{cont.lon.attrs['units']}], "
+                f"dEl = {fit_res_params_dict['offset_el']:+.2f} [{cont.lat.attrs['units']}],\n"
+                f"FWHM_maj = {fit_res_params_dict['hpbw_major']:+.2f} [{skycoord_units}], "
+                f"FWHM_min = {fit_res_params_dict['hpbw_minor']:+.2f} [{skycoord_units}], "
+                f"P.A. = {fit_res_params_dict['position_angle']:+.1f} [deg],\n"
                 f"min_frequency = {min_frequency}, "
                 f"max_frequency = {max_frequency}",
                 fontsize=10,
@@ -1402,6 +1416,36 @@ def gaussian_2d(xy, amp, x0, y0, sigma_x_over_y, sigma_y, theta, offset):
         -(a * ((x - x0) ** 2) + 2 * b * (x - x0) * (y - y0) + c * ((y - y0) ** 2))
     )
     return g.ravel()
+
+
+def calc_chi2(data_obs, data_fit, sigma, num_params) -> tuple[float, float]:
+    """Calculate chi^2 and reduced chi^2 of a 2D Gaussian fitting."""
+    chi2 = np.sum(((data_obs - data_fit) / sigma) ** 2)
+    dof = len(data_obs) - num_params
+    reduced_chi2 = chi2 / dof
+    return chi2, reduced_chi2
+
+
+def make_fit_res_params_dict(popt, perr, chi2, reduced_chi2) -> dict[str, float]:
+    """Aggregate 2D Gaussian fitting results as a dictionary."""
+    res = {}
+    res["offset_az"] = popt[1]
+    res["offset_el"] = popt[2]
+    res["offset_az_error"] = perr[1]
+    res["offset_el_error"] = perr[2]
+    res["hpbw_major"] = popt[3] * popt[4] * 2.354820
+    res["hpbw_minor"] = popt[4] * 2.354820
+    res["hpbw_major_error"] = popt[3] * perr[4] * 2.354820
+    res["hpbw_minor_error"] = perr[4] * 2.354820
+    res["position_angle"] = -np.rad2deg(popt[5] + np.pi / 2.0)
+    res["position_angle_error"] = np.rad2deg(perr[5])
+    res["peak"] = popt[0]
+    res["peak_error"] = perr[0]
+    res["floor"] = popt[6]
+    res["floor_error"] = perr[6]
+    res["chi2"] = chi2
+    res["reduced_chi2"] = reduced_chi2
+    return res
 
 
 def main() -> None:
