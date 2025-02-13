@@ -1,0 +1,7 @@
+decode.plot module
+==================
+
+.. automodule:: decode.plot
+   :members:
+   :undoc-members:
+   :show-inheritance:
