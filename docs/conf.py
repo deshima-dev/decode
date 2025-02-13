@@ -1,4 +1,5 @@
 # project information
+project = "de:code"
 author = "DESHIMA Team"
 copyright = "2018-2025 DESHIMA Team"
 
