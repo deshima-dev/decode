@@ -3,15 +3,15 @@ message: "If you use this software, please cite it as below."
 
 title: "de:code"
 abstract: "DESHIMA code for data analysis"
-version: 2024.11.0
-date-released: 2024-11-26
+version: 2025.2.0
+date-released: 2025-02-13
 license: "MIT"
 doi: "10.5281/zenodo.3384216"
 url: "https://github.com/deshima-dev/decode"
 authors:
   - given-names: "Akio"
     family-names: "Taniguchi"
-    affiliation: "Nagoya University"
+    affiliation: "Kitami Institute of Technology"
     orcid: "https://orcid.org/0000-0002-9695-6183"
   - given-names: "Juri"
     family-names: "Yamanaka"
