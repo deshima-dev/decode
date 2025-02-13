@@ -1384,6 +1384,7 @@ def gaussian_2d(xy, amp, x0, y0, sigma_x_over_y, sigma_y, theta, offset):
 
 
 def calc_chi2(data_obs, data_fit, sigma, num_params) -> tuple[float, float]:
+    """Calculate chi^2 and reduced chi^2 of a 2D Gaussian fitting."""
     chi2 = np.sum(((data_obs - data_fit) / sigma) ** 2)
     dof = len(data_obs) - num_params
     reduced_chi2 = chi2 / dof
@@ -1391,6 +1392,7 @@ def calc_chi2(data_obs, data_fit, sigma, num_params) -> tuple[float, float]:
 
 
 def make_fit_res_params_dict(popt, perr, chi2, reduced_chi2) -> dict[str, float]:
+    """Aggregate 2D Gaussian fitting results as a dictionary."""
     res = {}
     res["offset_az"] = popt[1]
     res["offset_el"] = popt[2]
