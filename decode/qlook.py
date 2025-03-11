@@ -13,7 +13,6 @@ __all__ = [
 
 # standard library
 import copy
-import tomli_w
 import toml
 from contextlib import contextmanager
 from logging import DEBUG, basicConfig, getLogger
