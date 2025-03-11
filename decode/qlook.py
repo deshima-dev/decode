@@ -1461,7 +1461,6 @@ def save_pointing_toml(da, fit_res_params_dict) -> None:
     Returns:
         None
     """
-    ana_timestamp = datetime.strptime(da.name, '%Y%m%d%H%M%S')
     fit_result = {k: v.item() for k, v in fit_res_params_dict.items()}
     # TODO: pwvの取得(aste_misti_pwvの値はすべてnan)
     # TODO: bandwidthの平均値の計算、bandwidthはどこに格納されているか
@@ -1469,7 +1468,7 @@ def save_pointing_toml(da, fit_res_params_dict) -> None:
     with open('pointing.toml', 'wt') as f:
         result = {
             'analyses': [{
-                'ana_datetime': ana_timestamp,
+                'ana_datetime': datetime.strptime(da.name, '%Y%m%d%H%M%S'),
                 'pwv': 0.0,
                 'pwv_error': 0.0,
                 'kid_infos': [{
