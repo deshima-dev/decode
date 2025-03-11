@@ -13,11 +13,14 @@ __all__ = [
 
 # standard library
 import copy
+import tomli_w
+import toml
 from contextlib import contextmanager
 from logging import DEBUG, basicConfig, getLogger
 from pathlib import Path
 from typing import Any, Literal, Optional, Sequence, Union, cast
 from warnings import catch_warnings, simplefilter
+from datetime import datetime
 
 
 # dependencies
@@ -314,6 +317,8 @@ def daisy(
 
         for ax in axes:  # type: ignore
             ax.grid(True)
+
+        save_pointing_toml(da, fit_res_params_dict)
 
         fig.tight_layout()
         return save_qlook(fig, file, overwrite=overwrite, **options)
@@ -1446,6 +1451,42 @@ def make_fit_res_params_dict(popt, perr, chi2, reduced_chi2) -> dict[str, float]
     res["chi2"] = chi2
     res["reduced_chi2"] = reduced_chi2
     return res
+
+
+def save_pointing_toml(da, fit_res_params_dict) -> None:
+    """
+    Args:
+        dems: Input DEMS Object
+        Dict: 2D Gaussian fitting results
+
+    Returns:
+        None
+    """
+    ana_timestamp = datetime.strptime(da.name, '%Y%m%d%H%M%S')
+    fit_result = {k: v.item() for k, v in fit_res_params_dict.items()}
+    # TODO: pwvの取得(aste_misti_pwvの値はすべてnan)
+    # TODO: bandwidthの平均値の計算、bandwidthはどこに格納されているか
+    # TODO: frequencyがnanのmkidの扱いはどうするか
+    with open('pointing.toml', 'wt') as f:
+        result = {
+            'analyses': [{
+                'ana_datetime': ana_timestamp,
+                'pwv': 0.0,
+                'pwv_error': 0.0,
+                'kid_infos': [{
+                    'unit' : 'K',
+                    'frequency': da.d2_mkid_frequency.mean().item(),
+                    'bandwidth': 0.0,
+                    'pointings': [fit_result],
+                    'coadd_kid_infos': []
+                }]
+            }]
+        }
+        for master_id, mkid_type in zip(da.d2_mkid_id.values, da.d2_mkid_type.values):
+            result['analyses'][0]['kid_infos'][0]['coadd_kid_infos'].append(
+                {'master_id': master_id.item(), 'kid_type': mkid_type.item(), 'weight': 1.0}
+            );
+        toml.dump(result, f)
 
 
 def main() -> None:
