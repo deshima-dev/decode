@@ -1467,10 +1467,10 @@ def save_pointing_toml(da, fit_res_params_dict, weight) -> None:
     result = {
         'analyses': [{
             'ana_datetime': datetime.strptime(da.name, '%Y%m%d%H%M%S'),
-            'pwv': 0.0,
-            'pwv_error': 0.0,
+            'pwv': np.nan,
+            'pwv_error': np.nan,
             'kid_infos': [{
-                'unit' : 'K',
+                'unit' : da.units,
                 'frequency': freq_mean.item(),
                 'bandwidth': (da.d2_mkid_frequency.max() - da.d2_mkid_frequency.min()).item(),
                 'pointings': [fit_result],
