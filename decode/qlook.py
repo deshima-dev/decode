@@ -1463,7 +1463,6 @@ def save_pointing_toml(da, fit_res_params_dict, weight) -> None:
         None
     """
     fit_result = {k: v.item() for k, v in fit_res_params_dict.items()}
-    # TODO: frequencyがnanのmkidの扱いはどうするか
     freq_mean = np.sum(da.d2_mkid_frequency*weight)/np.sum(weight)
     with open('pointing.toml', 'wt') as f:
         result = {
