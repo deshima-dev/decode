@@ -1464,25 +1464,25 @@ def save_pointing_toml(da, fit_res_params_dict, weight) -> None:
     """
     fit_result = {k: v.item() for k, v in fit_res_params_dict.items()}
     freq_mean = np.sum(da.d2_mkid_frequency*weight)/np.sum(weight)
-    with open('pointing.toml', 'wt') as f:
-        result = {
-            'analyses': [{
-                'ana_datetime': datetime.strptime(da.name, '%Y%m%d%H%M%S'),
-                'pwv': 0.0,
-                'pwv_error': 0.0,
-                'kid_infos': [{
-                    'unit' : 'K',
-                    'frequency': freq_mean.item(),
-                    'bandwidth': (da.d2_mkid_frequency.max() - da.d2_mkid_frequency.min()).item(),
-                    'pointings': [fit_result],
-                    'coadd_kid_infos': []
-                }]
+    result = {
+        'analyses': [{
+            'ana_datetime': datetime.strptime(da.name, '%Y%m%d%H%M%S'),
+            'pwv': 0.0,
+            'pwv_error': 0.0,
+            'kid_infos': [{
+                'unit' : 'K',
+                'frequency': freq_mean.item(),
+                'bandwidth': (da.d2_mkid_frequency.max() - da.d2_mkid_frequency.min()).item(),
+                'pointings': [fit_result],
+                'coadd_kid_infos': []
             }]
-        }
-        for master_id, mkid_type, w in zip(da.d2_mkid_id.values, da.d2_mkid_type.values, weight.values):
-            result['analyses'][0]['kid_infos'][0]['coadd_kid_infos'].append(
-                {'master_id': master_id.item(), 'kid_type': mkid_type.item(), 'weight': w.item()}
-            );
+        }]
+    }
+    for master_id, mkid_type, w in zip(da.d2_mkid_id.values, da.d2_mkid_type.values, weight.values):
+        result['analyses'][0]['kid_infos'][0]['coadd_kid_infos'].append(
+            {'master_id': master_id.item(), 'kid_type': mkid_type.item(), 'weight': w.item()}
+        );
+    with open('pointing.toml', 'wt') as f:
         toml.dump(result, f)
 
 
