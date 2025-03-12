@@ -317,7 +317,7 @@ def daisy(
         for ax in axes:  # type: ignore
             ax.grid(True)
 
-        save_pointing_toml(da, fit_res_params_dict)
+        save_pointing_toml(da, fit_res_params_dict, weight)
 
         fig.tight_layout()
         return save_qlook(fig, file, overwrite=overwrite, **options)
@@ -1452,19 +1452,19 @@ def make_fit_res_params_dict(popt, perr, chi2, reduced_chi2) -> dict[str, float]
     return res
 
 
-def save_pointing_toml(da, fit_res_params_dict) -> None:
+def save_pointing_toml(da, fit_res_params_dict, weight) -> None:
     """
     Args:
         dems: Input DEMS Object
         Dict: 2D Gaussian fitting results
+        DataArray: weight
 
     Returns:
         None
     """
     fit_result = {k: v.item() for k, v in fit_res_params_dict.items()}
-    # TODO: pwvの取得(aste_misti_pwvの値はすべてnan)
-    # TODO: bandwidthの平均値の計算、bandwidthはどこに格納されているか
     # TODO: frequencyがnanのmkidの扱いはどうするか
+    freq_mean = np.sum(da.d2_mkid_frequency*weight)/np.sum(weight)
     with open('pointing.toml', 'wt') as f:
         result = {
             'analyses': [{
@@ -1473,16 +1473,16 @@ def save_pointing_toml(da, fit_res_params_dict) -> None:
                 'pwv_error': 0.0,
                 'kid_infos': [{
                     'unit' : 'K',
-                    'frequency': da.d2_mkid_frequency.mean().item(),
-                    'bandwidth': 0.0,
+                    'frequency': freq_mean.item(),
+                    'bandwidth': (da.d2_mkid_frequency.max() - da.d2_mkid_frequency.min()).item(),
                     'pointings': [fit_result],
                     'coadd_kid_infos': []
                 }]
             }]
         }
-        for master_id, mkid_type in zip(da.d2_mkid_id.values, da.d2_mkid_type.values):
+        for master_id, mkid_type, w in zip(da.d2_mkid_id.values, da.d2_mkid_type.values, weight.values):
             result['analyses'][0]['kid_infos'][0]['coadd_kid_infos'].append(
-                {'master_id': master_id.item(), 'kid_type': mkid_type.item(), 'weight': 1.0}
+                {'master_id': master_id.item(), 'kid_type': mkid_type.item(), 'weight': w.item()}
             );
         toml.dump(result, f)
 
