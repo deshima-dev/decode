@@ -13,7 +13,7 @@ __all__ = [
 
 # standard library
 import copy
-import toml
+import tomli_w as toml
 from contextlib import contextmanager
 from logging import DEBUG, basicConfig, getLogger
 from pathlib import Path
@@ -1476,13 +1476,17 @@ def make_pointing_toml_string(da, fit_res_params_dict, weight) -> str:
     """
     fit_result = {k: v.item() for k, v in fit_res_params_dict.items()}
     freq_mean = np.sum(da.d2_mkid_frequency*weight)/np.sum(weight)
+    unit = da.units
+    if unit == 'dimensionless':
+        unit = ''
+    
     result = {
         'analyses': [{
             'ana_datetime': datetime.strptime(da.name, '%Y%m%d%H%M%S'),
             'pwv': np.nan,
             'pwv_error': np.nan,
             'kid_infos': [{
-                'unit' : da.units,
+                'unit' : unit,
                 'frequency': freq_mean.item(),
                 'bandwidth': (da.d2_mkid_frequency.max() - da.d2_mkid_frequency.min()).item(),
                 'pointings': [fit_result],
