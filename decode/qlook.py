@@ -1389,29 +1389,29 @@ def save_qlook(
         qlook.savefig(path, **options)
         plt.close(qlook)
         return path
+    elif isinstance(qlook, xr.DataArray):
+        if path.name.endswith(".csv"):
+            name = qlook.attrs["data_type"]
+            ds = qlook.to_dataset(name=name)
+            ds.to_pandas().to_csv(path, **options)
+            return path
 
-    if path.name.endswith(".csv"):
-        name = qlook.attrs["data_type"]
-        ds = qlook.to_dataset(name=name)
-        ds.to_pandas().to_csv(path, **options)
-        return path
+        if path.name.endswith(".nc"):
+            qlook.to_netcdf(path, **options)
+            return path
 
-    if path.name.endswith(".nc"):
-        qlook.to_netcdf(path, **options)
-        return path
+        if path.name.endswith(".zarr"):
+            qlook.to_zarr(path, mode="w", **options)
+            return path
 
-    if path.name.endswith(".zarr"):
-        qlook.to_zarr(path, mode="w", **options)
-        return path
-
-    if path.name.endswith(".zarr.zip"):
-        qlook.to_zarr(path, mode="w", **options)
-        return path
-
-    if path.name.endswith(".toml"):
-        with open(path, "wt") as f:
-            f.write(qlook)
-        return path
+        if path.name.endswith(".zarr.zip"):
+            qlook.to_zarr(path, mode="w", **options)
+            return path
+    elif isinstance(qlook, str):
+        if path.name.endswith(".toml"):
+            with open(path, "wt") as f:
+                f.write(qlook)
+            return path
 
     raise ValueError("Extension of filename is not valid.")
 
