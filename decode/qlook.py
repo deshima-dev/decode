@@ -13,11 +13,13 @@ __all__ = [
 
 # standard library
 import copy
+import tomli_w as toml
 from contextlib import contextmanager
 from logging import DEBUG, basicConfig, getLogger
 from pathlib import Path
 from typing import Any, Literal, Optional, Sequence, Union, cast
 from warnings import catch_warnings, simplefilter
+from datetime import datetime
 
 
 # dependencies
@@ -34,6 +36,7 @@ from . import assign, convert, load, make, plot, select, utils
 # constants
 ABBA_PHASES = {0, 1, 2, 3}
 DATA_FORMATS = "csv", "nc", "zarr", "zarr.zip"
+TEXT_FORMATS = ("toml",)
 DEFAULT_DATA_TYPE = "auto"
 DEFAULT_DEBUG = False
 DEFAULT_FIGSIZE = 12, 4
@@ -265,6 +268,10 @@ def daisy(
 
         if format in DATA_FORMATS:
             return save_qlook(cont, file, overwrite=overwrite, **options)
+
+        if format in TEXT_FORMATS:
+            toml_string = make_pointing_toml_string(da, fit_res_params_dict, weight)
+            return save_qlook(toml_string, file, overwrite=overwrite, **options)
 
         fig, axes = plt.subplots(1, 2, figsize=(12, 5.5))
 
@@ -556,6 +563,10 @@ def raster(
 
         if format in DATA_FORMATS:
             return save_qlook(cont, file, overwrite=overwrite, **options)
+
+        if format in TEXT_FORMATS:
+            toml_string = make_pointing_toml_string(da, fit_res_params_dict, weight)
+            return save_qlook(toml_string, file, overwrite=overwrite, **options)
 
         fig, axes = plt.subplots(1, 2, figsize=(12, 5.5))
 
@@ -1348,7 +1359,7 @@ def load_dems(
 
 
 def save_qlook(
-    qlook: Union[Figure, xr.DataArray],
+    qlook: Union[Figure, xr.DataArray, str],
     file: Path,
     /,
     *,
@@ -1378,24 +1389,29 @@ def save_qlook(
         qlook.savefig(path, **options)
         plt.close(qlook)
         return path
+    elif isinstance(qlook, xr.DataArray):
+        if path.name.endswith(".csv"):
+            name = qlook.attrs["data_type"]
+            ds = qlook.to_dataset(name=name)
+            ds.to_pandas().to_csv(path, **options)
+            return path
 
-    if path.name.endswith(".csv"):
-        name = qlook.attrs["data_type"]
-        ds = qlook.to_dataset(name=name)
-        ds.to_pandas().to_csv(path, **options)
-        return path
+        if path.name.endswith(".nc"):
+            qlook.to_netcdf(path, **options)
+            return path
 
-    if path.name.endswith(".nc"):
-        qlook.to_netcdf(path, **options)
-        return path
+        if path.name.endswith(".zarr"):
+            qlook.to_zarr(path, mode="w", **options)
+            return path
 
-    if path.name.endswith(".zarr"):
-        qlook.to_zarr(path, mode="w", **options)
-        return path
-
-    if path.name.endswith(".zarr.zip"):
-        qlook.to_zarr(path, mode="w", **options)
-        return path
+        if path.name.endswith(".zarr.zip"):
+            qlook.to_zarr(path, mode="w", **options)
+            return path
+    elif isinstance(qlook, str):
+        if path.name.endswith(".toml"):
+            with open(path, "wt") as f:
+                f.write(qlook)
+            return path
 
     raise ValueError("Extension of filename is not valid.")
 
@@ -1446,6 +1462,55 @@ def make_fit_res_params_dict(popt, perr, chi2, reduced_chi2) -> dict[str, float]
     res["chi2"] = chi2
     res["reduced_chi2"] = reduced_chi2
     return res
+
+
+def make_pointing_toml_string(da, fit_res_params_dict, weight) -> str:
+    """
+    Args:
+        dems: Input DEMS Object
+        Dict: 2D Gaussian fitting results
+        DataArray: weight
+
+    Returns:
+        str
+    """
+    fit_result = {k: v.item() for k, v in fit_res_params_dict.items()}
+    freq_mean = np.sum(da.d2_mkid_frequency * weight) / np.sum(weight)
+    unit = da.units
+    if unit == "dimensionless":
+        unit = ""
+
+    result = {
+        "analyses": [
+            {
+                "ana_datetime": datetime.strptime(da.name, "%Y%m%d%H%M%S"),
+                "pwv": np.nan,
+                "pwv_error": np.nan,
+                "kid_infos": [
+                    {
+                        "unit": unit,
+                        "frequency": freq_mean.item(),
+                        "bandwidth": (
+                            da.d2_mkid_frequency.max() - da.d2_mkid_frequency.min()
+                        ).item(),
+                        "pointings": [fit_result],
+                        "coadd_kid_infos": [],
+                    }
+                ],
+            }
+        ]
+    }
+    for master_id, mkid_type, w in zip(
+        da.d2_mkid_id.values, da.d2_mkid_type.values, weight.values
+    ):
+        result["analyses"][0]["kid_infos"][0]["coadd_kid_infos"].append(
+            {
+                "master_id": master_id.item(),
+                "kid_type": mkid_type.item(),
+                "weight": w.item(),
+            }
+        )
+    return toml.dumps(result)
 
 
 def main() -> None:
