@@ -36,7 +36,7 @@ from . import assign, convert, load, make, plot, select, utils
 # constants
 ABBA_PHASES = {0, 1, 2, 3}
 DATA_FORMATS = "csv", "nc", "zarr", "zarr.zip"
-TEXT_FORMATS = "toml",
+TEXT_FORMATS = ("toml",)
 DEFAULT_DATA_TYPE = "auto"
 DEFAULT_DEBUG = False
 DEFAULT_FIGSIZE = 12, 4
@@ -1475,29 +1475,41 @@ def make_pointing_toml_string(da, fit_res_params_dict, weight) -> str:
         str
     """
     fit_result = {k: v.item() for k, v in fit_res_params_dict.items()}
-    freq_mean = np.sum(da.d2_mkid_frequency*weight)/np.sum(weight)
+    freq_mean = np.sum(da.d2_mkid_frequency * weight) / np.sum(weight)
     unit = da.units
-    if unit == 'dimensionless':
-        unit = ''
-    
+    if unit == "dimensionless":
+        unit = ""
+
     result = {
-        'analyses': [{
-            'ana_datetime': datetime.strptime(da.name, '%Y%m%d%H%M%S'),
-            'pwv': np.nan,
-            'pwv_error': np.nan,
-            'kid_infos': [{
-                'unit' : unit,
-                'frequency': freq_mean.item(),
-                'bandwidth': (da.d2_mkid_frequency.max() - da.d2_mkid_frequency.min()).item(),
-                'pointings': [fit_result],
-                'coadd_kid_infos': []
-            }]
-        }]
+        "analyses": [
+            {
+                "ana_datetime": datetime.strptime(da.name, "%Y%m%d%H%M%S"),
+                "pwv": np.nan,
+                "pwv_error": np.nan,
+                "kid_infos": [
+                    {
+                        "unit": unit,
+                        "frequency": freq_mean.item(),
+                        "bandwidth": (
+                            da.d2_mkid_frequency.max() - da.d2_mkid_frequency.min()
+                        ).item(),
+                        "pointings": [fit_result],
+                        "coadd_kid_infos": [],
+                    }
+                ],
+            }
+        ]
     }
-    for master_id, mkid_type, w in zip(da.d2_mkid_id.values, da.d2_mkid_type.values, weight.values):
-        result['analyses'][0]['kid_infos'][0]['coadd_kid_infos'].append(
-            {'master_id': master_id.item(), 'kid_type': mkid_type.item(), 'weight': w.item()}
-        );
+    for master_id, mkid_type, w in zip(
+        da.d2_mkid_id.values, da.d2_mkid_type.values, weight.values
+    ):
+        result["analyses"][0]["kid_infos"][0]["coadd_kid_infos"].append(
+            {
+                "master_id": master_id.item(),
+                "kid_type": mkid_type.item(),
+                "weight": w.item(),
+            }
+        )
     return toml.dumps(result)
 
 
