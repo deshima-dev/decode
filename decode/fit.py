@@ -19,7 +19,7 @@ def baseline(
     *,
     order: int = 0,
     model: str = "LinearRegression",
-    weight: Optional[Union[NDArray[np.float_], float]] = None,
+    weight: Optional[Union[NDArray[np.float64], float]] = None,
     **options: Any,
 ) -> xr.DataArray:
     """Fit baseline by polynomial and atmospheric models.
@@ -67,7 +67,7 @@ def baseline(
     else:
         model.fit(X, y)  # type: ignore
 
-    coeff: NDArray[np.float_] = model.coef_  # type: ignore
+    coeff: NDArray[np.float64] = model.coef_  # type: ignore
 
     # create baseline
     baseline = xr.zeros_like(dems)
@@ -80,7 +80,7 @@ def baseline(
     return baseline
 
 
-def dtau_dpwv(freq: NDArray[np.float_]) -> xr.DataArray:
+def dtau_dpwv(freq: NDArray[np.float64]) -> xr.DataArray:
     """Calculate dtau/dpwv as a function of frequency.
 
     Args:
