@@ -10,7 +10,7 @@ __all__ = [
     "select",
     "utils",
 ]
-__version__ = "2025.4.0"
+__version__ = "2025.4.1"
 
 
 # submodules

@@ -8,7 +8,7 @@ from decode import assign, load
 
 # constants
 DEMS_DIR = Path(__file__).parents[1] / "data" / "dems"
-DEMS = load.dems(DEMS_DIR / "dems_20171111110002.nc.gz")
+DEMS = load.dems(DEMS_DIR / "dems_20171111110002.nc.gz").compute()
 
 
 def test_assign_scan() -> None:
