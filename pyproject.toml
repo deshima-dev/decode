@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "decode"
-version = "2025.4.1"
+version = "2025.4.2"
 description = "DESHIMA code for data analysis"
 authors = [
     "Akio Taniguchi <taniguchi.akio@gmail.com>",
