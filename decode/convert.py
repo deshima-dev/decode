@@ -108,5 +108,5 @@ def units(
     if isinstance(new_units, xr.DataArray):
         new_units = new_units.attrs["units"]
 
-    new_data = Quantity(da, units).to(new_units, equivalencies)
+    new_data = Quantity(da, units).to(new_units, equivalencies).value
     return da.copy(data=new_data).assign_attrs(units=new_units)
