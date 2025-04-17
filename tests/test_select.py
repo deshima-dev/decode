@@ -3,12 +3,13 @@ from pathlib import Path
 
 
 # dependencies
+import xarray as xr
 from decode import load, select
 
 
 # constants
 DEMS_DIR = Path(__file__).parents[1] / "data" / "dems"
-DEMS = load.dems(DEMS_DIR / "dems_20171111110002.nc.gz")
+DEMS = load.dems(DEMS_DIR / "dems_20171111110002.nc.gz").compute()
 
 
 def test_select_by_min() -> None:

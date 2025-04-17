@@ -11,7 +11,7 @@ DESHIMA code for data analysis
 ## Installation
 
 ```shell
-pip install decode==2025.2.0
+pip install decode==2025.4.0
 ```
 
 ## Quick look

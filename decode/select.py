@@ -65,10 +65,10 @@ def by(
         dems = dems.sel({coord_dim: ~dems[coord_name].isin(exclude)})
 
     if min is not None:
-        dems = dems.sel({coord_dim: dems[coord_name] >= min})
+        dems = dems.sel({coord_dim: dems[coord_name] >= min})  # type: ignore
 
     if max is not None:
-        dems = dems.sel({coord_dim: dems[coord_name] < max})
+        dems = dems.sel({coord_dim: dems[coord_name] < max})  # type: ignore
 
     if sort:
         dems = dems.sortby(coord_name)

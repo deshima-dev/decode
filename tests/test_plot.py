@@ -9,7 +9,7 @@ from decode import load, plot
 
 # constants
 DEMS_DIR = Path(__file__).parents[1] / "data" / "dems"
-DEMS = load.dems(DEMS_DIR / "dems_20171111110002.nc.gz")
+DEMS = load.dems(DEMS_DIR / "dems_20171111110002.nc.gz").compute()
 
 
 def test_plot_data_1d_time() -> None:
