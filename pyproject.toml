@@ -1,12 +1,8 @@
-[tool.poetry]
+[project]
 name = "decode"
 version = "2025.4.2"
 description = "DESHIMA code for data analysis"
-authors = [
-    "Akio Taniguchi <taniguchi.akio@gmail.com>",
-    "Juri Yamanaka <j.yamanaka@a.phys.nagoya-u.ac.jp>",
-    "Shinji Fujita <s-fujita@ism.ac.jp>",
-]
+readme = "README.md"
 keywords = [
     "astronomy",
     "data-analysis",
@@ -14,40 +10,66 @@ keywords = [
     "spectroscopy",
     "submillimeter",
 ]
-license = "MIT"
-readme = "README.md"
-homepage = "https://github.com/deshima-dev/decode/"
-documentation = "https://deshima-dev.github.io/decode/"
+requires-python = ">=3.9,<3.13"
+dependencies = [
+    "astropy>=6,<8",
+    "dems>=2025.6,<2026.0",
+    "fire>=0.5,<1.0",
+    "matplotlib>=3,<4",
+    "numpy>=1.23,<3.0",
+    "pandas>=2,<3",
+    "pandas-stubs>=2,<3",
+    "scikit-learn>=1,<2",
+    "scipy>=1,<2",
+    "tomli_w>=1,<2",
+    "xarray>=2024,<2026",
+    "zarr>=2,<3",
+]
+classifiers = [
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
 
-[tool.poetry.dependencies]
-python = ">=3.9, <3.13"
-astropy = ">=6.0, <8.0"
-dems = "^2024.7"
-fire = ">=0.5, <1.0"
-matplotlib = "^3"
-numpy = ">=1.23, <3.0"
-pandas = "^2"
-scikit-learn = "^1"
-scipy = "^1"
-tomli_w = "^1"
-xarray = ">=2024.0, <2026.0"
-zarr = "^2"
+[[project.authors]]
+name = "Akio Taniguchi"
+email = "taniguchi.akio@gmail.com"
 
-[tool.poetry.group.dev.dependencies]
-black = "^25"
-ipython = ">=8.0, <10.0"
-myst-parser = ">=3.0, <5.0"
-pydata-sphinx-theme = ">=0.15, <1.0"
-pyright = "^1"
-pytest = "^8"
-sphinx = ">=7.0, <9.0"
+[[project.authors]]
+name = "Juri Yamanaka"
+email = "j.yamanaka@a.phys.nagoya-u.ac.jp"
 
-[tool.poetry.scripts]
+[[project.authors]]
+name = "Shinji Fujita"
+email = "s-fujita@ism.ac.jp"
+
+[project.license]
+file = "LICENSE"
+
+[project.scripts]
 decode-qlook = "decode.qlook:main"
+
+[project.urls]
+homepage = "https://deshima-dev.github.io/decode"
+repository = "https://github.com/deshima-dev/decode"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[dependency-groups]
+dev = [
+    "black>=25,<26",
+    "ipython>=8,<10",
+    "myst-parser>=3,<5",
+    "pydata-sphinx-theme>=0.15,<1.0",
+    "pyright>=1,<2",
+    "pytest>=8,<9",
+    "sphinx>=7,<9",
+]
 
 [tool.pyright]
 typeCheckingMode = "basic"
-
-[build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
