@@ -1,7 +1,8 @@
-__all__ = ["coord_units", "frame", "units"]
+__all__ = ["coord_units", "frame", "to_brightness", "to_dfof", "units"]
 
 
 # standard library
+from logging import getLogger
 from typing import Optional, Sequence, TypeVar, Union
 
 
@@ -9,6 +10,10 @@ from typing import Optional, Sequence, TypeVar, Union
 import numpy as np
 import xarray as xr
 from astropy.units import Equivalency, Quantity, Unit
+
+
+# constants
+LOGGER = getLogger(__name__)
 
 
 # type hints
@@ -82,6 +87,101 @@ def frame(da: xr.DataArray, new_frame: str, /) -> xr.DataArray:
 
     new_frame = da.frame.copy(data=new_frame)
     return da.assign_coords(frame=new_frame)
+
+
+def to_brightness(
+    dems: xr.DataArray,
+    /,
+    *,
+    T_amb: float = 273.0,
+    T_room: float = 293.0,
+) -> xr.DataArray:
+    """Convert DEMS on the df/f scale to the brightness temperature scale.
+
+    Args:
+        dems: Input DEMS DataArray on the df/f scale.
+        T_amb: Default ambient temperature value to be used
+            when all ``dems.temperature`` values are NaN.
+        T_room: Default room temperature value to be used
+            when all ``dems.aste_cabin_temperature`` values are NaN.
+
+    Returns:
+        DEMS DataArray on the brightness temperature scale.
+
+    """
+    if dems.long_name == "Brightness" or dems.units == "K":
+        LOGGER.warning("DEMS may already be on the brightness temperature scale.")
+
+    if all(np.isnan(T_room_ := dems.aste_cabin_temperature)):
+        T_room_ = T_room
+
+    if all(np.isnan(T_amb_ := dems.temperature)):
+        T_amb_ = T_amb
+
+    fwd = dems.d2_resp_fwd.data
+    p0 = dems.d2_resp_p0.data
+    T0 = dems.d2_resp_t0.data
+
+    return (
+        dems.copy(
+            deep=True,
+            data=(
+                (dems.data + p0 * (T_room_ + T0) ** 0.5) ** 2 / (p0**2 * fwd)
+                - (T0 + (1 - fwd) * T_amb_) / fwd
+            ),
+        )
+        .astype(dems.dtype)
+        .assign_attrs(long_name="Brightness", units="K")
+    )
+
+
+def to_dfof(
+    dems: xr.DataArray,
+    /,
+    *,
+    T_amb: float = 273.0,
+    T_room: float = 293.0,
+) -> xr.DataArray:
+    """Convert DEMS on the brightness temperature scale to the df/f scale.
+
+    Args:
+        dems: Input DEMS DataArray on the brightness temperature scale.
+        T_amb: Default ambient temperature value to be used
+            when all ``dems.temperature`` values are NaN.
+        T_room: Default room temperature value to be used
+            when all ``dems.aste_cabin_temperature`` values are NaN.
+
+    Returns:
+        DEMS DataArray on the df/f scale.
+
+    """
+    if dems.long_name == "df/f" or dems.units == "dimensionless":
+        LOGGER.warning("DEMS may already be on the df/f scale.")
+
+    if all(np.isnan(T_room_ := dems.aste_cabin_temperature)):
+        T_room_ = T_room
+
+    if all(np.isnan(T_amb_ := dems.temperature)):
+        T_amb_ = T_amb
+
+    fwd = dems.d2_resp_fwd.data
+    p0 = dems.d2_resp_p0.data
+    T0 = dems.d2_resp_t0.data
+
+    return (
+        dems.copy(
+            deep=True,
+            data=(
+                p0
+                * (
+                    (fwd * dems.data + (1 - fwd) * T_amb_ + T0) ** 0.5
+                    - (T_room_ + T0) ** 0.5
+                )
+            ),
+        )
+        .astype(dems.dtype)
+        .assign_attrs(long_name="df/f", units="dimensionless")
+    )
 
 
 def units(
