@@ -85,7 +85,7 @@ def auto(dems: Path, /, **options: Any) -> Path:
     """
     with xr.set_options(keep_attrs=True):
         da = load.dems(dems, chunks=None)
-        obs: str = da.attrs["observation"]
+        obs: str = da.aste_obs_file
 
         if "daisy" in obs:
             return daisy(dems, **options)
@@ -277,7 +277,7 @@ def daisy(
 
         ax = axes[0]  # type: ignore
         plot.data(series, ax=ax)
-        ax.set_title(f"{Path(dems).name}\n({da.observation})")
+        ax.set_title(f"{Path(dems).name}\n({da.aste_obs_file})")
 
         ax = axes[1]  # type: ignore
         map_lim = max(abs(cube.lon).max(), abs(cube.lat).max())
@@ -424,7 +424,7 @@ def pswsc(
         ax.set_ylim(get_robust_lim(spec))
 
         for ax in axes:  # type: ignore
-            ax.set_title(f"{Path(dems).name}\n({da.observation})")
+            ax.set_title(f"{Path(dems).name}\n({da.aste_obs_file})")
             ax.grid(True)
 
         fig.tight_layout()
@@ -572,7 +572,7 @@ def raster(
 
         ax = axes[0]  # type: ignore
         plot.data(series, ax=ax)
-        ax.set_title(f"{Path(dems).name}\n({da.observation})")
+        ax.set_title(f"{Path(dems).name}\n({da.aste_obs_file})")
 
         ax = axes[1]  # type: ignore
         map_lim = max(abs(cube.lon).max(), abs(cube.lat).max())
@@ -711,7 +711,7 @@ def skydip(
         plot.data(series, x="secz", ax=ax)
 
         for ax in axes:  # type: ignore
-            ax.set_title(f"{Path(dems).name}\n({da.observation})")
+            ax.set_title(f"{Path(dems).name}\n({da.aste_obs_file})")
             ax.grid(True)
 
         fig.tight_layout()
@@ -807,7 +807,7 @@ def still(
         plot.data(series, add_colorbar=False, ax=ax)
 
         for ax in axes:  # type: ignore
-            ax.set_title(f"{Path(dems).name}\n({da.observation})")
+            ax.set_title(f"{Path(dems).name}\n({da.aste_obs_file})")
             ax.grid(True)
 
         fig.tight_layout()
@@ -1144,7 +1144,7 @@ def _scan(
         plot.data(series, x=f"aste_subref_{axis}", ax=ax)
 
         for ax in axes:  # type: ignore
-            ax.set_title(f"{Path(dems).name}\n({da.observation})")
+            ax.set_title(f"{Path(dems).name}\n({da.aste_obs_file})")
             ax.grid(True)
 
         fig.tight_layout()
