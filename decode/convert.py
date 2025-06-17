@@ -112,10 +112,10 @@ def to_brightness(
     if dems.long_name == "Brightness" or dems.units == "K":
         LOGGER.warning("DEMS may already be on the brightness temperature scale.")
 
-    if all(np.isnan(T_room_ := dems.aste_cabin_temperature)):
+    if np.isnan(T_room_ := dems.aste_cabin_temperature.mean().data):
         T_room_ = T_room
 
-    if all(np.isnan(T_amb_ := dems.temperature)):
+    if np.isnan(T_amb_ := dems.temperature.mean().data):
         T_amb_ = T_amb
 
     fwd = dems.d2_resp_fwd.data
@@ -158,10 +158,10 @@ def to_dfof(
     if dems.long_name == "df/f" or dems.units == "dimensionless":
         LOGGER.warning("DEMS may already be on the df/f scale.")
 
-    if all(np.isnan(T_room_ := dems.aste_cabin_temperature)):
+    if np.isnan(T_room_ := dems.aste_cabin_temperature.mean().data):
         T_room_ = T_room
 
-    if all(np.isnan(T_amb_ := dems.temperature)):
+    if np.isnan(T_amb_ := dems.temperature.mean().data):
         T_amb_ = T_amb
 
     fwd = dems.d2_resp_fwd.data
