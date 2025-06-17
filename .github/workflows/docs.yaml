@@ -1,4 +1,4 @@
-name: GitHub Pages
+name: Docs
 
 on:
   release:
@@ -9,19 +9,16 @@ jobs:
   job:
     name: GitHub Pages
     runs-on: ubuntu-latest
+    container: ghcr.io/astral-sh/uv:python3.12-bookworm
     env:
-      POETRY_VIRTUALENVS_CREATE: false
+      UV_PROJECT_ENVIRONMENT: /usr/local
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
-      - uses: abatilo/actions-poetry@v3
-        with:
-          poetry-version: "1.8.3"
-      - run: poetry install
+          submodules: true
+      - run: uv sync --frozen
       - run: docs/build
-      - uses: peaceiris/actions-gh-pages@v3
+      - uses: peaceiris/actions-gh-pages@v4
         with:
           force_orphan: true
           github_token: ${{ secrets.GITHUB_TOKEN }}
