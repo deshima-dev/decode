@@ -20,4 +20,4 @@ def test_load_atm() -> None:
 
 @mark.parametrize("dems", DEMS_ALL)
 def test_load_dems(dems: Path) -> None:
-    load.dems(dems)
+    load.dems(dems, include_mkid_types=None)
