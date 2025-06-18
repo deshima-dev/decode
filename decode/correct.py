@@ -44,9 +44,9 @@ def for_atmosphere(
         DEMS DataArray of the on-source samples in the Ta* scale.
 
     """
-    Tb_on = select.by(dems, "state", include=include_on)
-    Tb_off = select.by(dems, "state", include=include_off)
-    Tb_r = select.by(dems, "state", include=include_r)
+    Tb_on = dems.sel(time=dems.state.isin(include_on))
+    Tb_off = dems.sel(time=dems.state.isin(include_off))
+    Tb_r = dems.sel(time=dems.state.isin(include_r))
 
     Tb_off_mean = Tb_off.groupby("scan").map(mean_in_time)
     Tb_r_mean = Tb_r.groupby("scan").map(mean_in_time)

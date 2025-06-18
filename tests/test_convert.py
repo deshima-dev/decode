@@ -8,7 +8,10 @@ from decode import convert, load
 
 # constants
 DEMS_DIR = Path(__file__).parents[1] / "data" / "dems"
-DEMS = load.dems(DEMS_DIR / "dems_20171111110002.nc.gz").compute()
+DEMS = load.dems(
+    DEMS_DIR / "dems_20171111110002.nc.gz",
+    include_mkid_types=None,
+)
 
 
 def test_convert_frame() -> None:

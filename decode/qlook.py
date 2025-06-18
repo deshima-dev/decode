@@ -17,7 +17,7 @@ import tomli_w as toml
 from contextlib import contextmanager
 from logging import DEBUG, basicConfig, getLogger
 from pathlib import Path
-from typing import Any, Literal, Optional, Sequence, Union, cast
+from typing import Any, Literal, Optional, Sequence, Union
 from warnings import catch_warnings, simplefilter
 from datetime import datetime
 
@@ -37,7 +37,7 @@ from . import assign, convert, load, make, plot, select, utils
 ABBA_PHASES = {0, 1, 2, 3}
 DATA_FORMATS = "csv", "nc", "zarr", "zarr.zip"
 TEXT_FORMATS = ("toml",)
-DEFAULT_DATA_TYPE = "auto"
+DEFAULT_DATA_SCALING = None
 DEFAULT_DEBUG = False
 DEFAULT_FIGSIZE = 12, 4
 DEFAULT_FORMAT = "png"
@@ -85,7 +85,7 @@ def auto(dems: Path, /, **options: Any) -> Path:
     """
     with xr.set_options(keep_attrs=True):
         da = load.dems(dems, chunks=None)
-        obs: str = da.attrs["observation"]
+        obs: str = da.aste_obs_file
 
         if "daisy" in obs:
             return daisy(dems, **options)
@@ -126,7 +126,7 @@ def daisy(
     exclude_mkid_ids: Optional[Sequence[int]] = DEFAULT_EXCL_MKID_IDS,
     min_frequency: Optional[str] = DEFAULT_MIN_FREQUENCY,
     max_frequency: Optional[str] = DEFAULT_MAX_FREQUENCY,
-    data_type: Literal["auto", "brightness", "df/f"] = DEFAULT_DATA_TYPE,
+    data_scaling: Optional[Literal["brightness", "df/f"]] = DEFAULT_DATA_SCALING,
     # options for analysis
     rolling_time: int = DEFAULT_ROLLING_TIME,
     source_radius: str = "60 arcsec",
@@ -155,8 +155,8 @@ def daisy(
             Defaults to no minimum frequency bound.
         max_frequency: Maximum frequency to be included in analysis.
             Defaults to no maximum frequency bound.
-        data_type: Data type of the input DEMS file.
-            Defaults to the ``long_name`` attribute in it.
+        data_scaling: Data scaling to be used in analysis.
+            Defaults to the data scaling of the input DEMS file.
         rolling_time: Moving window size.
         source_radius: Radius of the on-source area.
             Other areas are considered off-source in sky subtraction.
@@ -185,16 +185,18 @@ def daisy(
             LOGGER.debug(f"{key}: {val!r}")
 
     with xr.set_options(keep_attrs=True):
-        da = load_dems(
+        da = load.dems(
             dems,
             include_mkid_ids=include_mkid_ids,
             exclude_mkid_ids=exclude_mkid_ids,
             min_frequency=min_frequency,
             max_frequency=max_frequency,
-            data_type=data_type,
+            data_scaling=data_scaling,
             skycoord_units=skycoord_units,
+            skycoord_frame="relative",
+            chunks=None,
         )
-        da = select.by(da, "state", exclude="GRAD")
+        da = da.sel(time=da.state != "GRAD")
 
         ### Rolling
         da_rolled = da.rolling(time=int(rolling_time), center=True).mean()
@@ -210,8 +212,8 @@ def daisy(
         assign.scan(da, by="state", inplace=True)
 
         # subtract temporal baseline
-        da_on = select.by(da, "state", include="SCAN@ON")
-        da_off = select.by(da, "state", exclude="SCAN@ON")
+        da_on = da.sel(time=da.state == "SCAN@ON")
+        da_off = da.sel(time=da.state != "SCAN@ON")
         da_base = (
             da_off.groupby("scan")
             .map(mean_in_time)
@@ -277,7 +279,7 @@ def daisy(
 
         ax = axes[0]  # type: ignore
         plot.data(series, ax=ax)
-        ax.set_title(f"{Path(dems).name}\n({da.observation})")
+        ax.set_title(f"{Path(dems).name}\n({da.aste_obs_file})")
 
         ax = axes[1]  # type: ignore
         map_lim = max(abs(cube.lon).max(), abs(cube.lat).max())
@@ -335,7 +337,7 @@ def pswsc(
     exclude_mkid_ids: Optional[Sequence[int]] = DEFAULT_EXCL_MKID_IDS,
     min_frequency: Optional[str] = DEFAULT_MIN_FREQUENCY,
     max_frequency: Optional[str] = DEFAULT_MAX_FREQUENCY,
-    data_type: Literal["auto", "brightness", "df/f"] = DEFAULT_DATA_TYPE,
+    data_scaling: Optional[Literal["brightness", "df/f"]] = DEFAULT_DATA_SCALING,
     frequency_units: str = DEFAULT_FREQUENCY_UNITS,
     # options for saving
     format: str = DEFAULT_FORMAT,
@@ -358,8 +360,8 @@ def pswsc(
             Defaults to no minimum frequency bound.
         max_frequency: Maximum frequency to be included in analysis.
             Defaults to no maximum frequency bound.
-        data_type: Data type of the input DEMS file.
-            Defaults to the ``long_name`` attribute in it.
+        data_scaling: Data scaling to be used in analysis.
+            Defaults to the data scaling of the input DEMS file.
         frequency_units: Units of the frequency axis.
         format: Output data format of the quick-look result.
         outdir: Output directory for the quick-look result.
@@ -377,20 +379,22 @@ def pswsc(
             LOGGER.debug(f"{key}: {val!r}")
 
     with xr.set_options(keep_attrs=True):
-        da = load_dems(
+        da = load.dems(
             dems,
             include_mkid_ids=include_mkid_ids,
             exclude_mkid_ids=exclude_mkid_ids,
             min_frequency=min_frequency,
             max_frequency=max_frequency,
-            data_type=data_type,
+            data_scaling=data_scaling,
             frequency_units=frequency_units,
+            skycoord_frame="relative",
+            chunks=None,
         )
 
         da_despiked = despike(da)
 
         # calculate ABBA cycles and phases
-        da_onoff = select.by(da_despiked, "state", ["ON", "OFF"])
+        da_onoff = da_despiked.sel(time=da_despiked.state.isin(["ON", "OFF"]))
         scan_onoff = utils.phaseof(da_onoff.state)
         chop_per_scan = da_onoff.beam.groupby(scan_onoff).apply(utils.phaseof)
         is_second_half = chop_per_scan.groupby(scan_onoff).apply(
@@ -424,7 +428,7 @@ def pswsc(
         ax.set_ylim(get_robust_lim(spec))
 
         for ax in axes:  # type: ignore
-            ax.set_title(f"{Path(dems).name}\n({da.observation})")
+            ax.set_title(f"{Path(dems).name}\n({da.aste_obs_file})")
             ax.grid(True)
 
         fig.tight_layout()
@@ -440,7 +444,7 @@ def raster(
     exclude_mkid_ids: Optional[Sequence[int]] = DEFAULT_EXCL_MKID_IDS,
     min_frequency: Optional[str] = DEFAULT_MIN_FREQUENCY,
     max_frequency: Optional[str] = DEFAULT_MAX_FREQUENCY,
-    data_type: Literal["auto", "brightness", "df/f"] = DEFAULT_DATA_TYPE,
+    data_scaling: Optional[Literal["brightness", "df/f"]] = DEFAULT_DATA_SCALING,
     # options for analysis
     chan_weight: Literal["uniform", "std", "std/tx"] = "std/tx",
     pwv: Literal["0.5", "1.0", "2.0", "3.0", "4.0", "5.0"] = "5.0",
@@ -467,8 +471,8 @@ def raster(
             Defaults to no minimum frequency bound.
         max_frequency: Maximum frequency to be included in analysis.
             Defaults to no maximum frequency bound.
-        data_type: Data type of the input DEMS file.
-            Defaults to the ``long_name`` attribute in it.
+        data_scaling: Data scaling to be used in analysis.
+            Defaults to the data scaling of the input DEMS file.
         chan_weight: Weighting method along the channel axis.
             uniform: Uniform weight (i.e. no channel dependence).
             std: Inverse square of temporal standard deviation of sky.
@@ -494,19 +498,21 @@ def raster(
             LOGGER.debug(f"{key}: {val!r}")
 
     with xr.set_options(keep_attrs=True):
-        da = load_dems(
+        da = load.dems(
             dems,
             include_mkid_ids=include_mkid_ids,
             exclude_mkid_ids=exclude_mkid_ids,
             min_frequency=min_frequency,
             max_frequency=max_frequency,
-            data_type=data_type,
+            data_scaling=data_scaling,
             skycoord_units=skycoord_units,
+            skycoord_frame="relative",
+            chunks=None,
         )
 
         # subtract temporal baseline
-        da_on = select.by(da, "state", include="SCAN")
-        da_off = select.by(da, "state", exclude="SCAN")
+        da_on = da.sel(time=da.state == "SCAN")
+        da_off = da.sel(time=da.state != "SCAN")
         da_base = (
             da_off.groupby("scan")
             .map(mean_in_time)
@@ -572,7 +578,7 @@ def raster(
 
         ax = axes[0]  # type: ignore
         plot.data(series, ax=ax)
-        ax.set_title(f"{Path(dems).name}\n({da.observation})")
+        ax.set_title(f"{Path(dems).name}\n({da.aste_obs_file})")
 
         ax = axes[1]  # type: ignore
         map_lim = max(abs(cube.lon).max(), abs(cube.lat).max())
@@ -630,7 +636,7 @@ def skydip(
     exclude_mkid_ids: Optional[Sequence[int]] = DEFAULT_EXCL_MKID_IDS,
     min_frequency: Optional[str] = DEFAULT_MIN_FREQUENCY,
     max_frequency: Optional[str] = DEFAULT_MAX_FREQUENCY,
-    data_type: Literal["auto", "brightness", "df/f"] = DEFAULT_DATA_TYPE,
+    data_scaling: Optional[Literal["brightness", "df/f"]] = DEFAULT_DATA_SCALING,
     # options for analysis
     chan_weight: Literal["uniform", "std", "std/tx"] = "std/tx",
     pwv: Literal["0.5", "1.0", "2.0", "3.0", "4.0", "5.0"] = "5.0",
@@ -655,8 +661,8 @@ def skydip(
             Defaults to no minimum frequency bound.
         max_frequency: Maximum frequency to be included in analysis.
             Defaults to no maximum frequency bound.
-        data_type: Data type of the input DEMS file.
-            Defaults to the ``long_name`` attribute in it.
+        data_scaling: Data scaling to be used in analysis.
+            Defaults to the data scaling of the input DEMS file.
         chan_weight: Weighting method along the channel axis.
             uniform: Uniform weight (i.e. no channel dependence).
             std: Inverse square of temporal standard deviation of sky.
@@ -680,18 +686,32 @@ def skydip(
             LOGGER.debug(f"{key}: {val!r}")
 
     with xr.set_options(keep_attrs=True):
-        da = load_dems(
+        da = load.dems(
             dems,
             include_mkid_ids=include_mkid_ids,
             exclude_mkid_ids=exclude_mkid_ids,
             min_frequency=min_frequency,
             max_frequency=max_frequency,
-            data_type=data_type,
+            data_scaling=data_scaling,
+            skycoord_frame="relative",
+            chunks=None,
         )
 
+        # add airmass as a coordinate
+        # fmt: off
+        airmass = (
+            xr.DataArray(1 / np.sin(convert.units(da.lat, "rad")))
+            .assign_attrs(
+                long_name="Airmass",
+                units="dimensionless",
+            )
+        )
+        da = da.assign_coords(airmass=airmass)
+        # fmt: on
+
         # make continuum series
-        da_on = select.by(da, "state", include="SCAN")
-        da_off = select.by(da, "state", exclude="SCAN")
+        da_on = da.sel(time=da.state == "SCAN")
+        da_off = da.sel(time=da.state != "SCAN")
         weight = get_chan_weight(da_off, method=chan_weight, pwv=pwv)
         series = da_on.weighted(weight.fillna(0)).mean("chan")
 
@@ -711,7 +731,7 @@ def skydip(
         plot.data(series, x="secz", ax=ax)
 
         for ax in axes:  # type: ignore
-            ax.set_title(f"{Path(dems).name}\n({da.observation})")
+            ax.set_title(f"{Path(dems).name}\n({da.aste_obs_file})")
             ax.grid(True)
 
         fig.tight_layout()
@@ -727,7 +747,7 @@ def still(
     exclude_mkid_ids: Optional[Sequence[int]] = DEFAULT_EXCL_MKID_IDS,
     min_frequency: Optional[str] = DEFAULT_MIN_FREQUENCY,
     max_frequency: Optional[str] = DEFAULT_MAX_FREQUENCY,
-    data_type: Literal["auto", "brightness", "df/f"] = DEFAULT_DATA_TYPE,
+    data_scaling: Optional[Literal["brightness", "df/f"]] = DEFAULT_DATA_SCALING,
     # options for analysis
     chan_weight: Literal["uniform", "std", "std/tx"] = "std/tx",
     pwv: Literal["0.5", "1.0", "2.0", "3.0", "4.0", "5.0"] = "5.0",
@@ -752,8 +772,8 @@ def still(
             Defaults to no minimum frequency bound.
         max_frequency: Maximum frequency to be included in analysis.
             Defaults to no maximum frequency bound.
-        data_type: Data type of the input DEMS file.
-            Defaults to the ``long_name`` attribute in it.
+        data_scaling: Data scaling to be used in analysis.
+            Defaults to the data scaling of the input DEMS file.
         chan_weight: Weighting method along the channel axis.
             uniform: Uniform weight (i.e. no channel dependence).
             std: Inverse square of temporal standard deviation of sky.
@@ -777,17 +797,19 @@ def still(
             LOGGER.debug(f"{key}: {val!r}")
 
     with xr.set_options(keep_attrs=True):
-        da = load_dems(
+        da = load.dems(
             dems,
             include_mkid_ids=include_mkid_ids,
             exclude_mkid_ids=exclude_mkid_ids,
             min_frequency=min_frequency,
             max_frequency=max_frequency,
-            data_type=data_type,
+            data_scaling=data_scaling,
+            skycoord_frame="relative",
+            chunks=None,
         )
 
         # make continuum series
-        da_off = select.by(da, "state", exclude=["ON", "SCAN"])
+        da_off = da.sel(time=~da.state.isin(["ON", "OFF"]))
         weight = get_chan_weight(da_off, method=chan_weight, pwv=pwv)
         series = da.weighted(weight.fillna(0)).mean("chan")
 
@@ -807,7 +829,7 @@ def still(
         plot.data(series, add_colorbar=False, ax=ax)
 
         for ax in axes:  # type: ignore
-            ax.set_title(f"{Path(dems).name}\n({da.observation})")
+            ax.set_title(f"{Path(dems).name}\n({da.aste_obs_file})")
             ax.grid(True)
 
         fig.tight_layout()
@@ -823,7 +845,7 @@ def xscan(
     exclude_mkid_ids: Optional[Sequence[int]] = DEFAULT_EXCL_MKID_IDS,
     min_frequency: Optional[str] = DEFAULT_MIN_FREQUENCY,
     max_frequency: Optional[str] = DEFAULT_MAX_FREQUENCY,
-    data_type: Literal["auto", "brightness", "df/f"] = DEFAULT_DATA_TYPE,
+    data_scaling: Optional[Literal["brightness", "df/f"]] = DEFAULT_DATA_SCALING,
     # options for analysis
     chan_weight: Literal["uniform", "std", "std/tx"] = "std/tx",
     pwv: Literal["0.5", "1.0", "2.0", "3.0", "4.0", "5.0"] = "5.0",
@@ -848,8 +870,8 @@ def xscan(
             Defaults to no minimum frequency bound.
         max_frequency: Maximum frequency to be included in analysis.
             Defaults to no maximum frequency bound.
-        data_type: Data type of the input DEMS file.
-            Defaults to the ``long_name`` attribute in it.
+        data_scaling: Data scaling to be used in analysis.
+            Defaults to the data scaling of the input DEMS file.
         chan_weight: Weighting method along the channel axis.
             uniform: Uniform weight (i.e. no channel dependence).
             std: Inverse square of temporal standard deviation of sky.
@@ -880,7 +902,7 @@ def xscan(
         exclude_mkid_ids=exclude_mkid_ids,
         min_frequency=min_frequency,
         max_frequency=max_frequency,
-        data_type=data_type,
+        data_scaling=data_scaling,
         # options for analysis
         chan_weight=chan_weight,
         pwv=pwv,
@@ -902,7 +924,7 @@ def yscan(
     exclude_mkid_ids: Optional[Sequence[int]] = DEFAULT_EXCL_MKID_IDS,
     min_frequency: Optional[str] = DEFAULT_MIN_FREQUENCY,
     max_frequency: Optional[str] = DEFAULT_MAX_FREQUENCY,
-    data_type: Literal["auto", "brightness", "df/f"] = DEFAULT_DATA_TYPE,
+    data_scaling: Optional[Literal["brightness", "df/f"]] = DEFAULT_DATA_SCALING,
     # options for analysis
     chan_weight: Literal["uniform", "std", "std/tx"] = "std/tx",
     pwv: Literal["0.5", "1.0", "2.0", "3.0", "4.0", "5.0"] = "5.0",
@@ -927,8 +949,8 @@ def yscan(
             Defaults to no minimum frequency bound.
         max_frequency: Maximum frequency to be included in analysis.
             Defaults to no maximum frequency bound.
-        data_type: Data type of the input DEMS file.
-            Defaults to the ``long_name`` attribute in it.
+        data_scaling: Data scaling to be used in analysis.
+            Defaults to the data scaling of the input DEMS file.
         chan_weight: Weighting method along the channel axis.
             uniform: Uniform weight (i.e. no channel dependence).
             std: Inverse square of temporal standard deviation of sky.
@@ -959,7 +981,7 @@ def yscan(
         exclude_mkid_ids=exclude_mkid_ids,
         min_frequency=min_frequency,
         max_frequency=max_frequency,
-        data_type=data_type,
+        data_scaling=data_scaling,
         # options for analysis
         chan_weight=chan_weight,
         pwv=pwv,
@@ -981,7 +1003,7 @@ def zscan(
     exclude_mkid_ids: Optional[Sequence[int]] = DEFAULT_EXCL_MKID_IDS,
     min_frequency: Optional[str] = DEFAULT_MIN_FREQUENCY,
     max_frequency: Optional[str] = DEFAULT_MAX_FREQUENCY,
-    data_type: Literal["auto", "brightness", "df/f"] = DEFAULT_DATA_TYPE,
+    data_scaling: Optional[Literal["brightness", "df/f"]] = DEFAULT_DATA_SCALING,
     # options for analysis
     chan_weight: Literal["uniform", "std", "std/tx"] = "std/tx",
     pwv: Literal["0.5", "1.0", "2.0", "3.0", "4.0", "5.0"] = "5.0",
@@ -1006,8 +1028,8 @@ def zscan(
             Defaults to no minimum frequency bound.
         max_frequency: Maximum frequency to be included in analysis.
             Defaults to no maximum frequency bound.
-        data_type: Data type of the input DEMS file.
-            Defaults to the ``long_name`` attribute in it.
+        data_scaling: Data scaling to be used in analysis.
+            Defaults to the data scaling of the input DEMS file.
         chan_weight: Weighting method along the channel axis.
             uniform: Uniform weight (i.e. no channel dependence).
             std: Inverse square of temporal standard deviation of sky.
@@ -1038,7 +1060,7 @@ def zscan(
         exclude_mkid_ids=exclude_mkid_ids,
         min_frequency=min_frequency,
         max_frequency=max_frequency,
-        data_type=data_type,
+        data_scaling=data_scaling,
         # options for analysis
         chan_weight=chan_weight,
         pwv=pwv,
@@ -1062,7 +1084,7 @@ def _scan(
     exclude_mkid_ids: Optional[Sequence[int]] = DEFAULT_EXCL_MKID_IDS,
     min_frequency: Optional[str] = DEFAULT_MIN_FREQUENCY,
     max_frequency: Optional[str] = DEFAULT_MAX_FREQUENCY,
-    data_type: Literal["auto", "brightness", "df/f"] = DEFAULT_DATA_TYPE,
+    data_scaling: Optional[Literal["brightness", "df/f"]] = DEFAULT_DATA_SCALING,
     # options for analysis
     chan_weight: Literal["uniform", "std", "std/tx"] = "std/tx",
     pwv: Literal["0.5", "1.0", "2.0", "3.0", "4.0", "5.0"] = "5.0",
@@ -1088,8 +1110,8 @@ def _scan(
             Defaults to no minimum frequency bound.
         max_frequency: Maximum frequency to be included in analysis.
             Defaults to no maximum frequency bound.
-        data_type: Data type of the input DEMS file.
-            Defaults to the ``long_name`` attribute in it.
+        data_scaling: Data scaling to be used in analysis.
+            Defaults to the data scaling of the input DEMS file.
         chan_weight: Weighting method along the channel axis.
             uniform: Uniform weight (i.e. no channel dependence).
             std: Inverse square of temporal standard deviation of sky.
@@ -1113,18 +1135,20 @@ def _scan(
             LOGGER.debug(f"{key}: {val!r}")
 
     with xr.set_options(keep_attrs=True):
-        da = load_dems(
+        da = load.dems(
             dems,
             include_mkid_ids=include_mkid_ids,
             exclude_mkid_ids=exclude_mkid_ids,
             min_frequency=min_frequency,
             max_frequency=max_frequency,
-            data_type=data_type,
+            data_scaling=data_scaling,
+            skycoord_frame="relative",
+            chunks=None,
         )
 
         # make continuum series
-        da_on = select.by(da, "state", include="ON")
-        da_off = select.by(da, "state", exclude="ON")
+        da_on = da.sel(time=da.state == "ON")
+        da_off = da.sel(time=da.state != "ON")
         weight = get_chan_weight(da_off, method=chan_weight, pwv=pwv)
         series = da_on.weighted(weight.fillna(0)).mean("chan")
 
@@ -1144,7 +1168,7 @@ def _scan(
         plot.data(series, x=f"aste_subref_{axis}", ax=ax)
 
         for ax in axes:  # type: ignore
-            ax.set_title(f"{Path(dems).name}\n({da.observation})")
+            ax.set_title(f"{Path(dems).name}\n({da.aste_obs_file})")
             ax.grid(True)
 
         fig.tight_layout()
@@ -1209,11 +1233,11 @@ def subtract_per_abba_phase(dems: xr.DataArray, /) -> xr.DataArray:
         raise ValueError("State must be unique.")
 
     if states[0] == "ON":
-        src = select.by(dems, "beam", include="A").mean("time")
-        sky = select.by(dems, "beam", include="B").mean("time")
+        src = dems.sel(time=dems.beam == "A").mean("time")
+        sky = dems.sel(time=dems.beam == "B").mean("time")
     elif states[0] == "OFF":
-        src = select.by(dems, "beam", include="B").mean("time")
-        sky = select.by(dems, "beam", include="A").mean("time")
+        src = dems.sel(time=dems.beam == "B").mean("time")
+        sky = dems.sel(time=dems.beam == "A").mean("time")
     else:
         raise ValueError("State must be either ON or OFF.")
 
@@ -1272,92 +1296,6 @@ def get_robust_lim(da: xr.DataArray) -> tuple[float, float]:
     )
 
 
-def load_dems(
-    dems: Path,
-    /,
-    *,
-    include_mkid_ids: Optional[Sequence[int]] = DEFAULT_INCL_MKID_IDS,
-    exclude_mkid_ids: Optional[Sequence[int]] = DEFAULT_EXCL_MKID_IDS,
-    min_frequency: Optional[str] = DEFAULT_MIN_FREQUENCY,
-    max_frequency: Optional[str] = DEFAULT_MAX_FREQUENCY,
-    data_type: Literal["auto", "brightness", "df/f"] = DEFAULT_DATA_TYPE,
-    frequency_units: str = DEFAULT_FREQUENCY_UNITS,
-    skycoord_units: str = DEFAULT_SKYCOORD_UNITS,
-) -> xr.DataArray:
-    """Load a DEMS with given conversions and selections.
-
-    Args:
-        dems: Input DEMS file (netCDF or Zarr).
-        include_mkid_ids: MKID IDs to be included in analysis.
-            Defaults to all MKID IDs.
-        exclude_mkid_ids: MKID IDs to be excluded in analysis.
-            Defaults to no MKID IDs.
-        min_frequency: Minimum frequency to be included in analysis.
-            Defaults to no minimum frequency bound.
-        max_frequency: Maximum frequency to be included in analysis.
-            Defaults to no maximum frequency bound.
-        data_type: Data type of the input DEMS file.
-            Defaults to the ``long_name`` attribute in it.
-        frequency_units: Units of the frequency.
-        skycoord_units: Units of the sky coordinate axes.
-
-    Returns:
-        DEMS as a DataArray with given conversion and selections.
-
-    """
-    da = load.dems(dems, chunks=None)
-
-    if min_frequency is not None:
-        min_frequency = Quantity(min_frequency).to(frequency_units).value
-
-    if max_frequency is not None:
-        max_frequency = Quantity(max_frequency).to(frequency_units).value
-
-    if da.frame == "altaz":
-        z = np.pi / 2 - convert.units(da.lat, "rad")
-        secz = cast(xr.DataArray, 1 / np.cos(z))
-        da = da.assign_coords(
-            secz=secz.assign_attrs(long_name="sec(Z)", units="dimensionless")
-        )
-
-    da = convert.coord_units(
-        da,
-        ["d2_mkid_frequency", "frequency"],
-        frequency_units,
-    )
-    da = convert.coord_units(
-        da,
-        ["lat", "lat_origin", "lon", "lon_origin"],
-        skycoord_units,
-    )
-    da = assign.scan(da, by="state")
-    da = convert.frame(da, "relative")
-    da = select.by(da, "d2_mkid_type", "filter")
-    da = select.by(
-        da,
-        "chan",
-        include=include_mkid_ids,
-        exclude=exclude_mkid_ids,
-    )
-    da = select.by(
-        da,
-        "frequency",
-        min=min_frequency,
-        max=max_frequency,
-    )
-
-    if data_type == "auto" and "units" in da.attrs:
-        return da
-
-    if data_type == "brightness":
-        return da.assign_attrs(long_name="Brightness", units="K")
-
-    if data_type == "df/f":
-        return da.assign_attrs(long_name="df/f", units="dimensionless")
-
-    raise ValueError("Data type could not be inferred.")
-
-
 def save_qlook(
     qlook: Union[Figure, xr.DataArray, str],
     file: Path,
@@ -1391,7 +1329,7 @@ def save_qlook(
         return path
     elif isinstance(qlook, xr.DataArray):
         if path.name.endswith(".csv"):
-            name = qlook.attrs["data_type"]
+            name = qlook.attrs["data_scaling"]
             ds = qlook.to_dataset(name=name)
             ds.to_pandas().to_csv(path, **options)
             return path
