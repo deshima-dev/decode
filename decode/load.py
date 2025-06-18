@@ -2,8 +2,10 @@ __all__ = ["atm", "dems"]
 
 
 # standard library
+from collections.abc import Sequence
+from os import PathLike
 from pathlib import Path
-from typing import Any, Literal, Union
+from typing import Any, Literal, Optional, Union
 from warnings import catch_warnings, simplefilter
 
 
@@ -11,6 +13,9 @@ from warnings import catch_warnings, simplefilter
 import numpy as np
 import pandas as pd
 import xarray as xr
+from astropy.units import Quantity
+from ndtools import Range
+from . import convert
 
 
 # constants
@@ -66,25 +71,64 @@ def atm(*, type: Literal["eta", "tau"] = "tau") -> xr.DataArray:
         raise ValueError("Type must be either eta or tau.")
 
 
-def dems(dems: Union[Path, str], /, **options: Any) -> xr.DataArray:
+def dems(
+    dems: Union[PathLike[str], str],
+    /,
+    *,
+    # options for data selection
+    include_mkid_types: Optional[Sequence[str]] = ("filter",),
+    exclude_mkid_types: Optional[Sequence[str]] = None,
+    include_mkid_ids: Optional[Sequence[int]] = None,
+    exclude_mkid_ids: Optional[Sequence[int]] = None,
+    min_frequency: Optional[str] = None,
+    max_frequency: Optional[str] = None,
+    # options for coordinate conversion
+    frequency_units: Optional[str] = "GHz",
+    skycoord_units: Optional[str] = "arcsec",
+    skycoord_frame: Optional[str] = "relative",
+    # options for data conversion
+    data_scaling: Optional[Literal["brightness", "df/f"]] = "brightness",
+    T_amb: float = 273.0,  # K
+    T_room: float = 293.0,  # K
+    # other options for loading
+    **options: Any,
+) -> xr.DataArray:
     """Load a DEMS file as a DataArray.
 
     Args:
         dems: Path of the DEMS file.
-
-    Keyword Args:
-        options: Arguments to be passed to ``xarray.open_dataarray``.
+        include_mkid_types: MKID types to be included.
+            Defaults to filter-only.
+        exclude_mkid_types: MKID types to be excluded.
+            Defaults to no MKID types.
+        include_mkid_ids: MKID IDs to be included.
+            Defaults to all MKID IDs.
+        exclude_mkid_ids: MKID IDs to be excluded.
+            Defaults to no MKID IDs.
+        min_frequency: Minimum frequency to be included.
+            Defaults to no minimum frequency bound.
+        max_frequency: Maximum frequency to be included.
+            Defaults to no maximum frequency bound.
+        frequency_units: Units of the frequency-related coordinates.
+            Defaults to GHz.
+        skycoord_units: Units of the skycoord-related coordinates.
+            Defaults to arcsec.
+        skycoord_frame: Frame of the skycoord.
+            Defaults to relative skycoord of the original one.
+        data_scaling: Data scaling (either brightness or df/f).
+            Defaults to brightness.
+        T_amb: Default ambient temperature value for the data scaling
+            to be used when the ``temperature`` coordinate is all-NaN.
+        T_room: Default room temperature value for the data scaling
+            to be used when the ``aste_cabin_temperature`` coordinate is all-NaN.
+        **options: Other options for loading (e.g. ``chunks=None``, etc).
 
     Return:
-        Loaded DEMS DataArray.
-
-    Raises:
-        ValueError: Raised if the file type is not supported.
+        DataArray of the loaded DEMS file.
 
     """
-    suffixes = Path(dems).suffixes
-
-    if NETCDF_SUFFIX in suffixes:
+    # load DEMS as DataArray
+    if NETCDF_SUFFIX in (suffixes := Path(dems).suffixes):
         options = {
             "engine": NETCDF_ENGINE,
             **options,
@@ -101,4 +145,59 @@ def dems(dems: Union[Path, str], /, **options: Any) -> xr.DataArray:
             "Use netCDF (.nc) or Zarr (.zarr, .zarr.zip)."
         )
 
-    return xr.open_dataarray(dems, **options)
+    da = xr.open_dataarray(dems, **options)
+
+    # load DataArray coordinates on memory
+    for name in da.coords:
+        da.coords[name].load()
+
+    # select DataArray by MKID types
+    if include_mkid_types is not None:
+        da = da.sel(chan=da.d2_mkid_type.isin(include_mkid_types))
+
+    if exclude_mkid_types is not None:
+        da = da.sel(chan=~da.d2_mkid_type.isin(exclude_mkid_types))
+
+    # select DataArray by MKID master IDs
+    if include_mkid_ids is not None:
+        da = da.sel(chan=da.d2_mkid_id.isin(include_mkid_ids))
+
+    if exclude_mkid_ids is not None:
+        da = da.sel(chan=~da.d2_mkid_id.isin(exclude_mkid_ids))
+
+    # select DataArray by frequency range
+    if min_frequency is not None:
+        min_frequency = Quantity(min_frequency).to(da.frequency.units).value
+
+    if max_frequency is not None:
+        max_frequency = Quantity(max_frequency).to(da.frequency.units).value
+
+    if min_frequency is not None or max_frequency is not None:
+        da = da.sel(chan=da.frequency == Range(min_frequency, max_frequency))
+
+    # convert frequency units
+    if frequency_units is not None:
+        da = convert.coord_units(
+            da,
+            ["bandwidth", "frequency", "d2_mkid_frequency"],
+            frequency_units,
+        )
+
+    # convert skycoord units and frame
+    if skycoord_units is not None:
+        da = convert.coord_units(
+            da,
+            ["lat", "lat_origin", "lon", "lon_origin"],
+            skycoord_units,
+        )
+
+    if skycoord_frame is not None:
+        da = convert.frame(da, skycoord_frame)
+
+    # convert data scaling
+    if data_scaling == "brightness":
+        return convert.to_brightness(da, T_amb=T_amb, T_room=T_room)
+    elif data_scaling == "df/f":
+        return convert.to_dfof(da, T_amb=T_amb, T_room=T_room)
+    else:
+        return da
