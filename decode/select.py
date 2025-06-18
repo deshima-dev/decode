@@ -4,11 +4,16 @@ __all__ = ["by"]
 # standard library
 from collections.abc import Sequence
 from datetime import datetime, timedelta
+from logging import getLogger
 from typing import Optional, TypeVar, Union
 
 
 # dependencies
 import xarray as xr
+
+
+# constants
+LOGGER = getLogger(__name__)
 
 
 # type hints
@@ -47,7 +52,21 @@ def by(
     Returns:
         Selected DEMS.
 
+    Important:
+        This function will be deprecated in a future release.
+        For ``include`` and ``exclude`` options, use ``xarray.DataArray.isin``
+        like ``dems.sel(time=dems.state.isin(['ON', 'OFF']))``.
+        For ``min`` and ``max`` options, use ``ndtools.Range`` like
+        ``dems.sel(chan=dems.frequency == Range(250e9, 300e9))``.
+
     """
+    LOGGER.warning(
+        "This function will be deprecated in a future release. "
+        "For include and exclude options, use DataArray.isin like "
+        "dems.sel(time=dems.state.isin(['ON', 'OFF'])). "
+        "For min and max options, use ndtools.Range like "
+        "dems.sel(chan=dems.frequency == Range(250e9, 300e9))."
+    )
     coord = dems[coord_name]
 
     if not isinstance(coord, xr.DataArray):

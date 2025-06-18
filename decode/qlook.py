@@ -195,7 +195,7 @@ def daisy(
             skycoord_units=skycoord_units,
             chunks=None,
         )
-        da = select.by(da, "state", exclude="GRAD")
+        da = da.sel(time=da.state != "GRAD")
 
         ### Rolling
         da_rolled = da.rolling(time=int(rolling_time), center=True).mean()
@@ -211,8 +211,8 @@ def daisy(
         assign.scan(da, by="state", inplace=True)
 
         # subtract temporal baseline
-        da_on = select.by(da, "state", include="SCAN@ON")
-        da_off = select.by(da, "state", exclude="SCAN@ON")
+        da_on = da.sel(time=da.state == "SCAN@ON")
+        da_off = da.sel(time=da.state != "SCAN@ON")
         da_base = (
             da_off.groupby("scan")
             .map(mean_in_time)
@@ -392,7 +392,7 @@ def pswsc(
         da_despiked = despike(da)
 
         # calculate ABBA cycles and phases
-        da_onoff = select.by(da_despiked, "state", ["ON", "OFF"])
+        da_onoff = da_despiked.sel(time=da_despiked.state.isin(["ON", "OFF"]))
         scan_onoff = utils.phaseof(da_onoff.state)
         chop_per_scan = da_onoff.beam.groupby(scan_onoff).apply(utils.phaseof)
         is_second_half = chop_per_scan.groupby(scan_onoff).apply(
@@ -508,8 +508,8 @@ def raster(
         )
 
         # subtract temporal baseline
-        da_on = select.by(da, "state", include="SCAN")
-        da_off = select.by(da, "state", exclude="SCAN")
+        da_on = da.sel(time=da.state == "SCAN")
+        da_off = da.sel(time=da.state != "SCAN")
         da_base = (
             da_off.groupby("scan")
             .map(mean_in_time)
@@ -706,8 +706,8 @@ def skydip(
         # fmt: on
 
         # make continuum series
-        da_on = select.by(da, "state", include="SCAN")
-        da_off = select.by(da, "state", exclude="SCAN")
+        da_on = da.sel(time=da.state == "SCAN")
+        da_off = da.sel(time=da.state != "SCAN")
         weight = get_chan_weight(da_off, method=chan_weight, pwv=pwv)
         series = da_on.weighted(weight.fillna(0)).mean("chan")
 
@@ -804,7 +804,7 @@ def still(
         )
 
         # make continuum series
-        da_off = select.by(da, "state", exclude=["ON", "SCAN"])
+        da_off = da.sel(time=~da.state.isin(["ON", "OFF"]))
         weight = get_chan_weight(da_off, method=chan_weight, pwv=pwv)
         series = da.weighted(weight.fillna(0)).mean("chan")
 
@@ -1141,8 +1141,8 @@ def _scan(
         )
 
         # make continuum series
-        da_on = select.by(da, "state", include="ON")
-        da_off = select.by(da, "state", exclude="ON")
+        da_on = da.sel(time=da.state == "ON")
+        da_off = da.sel(time=da.state != "ON")
         weight = get_chan_weight(da_off, method=chan_weight, pwv=pwv)
         series = da_on.weighted(weight.fillna(0)).mean("chan")
 
@@ -1227,11 +1227,11 @@ def subtract_per_abba_phase(dems: xr.DataArray, /) -> xr.DataArray:
         raise ValueError("State must be unique.")
 
     if states[0] == "ON":
-        src = select.by(dems, "beam", include="A").mean("time")
-        sky = select.by(dems, "beam", include="B").mean("time")
+        src = dems.sel(time=dems.beam == "A").mean("time")
+        sky = dems.sel(time=dems.beam == "B").mean("time")
     elif states[0] == "OFF":
-        src = select.by(dems, "beam", include="B").mean("time")
-        sky = select.by(dems, "beam", include="A").mean("time")
+        src = dems.sel(time=dems.beam == "B").mean("time")
+        sky = dems.sel(time=dems.beam == "A").mean("time")
     else:
         raise ValueError("State must be either ON or OFF.")
 
