@@ -85,9 +85,9 @@ def dems(
     # options for coordinate conversion
     frequency_units: Optional[str] = "GHz",
     skycoord_units: Optional[str] = "arcsec",
-    skycoord_frame: Optional[str] = "relative",
+    skycoord_frame: Optional[str] = None,
     # options for data conversion
-    data_scaling: Optional[Literal["brightness", "df/f"]] = "brightness",
+    data_scaling: Optional[Literal["brightness", "df/f"]] = None,
     T_amb: float = 273.0,  # K
     T_room: float = 293.0,  # K
     # other options for loading
@@ -114,9 +114,9 @@ def dems(
         skycoord_units: Units of the skycoord-related coordinates.
             Defaults to arcsec.
         skycoord_frame: Frame of the skycoord.
-            Defaults to relative skycoord of the original one.
+            Defaults to the skycoord of the input DEMS file.
         data_scaling: Data scaling (either brightness or df/f).
-            Defaults to brightness.
+            Defaults to the data scaling of the input DEMS file.
         T_amb: Default ambient temperature value for the data scaling
             to be used when the ``temperature`` coordinate is all-NaN.
         T_room: Default room temperature value for the data scaling

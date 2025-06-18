@@ -193,6 +193,7 @@ def daisy(
             max_frequency=max_frequency,
             data_scaling=data_scaling,
             skycoord_units=skycoord_units,
+            skycoord_frame="relative",
             chunks=None,
         )
         da = da.sel(time=da.state != "GRAD")
@@ -386,6 +387,7 @@ def pswsc(
             max_frequency=max_frequency,
             data_scaling=data_scaling,
             frequency_units=frequency_units,
+            skycoord_frame="relative",
             chunks=None,
         )
 
@@ -504,6 +506,7 @@ def raster(
             max_frequency=max_frequency,
             data_scaling=data_scaling,
             skycoord_units=skycoord_units,
+            skycoord_frame="relative",
             chunks=None,
         )
 
@@ -690,6 +693,7 @@ def skydip(
             min_frequency=min_frequency,
             max_frequency=max_frequency,
             data_scaling=data_scaling,
+            skycoord_frame="relative",
             chunks=None,
         )
 
@@ -800,6 +804,7 @@ def still(
             min_frequency=min_frequency,
             max_frequency=max_frequency,
             data_scaling=data_scaling,
+            skycoord_frame="relative",
             chunks=None,
         )
 
@@ -1137,6 +1142,7 @@ def _scan(
             min_frequency=min_frequency,
             max_frequency=max_frequency,
             data_scaling=data_scaling,
+            skycoord_frame="relative",
             chunks=None,
         )
 
