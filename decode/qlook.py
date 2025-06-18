@@ -17,7 +17,7 @@ import tomli_w as toml
 from contextlib import contextmanager
 from logging import DEBUG, basicConfig, getLogger
 from pathlib import Path
-from typing import Any, Literal, Optional, Sequence, Union, cast
+from typing import Any, Literal, Optional, Sequence, Union
 from warnings import catch_warnings, simplefilter
 from datetime import datetime
 
@@ -689,6 +689,18 @@ def skydip(
             data_type=data_type,
         )
 
+        # add airmass as a coordinate
+        # fmt: off
+        airmass = (
+            xr.DataArray(1 / np.sin(convert.units(da.lat, "rad")))
+            .assign_attrs(
+                long_name="Airmass",
+                units="dimensionless",
+            )
+        )
+        da = da.assign_coords(airmass=airmass)
+        # fmt: on
+
         # make continuum series
         da_on = select.by(da, "state", include="SCAN")
         da_off = select.by(da, "state", exclude="SCAN")
@@ -1312,13 +1324,6 @@ def load_dems(
 
     if max_frequency is not None:
         max_frequency = Quantity(max_frequency).to(frequency_units).value
-
-    if da.frame == "altaz":
-        z = np.pi / 2 - convert.units(da.lat, "rad")
-        secz = cast(xr.DataArray, 1 / np.cos(z))
-        da = da.assign_coords(
-            secz=secz.assign_attrs(long_name="sec(Z)", units="dimensionless")
-        )
 
     da = convert.coord_units(
         da,
