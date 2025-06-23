@@ -49,7 +49,7 @@ def all(
     keep_attrs: Optional[bool] = None,
     **options: Any,
 ) -> xr.DataArray:
-    """Apply a (chunked) ``all``  operation to a DataArray.
+    """Apply a (chunked) ``all`` operation to a DataArray.
 
     Args:
         da: Input DataArray.
