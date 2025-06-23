@@ -1,0 +1,7 @@
+decode.select module
+====================
+
+.. automodule:: decode.select
+   :members:
+   :show-inheritance:
+   :undoc-members:

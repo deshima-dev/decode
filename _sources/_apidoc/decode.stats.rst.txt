@@ -1,0 +1,7 @@
+decode.stats module
+===================
+
+.. automodule:: decode.stats
+   :members:
+   :show-inheritance:
+   :undoc-members:

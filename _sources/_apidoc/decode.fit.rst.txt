@@ -1,0 +1,7 @@
+decode.fit module
+=================
+
+.. automodule:: decode.fit
+   :members:
+   :show-inheritance:
+   :undoc-members:

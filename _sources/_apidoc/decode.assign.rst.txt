@@ -1,0 +1,7 @@
+decode.assign module
+====================
+
+.. automodule:: decode.assign
+   :members:
+   :show-inheritance:
+   :undoc-members:
