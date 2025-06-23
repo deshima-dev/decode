@@ -647,7 +647,7 @@ def _apply(
             skipna=skipna,
             keep_attrs=keep_attrs,
             **options,
-        )
+        ).squeeze()
 
     if callable(func):
         return coarsened.reduce(
@@ -655,7 +655,7 @@ def _apply(
             skipna=skipna,
             keep_attrs=keep_attrs,
             **options,
-        )
+        ).squeeze()
 
     raise TypeError("Func must be either callable or string.")
 
