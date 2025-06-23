@@ -46,7 +46,6 @@ def all(
     side: Union[Side, dict[Hashable, Side]] = "left",
     numeric_coord_func: Stat = "mean",
     nonnumeric_coord_func: Stat = "first",
-    skipna: Optional[bool] = None,
     keep_attrs: Optional[bool] = None,
     **options: Any,
 ) -> xr.DataArray:
@@ -64,7 +63,6 @@ def all(
             for the numeric coordinates (bool, numbers, datetime, timedelta).
         nonnumeric_coord_func: Function or name of the statistical operation
             for the non-numeric coordinates (str, bytes, and general object).
-        skipna: Whether to ignore missing values in the ``all``  operation.
         keep_attrs: Whether to keep attributes in the ``all``  operation.
         **options: Other options to be passed to the ``all``  operation.
 
@@ -80,7 +78,6 @@ def all(
         side=side,
         numeric_coord_func=numeric_coord_func,
         nonnumeric_coord_func=nonnumeric_coord_func,
-        skipna=skipna,
         keep_attrs=keep_attrs,
         **options,
     )
@@ -95,7 +92,6 @@ def any(
     side: Union[Side, dict[Hashable, Side]] = "left",
     numeric_coord_func: Stat = "mean",
     nonnumeric_coord_func: Stat = "first",
-    skipna: Optional[bool] = None,
     keep_attrs: Optional[bool] = None,
     **options: Any,
 ) -> xr.DataArray:
@@ -113,7 +109,6 @@ def any(
             for the numeric coordinates (bool, numbers, datetime, timedelta).
         nonnumeric_coord_func: Function or name of the statistical operation
             for the non-numeric coordinates (str, bytes, and general object).
-        skipna: Whether to ignore missing values in the ``any`` operation.
         keep_attrs: Whether to keep attributes in the ``any`` operation.
         **options: Other options to be passed to the ``any`` operation.
 
@@ -129,7 +124,6 @@ def any(
         side=side,
         numeric_coord_func=numeric_coord_func,
         nonnumeric_coord_func=nonnumeric_coord_func,
-        skipna=skipna,
         keep_attrs=keep_attrs,
         **options,
     )
@@ -144,7 +138,6 @@ def count(
     side: Union[Side, dict[Hashable, Side]] = "left",
     numeric_coord_func: Stat = "mean",
     nonnumeric_coord_func: Stat = "first",
-    skipna: Optional[bool] = None,
     keep_attrs: Optional[bool] = None,
     **options: Any,
 ) -> xr.DataArray:
@@ -162,7 +155,6 @@ def count(
             for the numeric coordinates (bool, numbers, datetime, timedelta).
         nonnumeric_coord_func: Function or name of the statistical operation
             for the non-numeric coordinates (str, bytes, and general object).
-        skipna: Whether to ignore missing values in the ``count`` operation.
         keep_attrs: Whether to keep attributes in the ``count`` operation.
         **options: Other options to be passed to the ``count`` operation.
 
@@ -178,7 +170,6 @@ def count(
         side=side,
         numeric_coord_func=numeric_coord_func,
         nonnumeric_coord_func=nonnumeric_coord_func,
-        skipna=skipna,
         keep_attrs=keep_attrs,
         **options,
     )
@@ -193,8 +184,8 @@ def max(
     side: Union[Side, dict[Hashable, Side]] = "left",
     numeric_coord_func: Stat = "mean",
     nonnumeric_coord_func: Stat = "first",
-    skipna: Optional[bool] = None,
     keep_attrs: Optional[bool] = None,
+    skipna: Optional[bool] = None,
     **options: Any,
 ) -> xr.DataArray:
     """Apply a (chunked) ``max`` operation to a DataArray.
@@ -211,8 +202,8 @@ def max(
             for the numeric coordinates (bool, numbers, datetime, timedelta).
         nonnumeric_coord_func: Function or name of the statistical operation
             for the non-numeric coordinates (str, bytes, and general object).
-        skipna: Whether to ignore missing values in the ``max`` operation.
         keep_attrs: Whether to keep attributes in the ``max`` operation.
+        skipna: Whether to ignore missing values in the ``max`` operation.
         **options: Other options to be passed to the ``max`` operation.
 
     Returns:
@@ -227,8 +218,8 @@ def max(
         side=side,
         numeric_coord_func=numeric_coord_func,
         nonnumeric_coord_func=nonnumeric_coord_func,
-        skipna=skipna,
         keep_attrs=keep_attrs,
+        skipna=skipna,
         **options,
     )
 
@@ -242,8 +233,8 @@ def mean(
     side: Union[Side, dict[Hashable, Side]] = "left",
     numeric_coord_func: Stat = "mean",
     nonnumeric_coord_func: Stat = "first",
-    skipna: Optional[bool] = None,
     keep_attrs: Optional[bool] = None,
+    skipna: Optional[bool] = None,
     **options: Any,
 ) -> xr.DataArray:
     """Apply a (chunked) ``mean`` operation to a DataArray.
@@ -260,8 +251,8 @@ def mean(
             for the numeric coordinates (bool, numbers, datetime, timedelta).
         nonnumeric_coord_func: Function or name of the statistical operation
             for the non-numeric coordinates (str, bytes, and general object).
-        skipna: Whether to ignore missing values in the ``mean`` operation.
         keep_attrs: Whether to keep attributes in the ``mean`` operation.
+        skipna: Whether to ignore missing values in the ``mean`` operation.
         **options: Other options to be passed to the ``mean`` operation.
 
     Returns:
@@ -276,8 +267,8 @@ def mean(
         side=side,
         numeric_coord_func=numeric_coord_func,
         nonnumeric_coord_func=nonnumeric_coord_func,
-        skipna=skipna,
         keep_attrs=keep_attrs,
+        skipna=skipna,
         **options,
     )
 
@@ -291,8 +282,8 @@ def median(
     side: Union[Side, dict[Hashable, Side]] = "left",
     numeric_coord_func: Stat = "mean",
     nonnumeric_coord_func: Stat = "first",
-    skipna: Optional[bool] = None,
     keep_attrs: Optional[bool] = None,
+    skipna: Optional[bool] = None,
     **options: Any,
 ) -> xr.DataArray:
     """Apply a (chunked) ``median`` operation to a DataArray.
@@ -309,8 +300,8 @@ def median(
             for the numeric coordinates (bool, numbers, datetime, timedelta).
         nonnumeric_coord_func: Function or name of the statistical operation
             for the non-numeric coordinates (str, bytes, and general object).
-        skipna: Whether to ignore missing values in the ``median`` operation.
         keep_attrs: Whether to keep attributes in the ``median`` operation.
+        skipna: Whether to ignore missing values in the ``median`` operation.
         **options: Other options to be passed to the ``median`` operation.
 
     Returns:
@@ -325,8 +316,8 @@ def median(
         side=side,
         numeric_coord_func=numeric_coord_func,
         nonnumeric_coord_func=nonnumeric_coord_func,
-        skipna=skipna,
         keep_attrs=keep_attrs,
+        skipna=skipna,
         **options,
     )
 
@@ -340,8 +331,8 @@ def min(
     side: Union[Side, dict[Hashable, Side]] = "left",
     numeric_coord_func: Stat = "mean",
     nonnumeric_coord_func: Stat = "first",
-    skipna: Optional[bool] = None,
     keep_attrs: Optional[bool] = None,
+    skipna: Optional[bool] = None,
     **options: Any,
 ) -> xr.DataArray:
     """Apply a (chunked) ``min`` operation to a DataArray.
@@ -358,8 +349,8 @@ def min(
             for the numeric coordinates (bool, numbers, datetime, timedelta).
         nonnumeric_coord_func: Function or name of the statistical operation
             for the non-numeric coordinates (str, bytes, and general object).
-        skipna: Whether to ignore missing values in the ``min`` operation.
         keep_attrs: Whether to keep attributes in the ``min`` operation.
+        skipna: Whether to ignore missing values in the ``min`` operation.
         **options: Other options to be passed to the ``min`` operation.
 
     Returns:
@@ -374,8 +365,8 @@ def min(
         side=side,
         numeric_coord_func=numeric_coord_func,
         nonnumeric_coord_func=nonnumeric_coord_func,
-        skipna=skipna,
         keep_attrs=keep_attrs,
+        skipna=skipna,
         **options,
     )
 
@@ -389,8 +380,8 @@ def prod(
     side: Union[Side, dict[Hashable, Side]] = "left",
     numeric_coord_func: Stat = "mean",
     nonnumeric_coord_func: Stat = "first",
-    skipna: Optional[bool] = None,
     keep_attrs: Optional[bool] = None,
+    skipna: Optional[bool] = None,
     **options: Any,
 ) -> xr.DataArray:
     """Apply a (chunked) ``prod`` operation to a DataArray.
@@ -407,8 +398,8 @@ def prod(
             for the numeric coordinates (bool, numbers, datetime, timedelta).
         nonnumeric_coord_func: Function or name of the statistical operation
             for the non-numeric coordinates (str, bytes, and general object).
-        skipna: Whether to ignore missing values in the ``prod`` operation.
         keep_attrs: Whether to keep attributes in the ``prod`` operation.
+        skipna: Whether to ignore missing values in the ``prod`` operation.
         **options: Other options to be passed to the ``prod`` operation.
 
     Returns:
@@ -423,8 +414,8 @@ def prod(
         side=side,
         numeric_coord_func=numeric_coord_func,
         nonnumeric_coord_func=nonnumeric_coord_func,
-        skipna=skipna,
         keep_attrs=keep_attrs,
+        skipna=skipna,
         **options,
     )
 
@@ -438,8 +429,8 @@ def std(
     side: Union[Side, dict[Hashable, Side]] = "left",
     numeric_coord_func: Stat = "mean",
     nonnumeric_coord_func: Stat = "first",
-    skipna: Optional[bool] = None,
     keep_attrs: Optional[bool] = None,
+    skipna: Optional[bool] = None,
     **options: Any,
 ) -> xr.DataArray:
     """Apply a (chunked) ``std`` operation to a DataArray.
@@ -456,8 +447,8 @@ def std(
             for the numeric coordinates (bool, numbers, datetime, timedelta).
         nonnumeric_coord_func: Function or name of the statistical operation
             for the non-numeric coordinates (str, bytes, and general object).
-        skipna: Whether to ignore missing values in the ``std`` operation.
         keep_attrs: Whether to keep attributes in the ``std`` operation.
+        skipna: Whether to ignore missing values in the ``std`` operation.
         **options: Other options to be passed to the ``std`` operation.
 
     Returns:
@@ -472,8 +463,8 @@ def std(
         side=side,
         numeric_coord_func=numeric_coord_func,
         nonnumeric_coord_func=nonnumeric_coord_func,
-        skipna=skipna,
         keep_attrs=keep_attrs,
+        skipna=skipna,
         **options,
     )
 
@@ -487,8 +478,8 @@ def sum(
     side: Union[Side, dict[Hashable, Side]] = "left",
     numeric_coord_func: Stat = "mean",
     nonnumeric_coord_func: Stat = "first",
-    skipna: Optional[bool] = None,
     keep_attrs: Optional[bool] = None,
+    skipna: Optional[bool] = None,
     **options: Any,
 ) -> xr.DataArray:
     """Apply a (chunked) ``sum`` operation to a DataArray.
@@ -505,8 +496,8 @@ def sum(
             for the numeric coordinates (bool, numbers, datetime, timedelta).
         nonnumeric_coord_func: Function or name of the statistical operation
             for the non-numeric coordinates (str, bytes, and general object).
-        skipna: Whether to ignore missing values in the ``sum`` operation.
         keep_attrs: Whether to keep attributes in the ``sum`` operation.
+        skipna: Whether to ignore missing values in the ``sum`` operation.
         **options: Other options to be passed to the ``sum`` operation.
 
     Returns:
@@ -521,8 +512,8 @@ def sum(
         side=side,
         numeric_coord_func=numeric_coord_func,
         nonnumeric_coord_func=nonnumeric_coord_func,
-        skipna=skipna,
         keep_attrs=keep_attrs,
+        skipna=skipna,
         **options,
     )
 
@@ -536,8 +527,8 @@ def var(
     side: Union[Side, dict[Hashable, Side]] = "left",
     numeric_coord_func: Stat = "mean",
     nonnumeric_coord_func: Stat = "first",
-    skipna: Optional[bool] = None,
     keep_attrs: Optional[bool] = None,
+    skipna: Optional[bool] = None,
     **options: Any,
 ) -> xr.DataArray:
     """Apply a (chunked) ``var`` operation to a DataArray.
@@ -554,8 +545,8 @@ def var(
             for the numeric coordinates (bool, numbers, datetime, timedelta).
         nonnumeric_coord_func: Function or name of the statistical operation
             for the non-numeric coordinates (str, bytes, and general object).
-        skipna: Whether to ignore missing values in the ``var`` operation.
         keep_attrs: Whether to keep attributes in the ``var`` operation.
+        skipna: Whether to ignore missing values in the ``var`` operation.
         **options: Other options to be passed to the ``var`` operation.
 
     Returns:
@@ -586,7 +577,6 @@ def _apply(
     side: Union[Side, dict[Hashable, Side]] = "left",
     numeric_coord_func: Stat = "mean",
     nonnumeric_coord_func: Stat = "first",
-    skipna: Optional[bool] = None,
     keep_attrs: Optional[bool] = None,
     **options: Any,
 ) -> xr.DataArray:
@@ -605,7 +595,6 @@ def _apply(
             for the numeric coordinates (bool, numbers, datetime, timedelta).
         nonnumeric_coord_func: Function or name of the statistical operation
             for the non-numeric coordinates (str, bytes, and general object).
-        skipna: Whether to ignore missing values in the statistical operation.
         keep_attrs: Whether to keep attributes in the statistical operation.
         **options: Other options to be passed to the statistical operation.
 
@@ -644,7 +633,6 @@ def _apply(
 
     if isinstance(func, str):
         return getattr(coarsened, func)(
-            skipna=skipna,
             keep_attrs=keep_attrs,
             **options,
         ).squeeze()
@@ -652,7 +640,6 @@ def _apply(
     if callable(func):
         return coarsened.reduce(
             func=func,
-            skipna=skipna,
             keep_attrs=keep_attrs,
             **options,
         ).squeeze()
