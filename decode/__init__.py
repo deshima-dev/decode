@@ -8,9 +8,10 @@ __all__ = [
     "plot",
     "qlook",
     "select",
+    "stats",
     "utils",
 ]
-__version__ = "2025.4.2"
+__version__ = "2025.6.0"
 
 
 # submodules
@@ -23,4 +24,5 @@ from . import make
 from . import plot
 from . import qlook
 from . import select
+from . import stats
 from . import utils
