@@ -3,6 +3,8 @@ __all__ = [
     "any",
     "apply",
     "count",
+    "first",
+    "last",
     "max",
     "mean",
     "median",
@@ -251,6 +253,98 @@ def count(
     return apply(
         da,
         "count",
+        dim=dim,
+        boundary=boundary,
+        side=side,
+        numeric_coord_func=numeric_coord_func,
+        nonnumeric_coord_func=nonnumeric_coord_func,
+        keep_attrs=keep_attrs,
+        **options,
+    )
+
+
+def first(
+    da: xr.DataArray,
+    /,
+    *,
+    dim: Union[Dims, dict[Hashable, int]] = None,
+    boundary: Boundary = "trim",
+    side: Union[Side, dict[Hashable, Side]] = "left",
+    numeric_coord_func: Stat = "mean",
+    nonnumeric_coord_func: Stat = "first",
+    keep_attrs: Optional[bool] = None,
+    **options: Any,
+) -> xr.DataArray:
+    """Apply a (chunked) ``first`` operation to a DataArray.
+
+    Args:
+        da: Input DataArray.
+        dim: Name(s) of the dimension(s) along which the ``first`` operation
+            will be applied. If a dictionary such as ``{dim: size, ...}``
+            is specified, then the ``first`` operation will be applied
+            to every data chunk of given size.
+        boundary: Same option as ``xarray.DataArray.coarsen`` but defaults to ``'trim'``.
+        side: Same option as ``xarray.DataArray.coarsen`` and defualts to ``'left'``.
+        numeric_coord_func: Function or name of the statistical operation
+            for the numeric coordinates (bool, numbers, datetime, timedelta).
+        nonnumeric_coord_func: Function or name of the statistical operation
+            for the non-numeric coordinates (str, bytes, and general object).
+        keep_attrs: Whether to keep attributes in the ``first`` operation.
+        **options: Other options to be passed to the ``first`` operation.
+
+    Returns:
+        DataArray that the (chunked) ``first`` operation is applied.
+
+    """
+    return apply(
+        da,
+        _first,
+        dim=dim,
+        boundary=boundary,
+        side=side,
+        numeric_coord_func=numeric_coord_func,
+        nonnumeric_coord_func=nonnumeric_coord_func,
+        keep_attrs=keep_attrs,
+        **options,
+    )
+
+
+def last(
+    da: xr.DataArray,
+    /,
+    *,
+    dim: Union[Dims, dict[Hashable, int]] = None,
+    boundary: Boundary = "trim",
+    side: Union[Side, dict[Hashable, Side]] = "left",
+    numeric_coord_func: Stat = "mean",
+    nonnumeric_coord_func: Stat = "first",
+    keep_attrs: Optional[bool] = None,
+    **options: Any,
+) -> xr.DataArray:
+    """Apply a (chunked) ``last`` operation to a DataArray.
+
+    Args:
+        da: Input DataArray.
+        dim: Name(s) of the dimension(s) along which the ``last`` operation
+            will be applied. If a dictionary such as ``{dim: size, ...}``
+            is specified, then the ``last`` operation will be applied
+            to every data chunk of given size.
+        boundary: Same option as ``xarray.DataArray.coarsen`` but defaults to ``'trim'``.
+        side: Same option as ``xarray.DataArray.coarsen`` and defualts to ``'left'``.
+        numeric_coord_func: Function or name of the statistical operation
+            for the numeric coordinates (bool, numbers, datetime, timedelta).
+        nonnumeric_coord_func: Function or name of the statistical operation
+            for the non-numeric coordinates (str, bytes, and general object).
+        keep_attrs: Whether to keep attributes in the ``last`` operation.
+        **options: Other options to be passed to the ``last`` operation.
+
+    Returns:
+        DataArray that the (chunked) ``last`` operation is applied.
+
+    """
+    return apply(
+        da,
+        _last,
         dim=dim,
         boundary=boundary,
         side=side,

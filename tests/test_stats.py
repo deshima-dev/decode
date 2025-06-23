@@ -67,6 +67,40 @@ def test_count() -> None:
     )
 
 
+def test_first() -> None:
+    expected = xr.DataArray(
+        np.array([[0, 3], [12, 15], [24, 27]]),
+        dims=("x", "y"),
+        coords={
+            "x": np.array([0.5, 2.5, 4.5]),
+            "y": np.array([7.0, 10.0]),
+            "c1": ("x", np.array(list("ace"))),
+            "c2": ("x", np.array([0.5, 2.5, 4.5])),
+        },
+    )
+    xr.testing.assert_equal(
+        stats.first(DATA, dim={"x": 2, "y": 3}),
+        expected,
+    )
+
+
+def test_last() -> None:
+    expected = xr.DataArray(
+        np.array([[8, 11], [20, 23], [32, 35]]),
+        dims=("x", "y"),
+        coords={
+            "x": np.array([0.5, 2.5, 4.5]),
+            "y": np.array([7.0, 10.0]),
+            "c1": ("x", np.array(list("ace"))),
+            "c2": ("x", np.array([0.5, 2.5, 4.5])),
+        },
+    )
+    xr.testing.assert_equal(
+        stats.last(DATA, dim={"x": 2, "y": 3}),
+        expected,
+    )
+
+
 def test_max() -> None:
     expected = xr.DataArray(
         np.array([[8, 11], [20, 23], [32, 35]]),
