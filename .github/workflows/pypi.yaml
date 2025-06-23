@@ -16,6 +16,4 @@ jobs:
       id-token: write
     steps:
       - uses: actions/checkout@v4
-        with:
-          submodules: true
       - run: uv build && uv publish
