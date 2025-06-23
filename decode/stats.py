@@ -613,16 +613,21 @@ def _apply(
 
     coord_func: dict[Hashable, Stat] = {}
 
+    if numeric_coord_func == "first":
+        numeric_coord_func = _first
+    elif numeric_coord_func == "last":
+        numeric_coord_func = _last
+
+    if nonnumeric_coord_func == "first":
+        nonnumeric_coord_func = _first
+    elif nonnumeric_coord_func == "last":
+        nonnumeric_coord_func = _last
+
     for name, coord in da.coords.items():
         if coord.dtype.kind in NUMERIC_KINDS:
             coord_func[name] = numeric_coord_func
         else:
-            if nonnumeric_coord_func == "first":
-                coord_func[name] = _first
-            elif nonnumeric_coord_func == "last":
-                coord_func[name] = _last
-            else:
-                coord_func[name] = nonnumeric_coord_func
+            coord_func[name] = nonnumeric_coord_func
 
     coarsened = da.coarsen(
         dim,
