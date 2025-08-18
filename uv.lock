@@ -535,7 +535,7 @@ wheels = [
 
 [[package]]
 name = "decode"
-version = "2025.6.1"
+version = "2025.8.0"
 source = { editable = "." }
 dependencies = [
     { name = "astropy", version = "6.0.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
