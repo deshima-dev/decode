@@ -46,6 +46,7 @@ def phaseof(
     *,
     keep_attrs: bool = False,
     keep_coords: bool = False,
+    keep_name: bool = False,
 ) -> xr.DataArray:
     """Assign a phase to each value in a 1D DataArray.
 
@@ -57,6 +58,7 @@ def phaseof(
         da: Input 1D DataArray.
         keep_attrs: Whether to keep attributes of the input.
         keep_coords: Whether to keep coordinates of the input.
+        keep_name: Whether to keep name of the input.
 
     Returns:
         1D int64 DataArray of phases.
@@ -69,4 +71,11 @@ def phaseof(
     is_transision.data[1:] = da.data[1:] != da.data[:-1]
 
     phase = is_transision.cumsum(keep_attrs=keep_attrs)
-    return phase if keep_coords else phase.reset_coords(drop=True)
+
+    if not keep_coords:
+        phase = phase.reset_coords(drop=True)
+
+    if not keep_name:
+        phase = phase.rename(None)
+
+    return phase

@@ -11,7 +11,7 @@ __all__ = [
     "stats",
     "utils",
 ]
-__version__ = "2025.6.1"
+__version__ = "2025.8.0"
 
 
 # submodules
