@@ -1,0 +1,7 @@
+decode.convert module
+=====================
+
+.. automodule:: decode.convert
+   :members:
+   :show-inheritance:
+   :undoc-members:

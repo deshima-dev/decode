@@ -1,0 +1,7 @@
+decode.correct module
+=====================
+
+.. automodule:: decode.correct
+   :members:
+   :show-inheritance:
+   :undoc-members:

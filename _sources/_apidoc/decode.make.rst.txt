@@ -1,0 +1,7 @@
+decode.make module
+==================
+
+.. automodule:: decode.make
+   :members:
+   :show-inheritance:
+   :undoc-members:
