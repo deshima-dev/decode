@@ -33,7 +33,8 @@ def cube(
         skycoord_units: Units of the sky coordinate axes.
 
     Returns:
-        Cube DataArray.
+        Cube DataArray. The weight coordinate is the inverse
+        variance of the input DEMS samples within each pixel.
 
     """
     dems = convert.coord_units(dems, "lon", "deg")
@@ -56,14 +57,20 @@ def cube(
 
     dems = dems.copy(data=dems.data)
     dems.coords.update({"index": index})
-    gridded = dems.groupby("index").mean("time")
+    mean = dems.groupby("index").mean("time")
+    var = dems.groupby("index").var("time")
 
     data = np.full([n_lat * n_lon, n_chan], np.nan)
-    data[gridded.index.values] = gridded.values
+    data[mean.index.values] = mean.values
     data = data.reshape(n_lat, n_lon, n_chan).transpose(2, 0, 1)
+
+    weight = np.full([n_lat * n_lon, n_chan], np.nan)
+    weight[var.index.values] = 1 / var.values
+    weight = weight.reshape(n_lat, n_lon, n_chan).transpose(2, 0, 1)
 
     cube = Cube.new(
         data=data,
+        weight=weight,
         lat=lat,
         lon=lon,
         chan=dems.chan,
