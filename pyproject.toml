@@ -1,6 +1,6 @@
 [project]
 name = "decode"
-version = "2025.8.0"
+version = "2025.10.0"
 description = "DESHIMA code for data analysis"
 readme = "README.md"
 keywords = [
