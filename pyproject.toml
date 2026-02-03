@@ -16,6 +16,7 @@ dependencies = [
     "dask>=2024,<2026",
     "dems>=2025.6,<2026.0",
     "fire>=0.5,<1.0",
+    "iminuit>=2,<3",
     "matplotlib>=3,<4",
     "ndtools>=1,<2",
     "numpy>=1.23,<3.0",

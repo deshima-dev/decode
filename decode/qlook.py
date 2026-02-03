@@ -5,6 +5,7 @@ __all__ = [
     "raster",
     "skydip",
     "still",
+    "timeoffset_search",
     "xscan",
     "yscan",
     "zscan",
@@ -17,7 +18,7 @@ import tomli_w as toml
 from contextlib import contextmanager
 from logging import DEBUG, basicConfig, getLogger
 from pathlib import Path
-from typing import Any, Literal, Optional, Sequence, Union
+from typing import Any, Literal, Optional, Sequence, Union, Iterable, Dict
 from warnings import catch_warnings, simplefilter
 from datetime import datetime
 
@@ -29,7 +30,8 @@ import matplotlib.pyplot as plt
 from astropy.units import Quantity
 from fire import Fire
 from matplotlib.figure import Figure
-from scipy.optimize import curve_fit
+from scipy.optimize import curve_fit, minimize
+from iminuit import Minuit
 from . import assign, convert, load, make, plot, select, utils
 
 
@@ -1451,6 +1453,448 @@ def make_pointing_toml_string(da, fit_res_params_dict, weight) -> str:
     return toml.dumps(result)
 
 
+def shift_coords(
+    da: xr.DataArray,
+    time_coords: Iterable[str],
+    time_offset: np.timedelta64 = np.timedelta64(0, "ms"),
+) -> xr.DataArray:
+    """Shifts the time coordinates of an Xarray object
+        by a specified offset and re-interpolates specified
+        coordinate variables onto the original time grid.
+
+    Args:
+        da (xr.DataArray): The input Xarray DataArray to be shifted.
+        time_coords (Iterable[str]): A list of coordinate names to
+            be re-interpolated (e.g., ['lat', 'lon']).
+        time_offset (np.timedelta64): The time offset amount to shift.
+            Defaults to 0 ms.
+
+    Returns:
+        xr.DataArray: A new DataArray with shifted
+        time and re-interpolated coordinates.
+    """
+    shifted_time = da.time + time_offset
+    temp_obj = da.assign_coords(time=shifted_time)
+    interpolated_vars = {}
+    for var_name in time_coords:
+        var_to_interp = temp_obj.coords[var_name]
+        interpolated_var = var_to_interp.interp_like(
+            da,
+            method="linear",
+            kwargs={"fill_value": "extrapolate"},
+        )
+        interpolated_vars[var_name] = interpolated_var
+    result_obj = da.assign_coords(**interpolated_vars)
+    return result_obj
+
+
+def gaussfit(cont: xr.DataArray) -> Dict[str, Any]:
+    """Performs a 2D Gaussian fitting on the input 2D map data.
+
+    Args:
+        cont (xr.DataArray): The input 2D map data array
+            (e.g., intensity map).
+
+    Returns:
+        Dict[str, Any]: A dictionary containing fitting parameters
+            (peak, x0, y0, etc.),
+            chi-squared values.Returns an empty dict if fitting fails.
+    """
+    try:
+        mad = utils.mad(cont).item()
+        sigma = mad * SIGMA_OVER_MAD
+
+        data = np.array(copy.deepcopy(cont).data)
+        data[np.isnan(data)] = 0.0
+
+        x, y = np.meshgrid(np.array(cont["lon"]), np.array(cont["lat"]))
+
+        amp_guess = np.nanmax(data)
+
+        max_idx = np.argmax(data)
+        x0_guess = x.ravel()[max_idx]
+        y0_guess = y.ravel()[max_idx]
+
+        x_min, x_max = np.nanmin(x), np.nanmax(x)
+        y_min, y_max = np.nanmin(y), np.nanmax(y)
+        sigma_x_guess = (x_max - x_min) / 10.0
+        sigma_y_guess = (y_max - y_min) / 10.0
+
+        if sigma_x_guess <= 0:
+            sigma_x_guess = 1e-4
+        if sigma_y_guess <= 0:
+            sigma_y_guess = 1e-4
+
+        def fixed_offset_gaussian(xy, amp, x0, y0, sigma_x, sigma_y, theta):
+            return gaussian_2d(xy, amp, x0, y0, sigma_x, sigma_y, theta, 0)
+
+        initial_guess = (amp_guess, x0_guess, y0_guess, sigma_x_guess, sigma_y_guess, 0)
+        bounds = (
+            [0, -np.inf, -np.inf, 1e-10, 1e-10, -np.pi],
+            [np.inf, np.inf, np.inf, np.inf, np.inf, np.pi],
+        )
+
+        popt, pcov = curve_fit(
+            fixed_offset_gaussian, (x, y), data.ravel(), p0=initial_guess, bounds=bounds
+        )
+        perr = np.sqrt(np.diag(pcov))
+
+        data_fitted = fixed_offset_gaussian((x, y), *popt).reshape(x.shape)
+
+        chi2, reduced_chi2 = calc_chi2(
+            data, data_fitted, sigma, num_params=len(initial_guess)
+        )
+
+        popt_full = np.append(popt, 0)
+        perr_full = np.append(perr, 0)
+
+        fit_res_params_dict = make_fit_res_params_dict(
+            popt_full, perr_full, chi2, reduced_chi2
+        )
+
+        param_names = ["peak", "x0", "y0", "sigma_x", "sigma_y", "theta", "offset"]
+        for i, name in enumerate(param_names):
+            fit_res_params_dict[name] = popt_full[i]
+            fit_res_params_dict[f"{name}_err"] = perr_full[i]
+
+        fit_res_params_dict["popt"] = popt_full  # type: ignore
+
+        return fit_res_params_dict
+    except Exception as error:
+        return {}
+
+
+def get_result(
+    da: xr.DataArray,
+    time_offset: float,
+) -> Dict[str, Any]:
+    """Calculates the Gaussian fitting result for a given time offset.
+
+    Args:
+        da (xr.DataArray): The input DataArray.
+        time_offset (float): The time offset in milliseconds to be applied.
+
+    Returns:
+        Dict[str, Any]: A dictionary containing the Gaussian fitting results
+        (parameters, chi2, etc.).
+    """
+
+    time_offset_ns = int(time_offset * 1000000)
+    time_offset_np = np.timedelta64(int(np.round(time_offset_ns)), "ns")
+
+    da_shifted = shift_coords(da, ["lat", "lon"], time_offset_np)
+    da_scan = da_shifted[da_shifted.state == "SCAN"]
+    time_profile = da_scan.mean("chan", skipna=True)
+    peak_idx = time_profile.argmax(dim="time")
+
+    peak_lon = da_scan.lon[peak_idx].item()
+    peak_lat = da_scan.lat[peak_idx].item()
+
+    mask_spatial = (abs(da_shifted.lon - peak_lon) <= 60) & (
+        abs(da_shifted.lat - peak_lat) <= 60
+    )
+    mask_scan = da_shifted.state == "SCAN"
+    mask_off = da_shifted.state != "SCAN"
+    da_cropped = da_shifted.where((mask_scan & mask_spatial) | mask_off, drop=True)
+
+    map_data = mapping(da_cropped, da.frequency.min().item(), da.frequency.max().item())
+
+    result = gaussfit(map_data)
+    return result
+
+
+def mapping(da: xr.DataArray, min_freq: float, max_freq: float) -> xr.DataArray:
+    """Generates a 2D map from the input DataArray by
+        performing sky subtraction and gridding.
+
+    Args:
+        da (xr.DataArray): The input DataArray containing ON/OFF scan data.
+        min_freq (float): Minimum frequency for the map integration (GHz).
+        max_freq (float): Maximum frequency for the map integration (GHz).
+
+    Returns:
+        xr.DataArray: The generated 2D map averaged over the frequency range.
+        Returns None if data is insufficient.
+    """
+
+    da_on = da[da.state == "SCAN"]
+    da_off = da[da.state != "SCAN"]
+    da_base = (
+        da_off.groupby("scan")
+        .map(mean_in_time)
+        .interp_like(
+            da_on,
+            method="linear",
+            kwargs={"fill_value": "extrapolate"},
+        )
+    )
+    with catch_warnings():
+        simplefilter("ignore")
+        cube = make.cube(da_on - da_base.data, skycoord_grid="3 arcsec")
+    condition = (cube.frequency >= min_freq) & (cube.frequency <= max_freq)
+    map = cube.where(condition, drop=True).mean("chan")
+    return map
+
+
+def visualize_correction(
+    da: xr.DataArray,
+    min_freq: float,
+    max_freq: float,
+    offset_val: float,
+    save_path: str,
+) -> None:
+    """Visualizes the corrected map, best-fit model,
+        and residuals for a specific time offset.
+
+    Args:
+        da (xr.DataArray): The input DataArray.
+        offset_val (float): The optimized time offset in milliseconds.
+        min_freq (float): Minimum frequency for visualization (GHz).
+        max_freq (float): Maximum frequency for visualization (GHz).
+        save_path (Optional[str]): File path to save the plot image.
+        If None, the plot is displayed but not saved.
+
+    Returns:
+        None
+    """
+    if np.isnan(offset_val):
+        return
+
+    offset_ns = int(offset_val * 1_000_000)
+    offset_td = np.timedelta64(int(np.round(offset_ns)), "ns")
+    da_shifted = shift_coords(da, ["lat", "lon"], offset_td)
+
+    data_map = mapping(da_shifted, min_freq, max_freq)
+
+    fit_result = gaussfit(data_map)
+
+    if "popt" not in fit_result:
+        return
+
+    popt = fit_result["popt"]
+
+    Z = np.array(data_map.data)
+    Z[np.isnan(Z)] = 0.0
+
+    X, Y = np.meshgrid(np.array(data_map["lon"]), np.array(data_map["lat"]))
+
+    model_data = gaussian_2d((X, Y), *popt).reshape(X.shape)
+    residual_data = Z - model_data
+
+    model_da = xr.DataArray(
+        model_data, coords=data_map.coords, dims=data_map.dims, name="Model"
+    )
+    residual_da = xr.DataArray(
+        residual_data, coords=data_map.coords, dims=data_map.dims, name="Residual"
+    )
+
+    fig, axes = plt.subplots(1, 3, figsize=(18, 5), sharex=True, sharey=True)
+
+    data_map.plot.pcolormesh(
+        ax=axes[0], cmap="coolwarm", cbar_kwargs={"label": "Intensity (K)"}
+    )
+    axes[0].set_title(f"Data (Shifted: {offset_val:.2f} ms)")
+    axes[0].set_aspect("equal")
+
+    model_da.plot.pcolormesh(
+        ax=axes[1], cmap="coolwarm", cbar_kwargs={"label": "Intensity (K)"}
+    )
+    axes[1].set_title("Best-fit Model")
+    axes[1].set_aspect("equal")
+    axes[1].set_ylabel("")
+
+    vmax_res = np.nanmax(np.abs(residual_data))
+    residual_da.plot.pcolormesh(
+        ax=axes[2],
+        cmap="viridis",
+        vmin=-vmax_res,
+        vmax=vmax_res,
+        cbar_kwargs={"label": "Residual (K)"},
+    )
+    axes[2].set_title("Residual (Data - Model)")
+    axes[2].set_aspect("equal")
+    axes[2].set_ylabel("")
+
+    plt.tight_layout()
+
+    if save_path:
+        plt.savefig(save_path, dpi=150, bbox_inches="tight")
+        plt.close()
+    else:
+        plt.show()
+
+
+def make_toml(
+    file_prefix: str,
+    min_freq: float,
+    max_freq: float,
+    opt_offset: float,
+    hesse_err: float,
+    init_val: float,
+    init_peak: float,
+    final_res: Dict[str, Any],
+) -> str:
+    """Generates a TOML formatted string from the analysis results.
+
+    Args:
+        file_prefix (str): Prefix used for file identification.
+        min_freq (float): Minimum frequency used.
+        max_freq (float): Maximum frequency used.
+        opt_offset (float): Optimized time offset.
+        hesse_err (float): Hessian error of the time offset.
+        init_val (float): Initial chi-squared value (at 0 offset).
+        opt_val (float): Optimized chi-squared value.
+        init_peak (float): Initial peak intensity.
+        opt_peak (float): Optimized peak intensity.
+        final_res (Dict[str, Any]): Dictionary containing final
+            fitting parameters.
+
+    Returns:
+        str: A TOML formatted string.
+    """
+
+    def to_native(val):
+        if isinstance(val, (np.integer, int)):
+            return int(val)
+        elif isinstance(val, (np.floating, float)):
+            return float(val)
+        elif isinstance(val, np.ndarray):
+            return val.tolist()
+        return val
+
+    data_dict = {
+        "file_id": file_prefix,
+        "min_freq": to_native(min_freq),
+        "max_freq": to_native(max_freq),
+        "optimal_offset": to_native(opt_offset),
+        "hesse_error": to_native(hesse_err),
+        "initial_chi2": to_native(init_val),
+        "initial_peak": to_native(init_peak),
+    }
+
+    for k, v in final_res.items():
+        if k != "popt":
+            data_dict[k] = to_native(v)
+
+    return toml.dumps(data_dict)
+
+
+def timeoffset_search(
+    dems: str, min_freq: float, max_freq: float, key: str = "chi2", save_dir="."
+) -> None:
+    """Searches for the optimal time offset to minimize the specified
+        key (e.g., chi2) and saves the results.
+
+    Args:
+        dems (str): Path to the DEMS file (Zarr/Zip).
+        min_freq (float): Minimum frequency for analysis (GHz).
+        max_freq (float): Maximum frequency for analysis (GHz).
+        key (str, optional): Key to minimize (default is 'chi2').
+        save_dir (str, optional): Directory to save output files
+            (default is current directory).
+
+    Returns:
+        Tuple[Optional[int], float, Dict[str, Any]]: A tuple containing
+        (Rounded optimal offset, Hesse error, Final result dictionary).
+        Returns (None, nan, nan, {}) if failed.
+    """
+
+    da = load.dems(dems, skycoord_frame="relative", data_scaling="brightness").compute()
+    da = da.where((da.frequency >= min_freq) & (da.frequency <= max_freq), drop=True)
+
+    basename = dems
+    if basename.endswith(".zarr.zip"):
+        file_prefix = basename.replace(".zarr.zip", "")
+    elif basename.endswith(".zarr"):
+        file_prefix = basename.replace(".zarr", "")
+    else:
+        file_prefix = basename
+
+    toml_path = f"{save_dir}/{file_prefix}_result.toml"
+    map_path = f"{save_dir}/{file_prefix}_maps.png"
+    init_res = get_result(da, 0.0)
+
+    init_val = init_res.get(key, np.nan)
+    init_peak = init_res.get("peak", np.nan)
+
+    def objective(offset: float) -> float:
+        if isinstance(offset, np.ndarray):
+            offset_val = offset[0]
+        else:
+            offset_val = offset
+        try:
+            offset_val = float(offset_val)
+        except:
+            return np.inf
+        if np.isnan(offset_val) or np.isinf(offset_val):
+            return np.inf
+
+        try:
+            result_dict = get_result(da, offset_val)
+            current_val = result_dict.get(key, np.inf)
+        except Exception:
+            return np.inf
+
+        if np.isnan(current_val):
+            return np.inf
+        return current_val
+
+    initial_guess = [50.0]
+    bounds = [(-50, 100)]
+
+    res_scipy = minimize(
+        lambda x: objective(x[0]),
+        initial_guess,
+        method="Powell",
+        bounds=bounds,
+        options={"ftol": 1e-3},
+    )
+    scipy_offset = res_scipy.x[0] if res_scipy.success else 50.0
+
+    m = Minuit(objective, offset=scipy_offset)  # type: ignore
+    m.errordef = Minuit.LEAST_SQUARES
+    m.limits["offset"] = (0, 100)
+    m.errors["offset"] = 1.0
+    m.tol = 1.0
+
+    m.simplex()
+
+    try:
+        m.hesse()
+    except:
+        pass
+
+    opt_offset = m.values["offset"]
+    hesse_err = m.errors["offset"]
+
+    final_res = get_result(da, opt_offset)
+
+    visualize_correction(da, min_freq, max_freq, opt_offset, save_path=map_path)
+    if np.isnan(opt_offset):
+        return None
+
+    if toml_path:
+        try:
+            toml_str = make_toml(
+                file_prefix,
+                min_freq,
+                max_freq,
+                opt_offset,
+                hesse_err,
+                init_val,
+                init_peak,
+                final_res,
+            )
+
+            with open(toml_path, "w") as f:
+                f.write(toml_str)
+            print(f"Results saved to {toml_path}")
+        except Exception as e:
+            print(f"Failed to save TOML: {e}")
+
+    return None
+
+
 def main() -> None:
     """Entry point of the decode-qlook command."""
 
@@ -1467,6 +1911,7 @@ def main() -> None:
             "raster": raster,
             "skydip": skydip,
             "still": still,
+            "timeoffset_search": timeoffset_search,
             "xscan": xscan,
             "yscan": yscan,
             "zscan": zscan,
