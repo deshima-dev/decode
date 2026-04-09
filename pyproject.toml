@@ -10,9 +10,10 @@ keywords = [
     "spectroscopy",
     "submillimeter",
 ]
-requires-python = ">=3.9,<3.13"
+requires-python = ">=3.10,<3.13"
 dependencies = [
     "astropy>=6,<8",
+    "casatools>=6.0,<6.7",
     "dask>=2024,<2026",
     "dems>=2025.6,<2026.0",
     "fire>=0.5,<1.0",

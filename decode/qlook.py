@@ -28,11 +28,14 @@ import numpy as np
 import xarray as xr
 import matplotlib.pyplot as plt
 from astropy.units import Quantity
+from casatools import atmosphere, quanta
 from fire import Fire
 from matplotlib.figure import Figure
-from scipy.optimize import curve_fit, minimize
+from ndtools import Range
+from scipy.interpolate import interp1d
+from scipy.optimize import curve_fit, least_squares, minimize
 from iminuit import Minuit
-from . import assign, convert, load, make, plot, select, utils
+from . import assign, convert, load, make, plot, select, stats, utils
 
 
 # constants
@@ -435,6 +438,167 @@ def pswsc(
 
         fig.tight_layout()
         return save_qlook(fig, file, overwrite=overwrite, **options)
+
+
+def pwv(
+    dems: Path,
+    # TODO: キーワード引数をちゃんと書き直す
+    # TODO: どきゅめんともちゃんと書き直す
+    /,
+    *,
+    # options for loading
+    include_mkid_ids: Optional[Sequence[int]] = DEFAULT_INCL_MKID_IDS,
+    exclude_mkid_ids: Optional[Sequence[int]] = DEFAULT_EXCL_MKID_IDS,
+    min_frequency: Optional[str] = DEFAULT_MIN_FREQUENCY,
+    max_frequency: Optional[str] = DEFAULT_MAX_FREQUENCY,
+    # data_scaling: Optional[Literal["brightness", "df/f"]] = DEFAULT_DATA_SCALING,
+    # options for analysis
+    # TODO: 必要なパラメーターの追加
+    # e.g. loss_function = "hurber"
+    # TODO: debug code
+    init_pwv: float = 0.37615840125099304,
+    # init_pwv: float = 1.0,
+
+    altitude:str    = '5000 m',
+    h0:str          = '2.0 km',
+
+    # options for saving
+    format: str = DEFAULT_FORMAT,
+    outdir: Path = DEFAULT_OUTDIR,
+    overwrite: bool = DEFAULT_OVERWRITE,
+    suffix: str = "still",
+    # other options
+    debug: bool = DEFAULT_DEBUG,
+    **options: Any,
+) -> Path:
+    """quick-look at a still observation.
+
+    args:
+        dems: input dems file (netcdf or zarr).
+        include_mkid_ids: mkid ids to be included in analysis.
+            defaults to all mkid ids.
+        exclude_mkid_ids: mkid ids to be excluded in analysis.
+            defaults to no mkid ids.
+        min_frequency: minimum frequency to be included in analysis.
+            defaults to no minimum frequency bound.
+        max_frequency: maximum frequency to be included in analysis.
+            defaults to no maximum frequency bound.
+        data_scaling: data scaling to be used in analysis.
+            defaults to the data scaling of the input dems file.
+        chan_weight: weighting method along the channel axis.
+            uniform: uniform weight (i.e. no channel dependence).
+            std: inverse square of temporal standard deviation of sky.
+            std/tx: same as std but std is divided by the atmospheric
+            transmission calculated by the atm model.
+        pwv: pwv in units of mm. only used for the calculation of
+            the atmospheric transmission when chan_weight is std/tx.
+        format: output data format of the quick-look result.
+        outdir: output directory for the quick-look result.
+        overwrite: whether to overwrite the output if it exists.
+        suffix: suffix that precedes the file extension.
+        debug: whether to print detailed logs for debugging.
+        **options: other options for saving the output (e.g. dpi).
+
+    returns:
+        absolute path of the saved file.
+
+    """
+    # with set_logger(debug):
+        # for key, val in locals().items():
+            # LOGGER.debug(f"{key}: {val!r}")
+
+    with xr.set_options(keep_attrs=True):
+        da = load.dems(
+            dems,
+            include_mkid_ids=include_mkid_ids,
+            exclude_mkid_ids=exclude_mkid_ids,
+            min_frequency=min_frequency,
+            max_frequency=max_frequency,
+            data_scaling='brightness',
+            chunks=None,
+            frequency_units='Hz',
+            skycoord_units='deg'
+        )
+    # da = da[:, ~da['frequency'].isnull()]
+    # da = da[:, da['frequency'] == Range(250e9, 315e9) | Range(335e9, 360e9)]
+
+    # predict pwv
+    # TODO: predictがちゃんとなっているか見ておく
+    measured_tau      = -1 * np.sin(np.deg2rad(da['lat'])) * np.log(1 - da/da['temperature'])
+    tmp               = measured_tau
+    measured_tau_mean = stats.mean(measured_tau, dim='time')
+    # measured_tau_mean    = measured_tau.mean('time')
+    measured_tau_std= measured_tau.std('time')
+    # atm_params        = {
+    #     'atmType': atm_type,
+    #     'humidity': float(measured_tau_mean["humidity"]),
+    #     'temperature': f'{float(measured_tau_mean["temperature"])} K',
+    #     'altitude': altitude,
+    #     'pressure': f'{float(measured_tau_mean["pressure"]) / 100} mbar',
+    #     'h0': '2 km',
+    # }
+    # TODO: debug code
+    atm_params = {
+    'atmType': 1,
+    'humidity': 20,
+    'temperature': '270 K',
+    'altitude': '5000 m',
+    'pressure': '560 mbar',
+    'h0': '2 km',
+    }
+
+    # freq_step = float(da['frequency'].sortby('frequency').diff('chan').median()/10)
+    # TODO: debug code
+    freq_step = 1e9
+    # freq_min = float(da['frequency'].min())
+    # freq_max = float(da['frequency'].max())
+    # TODO: debug code
+    freq_min = 100e9
+    freq_max = 500e9
+
+    def get_predicted_tau(pwv):
+        freq, tau_zero     = get_tau(freq_min, freq_max, freq_step, pwv, **atm_params)
+        f = interp1d(freq, tau_zero, kind='linear')
+        return f(da['frequency'])
+
+    def func(pwv):
+        predicted_tau = get_predicted_tau(pwv)
+
+        result = (predicted_tau - measured_tau_mean) / (measured_tau_std * 10)
+
+        return result
+
+    # TODO: loss関数を考慮する (e.g. huber, arctan, linear)
+    # result = least_squares(func, init_pwv, method='lm')
+    result = least_squares(func, init_pwv, method='trf', loss='huber')
+    # TODO: 出力を変える
+    # TODO: エラーを出力出力
+
+    # TODO: 保存するところとかを書く
+    # save result
+    # suffixes = f".{suffix}.{format}"
+    # file = path(outdir) / path(dems).with_suffix(suffixes).name
+
+    # if format in data_formats:
+        # return save_qlook(series, file, overwrite=overwrite, **options)
+
+    # TODO: プロットを書く
+    predicted_tau = get_predicted_tau(result.x[0])
+    # TODO: 残渣プロット とtauプロットを分けて表示してlossをloss関数を最適化する
+    # fig, axes = plt.subplots(1, 2)
+
+    # TODO: subplot用の残差
+    # plt.plot(da['frequency'], func(result.x[0]), label=f'func', linestyle='none', marker='.', markersize=4)
+    plt.plot(da['frequency'], predicted_tau, label=f'predicted pwv={result.x[0]}', linestyle='none', marker='.', markersize=4)
+    plt.errorbar(da['frequency'], measured_tau_mean, label='measured', linestyle='none', yerr=measured_tau_std, marker='.', markersize=4, ecolor='green')
+    plt.legend()
+    plt.ylim(0, 0.5) # TODO: プロットを書く
+    # plt.ylim(-10, 10) # TODO: subplot用
+    # TODO: debug code
+    plt.savefig('./result_lm_origin_huber_m1000.png')
+    # TODO: toml pwv"など"を保存する
+    return result.x[0]
+    return save_qlook(fig, file, overwrite=overwrite, **options)
 
 
 def raster(
@@ -1893,6 +2057,45 @@ def timeoffset_search(
             print(f"Failed to save TOML: {e}")
 
     return None
+
+
+def get_tau(
+    f_min: float,
+    f_max: float,
+    f_step: float,
+    pwv: float,
+    **atm_params,
+):
+    """Compute of zenith opacities at given frequencies.
+
+    Args:
+        f_min: Minimum frequency (in units of Hz).
+        f_max: Maximum frequency (in units of Hz).
+        f_step: Frequency step (in units of Hz).
+        pwv: Precipitable water vapor (in units of mm).
+        atm_params: Parameters fo the ATM model.
+
+    Returns:
+        freq: Array of frequencies (in units of Hz).
+        tau: Array of zenith opacities at the frequencies.
+
+    """
+    at = atmosphere()
+    qa = quanta()
+
+    f_cent = qa.quantity((f_min + f_max) / 2, "Hz")
+    f_width = qa.quantity(f_max - f_min + f_step, "Hz")
+    f_step = qa.quantity(f_step, "Hz")
+    pwv = qa.quantity(pwv, "mm")
+
+    at.initAtmProfile(**atm_params)
+    at.initSpectralWindow(1, f_cent, f_width, f_step)
+    at.setUserWH2O(pwv)
+
+    freq = qa.convert(at.getSpectralWindow(), "Hz")["value"]
+    tau = at.getDryOpacitySpec()[1] + at.getWetOpacitySpec()[1]['value']
+
+    return freq, tau
 
 
 def main() -> None:
